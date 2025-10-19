@@ -26,7 +26,7 @@ tasks.withType(JavaCompile) {
 
 application {
     mainModule = 'com.unpar.brokenlinkchecker'
-    mainClass = 'com.unpar.brokenlinkchecker.HelloApplication'
+    mainClass = 'com.unpar.brokenlinkchecker.Application'
 }
 
 javafx {
@@ -35,7 +35,9 @@ javafx {
 }
 
 dependencies {
-
+    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'com.squareup.okhttp3:okhttp:5.2.1'
+    
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }
