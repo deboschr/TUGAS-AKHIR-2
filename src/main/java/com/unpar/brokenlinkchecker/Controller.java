@@ -76,7 +76,7 @@ public class Controller {
          initButtonState();
          
          crawler = new Crawler(
-               status -> summaryCard.setCheckingStatus(status),
+               checkingStatus -> summaryCard.setCheckingStatus(checkingStatus),
                totalUrl -> totalLinks.add(totalUrl),
                webpage -> webpageLinks.add(webpage),
                broken -> brokenLinks.add(broken));

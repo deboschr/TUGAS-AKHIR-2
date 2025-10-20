@@ -26,7 +26,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class Crawler {
-    private static final String USER_AGENT = "BrokenLinkChecker/1.0 (+https://github.com/jakeschr/broken-link-checker; contact: 6182001060@student.unpar.ac.id)";
+    private static final String USER_AGENT = "BrokenLinkChecker/1.0 (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
     private static final int TIMEOUT = 10000;
     private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder()
             .followRedirects(true)
@@ -35,43 +35,43 @@ public class Crawler {
             .build();
 
     // ==================== Callback (streaming data) ====================
-    private final Consumer<CheckingStatus> statusConsumer;
+    private final Consumer<CheckingStatus> checkingStatusConsumer;
     private final Consumer<String> totalLinkConsumer;
     private final Consumer<Link> webpageLinkConsumer;
     private final Consumer<Link> brokenLinkConsumer;
 
     // ==================== Internal state ====================
+    // Untuk mengidentifikasi webpage
     private String rootHost;
+    // Untuk menyimoan antrian webpage yang akan di crawling (FIFO/BFS)
     private final Queue<Link> frontier = new ArrayDeque<>();
+    // Untuk menyimpan daftar unik setiap link yang ditemukan
     private final Set<String> repositories = new HashSet<>();
 
     private volatile boolean isRunning = false;
 
-    // ==================== Constructor ====================
-    public Crawler(Consumer<CheckingStatus> statusConsumer,
+    public Crawler(
+            Consumer<CheckingStatus> checkingStatusConsumer,
             Consumer<String> totalLinkConsumer,
             Consumer<Link> webpageLinkConsumer,
             Consumer<Link> brokenLinkConsumer) {
-        this.statusConsumer = statusConsumer;
+        this.checkingStatusConsumer = checkingStatusConsumer;
         this.totalLinkConsumer = totalLinkConsumer;
         this.webpageLinkConsumer = webpageLinkConsumer;
         this.brokenLinkConsumer = brokenLinkConsumer;
     }
 
-    // =========================================================
-    // Main
-    // =========================================================
     public void start(String seedUrl) {
         isRunning = true;
 
-        // Notifikasi mulai
-        sendStatus(CheckingStatus.CHECKING);
+        // Notifikasi ke controller bahwa proses pemeriksaan dimulai
+        notifyController(checkingStatusConsumer, CheckingStatus.CHECKING);
 
         this.rootHost = getHostUrl(seedUrl);
         repositories.clear();
         frontier.clear();
 
-        // masukkan seed ke frontier
+        // Masukkan seed ke frontier
         frontier.offer(new Link(seedUrl, null, 0, null, null, Instant.now()));
 
         while (isRunning && !frontier.isEmpty()) {
@@ -84,8 +84,8 @@ public class Crawler {
                 continue;
             }
 
-            // Kirim total link
-            sendTotalLink(link.getUrl());
+            // Kirim link ke controller
+            notifyController(totalLinkConsumer, link.getUrl());
 
             // Fetch dan parse url dari webpage link
             FetchResult result = fetchUrl(link.getUrl(), true);
@@ -97,7 +97,8 @@ public class Crawler {
 
             // Skip dan kirim broken link kalau error
             if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != null) {
-                sendBrokenLink(webpageLink);
+                // Kirim link rusak ke controller
+                notifyController(brokenLinkConsumer, webpageLink);
                 continue;
             }
 
@@ -112,8 +113,8 @@ public class Crawler {
                 continue;
             }
 
-            // Kirim webpage link
-            sendWebpageLink(webpageLink);
+            // Kirim webpage link ke controller
+            notifyController(webpageLinkConsumer, webpageLink);
 
             // Ekstrak seluruh url yang ada di webpage
             Map<String, String> linksOnWebpage = extractUrl(doc);
@@ -146,8 +147,8 @@ public class Crawler {
                         continue;
                     }
 
-                    // Kirim total link
-                    sendTotalLink(entryUrl);
+                    // Kirim link ke controller
+                    notifyController(totalLinkConsumer, entryUrl);
 
                     FetchResult entryRes = fetchUrl(entryUrl, false);
 
@@ -157,7 +158,7 @@ public class Crawler {
                     // Buat koneksi dengan parentnya dan kirim broken link
                     if (entryLink.getStatusCode() >= 400 || entryLink.getError() != null) {
                         entryLink.setConnection(webpageLink, entryAnchorText);
-                        sendBrokenLink(entryLink);
+                        notifyController(brokenLinkConsumer, entryLink);
                     }
 
                 }
@@ -168,13 +169,13 @@ public class Crawler {
 
         // kalau keluar dari loop artinya sudah selesai
         if (isRunning) {
-            sendStatus(CheckingStatus.COMPLETED);
+            notifyController(checkingStatusConsumer, CheckingStatus.COMPLETED);
         }
     }
 
     public void stop() {
         isRunning = false;
-        sendStatus(CheckingStatus.STOPPED);
+        notifyController(checkingStatusConsumer, CheckingStatus.STOPPED);
     }
 
     // =========================================================
@@ -325,24 +326,26 @@ public class Crawler {
     // =========================================================
     // Helpers (stream to controller)
     // =========================================================
-    private void sendStatus(CheckingStatus status) {
-        if (statusConsumer != null) {
-            Platform.runLater(() -> statusConsumer.accept(status));
+
+    /**
+     * Method ini dipakai buat ngirim data hasil proses balik ke Controller, tapi
+     * dengan cara yang aman dari thread lain.
+     * 
+     * - Kalau aplikasi lagi jalanin proses di background thread (misalnya
+     * crawling), kita gak bisa langsung ubah komponen di UI, karena JavaFX cuma
+     * boleh ubah UI dari thread khusus yang namanya "JavaFX Application Thread".
+     * - Nah, biar aman dari thread conflict, kita panggil `Platform.runLater()`,
+     * supaya kode di dalamnya dijalankan nanti di thread UI itu.
+     * 
+     * 
+     * @param <T>      tipe data yang akan dikirim
+     * @param consumer objek Consumer yang menerima data dari Crawler untuk diproses
+     *                 di Controller
+     * @param data     data yang akan dikirim ke consumer
+     */
+    private <T> void notifyController(Consumer<T> consumer, T data) {
+        if (consumer != null) {
+            Platform.runLater(() -> consumer.accept(data));
         }
-    }
-
-    private void sendTotalLink(String url) {
-        if (totalLinkConsumer != null)
-            Platform.runLater(() -> totalLinkConsumer.accept(url));
-    }
-
-    private void sendWebpageLink(Link link) {
-        if (webpageLinkConsumer != null)
-            Platform.runLater(() -> webpageLinkConsumer.accept(link));
-    }
-
-    private void sendBrokenLink(Link link) {
-        if (brokenLinkConsumer != null)
-            Platform.runLater(() -> brokenLinkConsumer.accept(link));
     }
 }
