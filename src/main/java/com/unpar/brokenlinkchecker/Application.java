@@ -22,7 +22,7 @@ public class Application extends javafx.application.Application {
     @Override
     public void start(Stage stage) throws Exception {
         // Loader buat baca file FXML (layout utama aplikasi)
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/main.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/table/table.fxml"));
         Parent root = loader.load();
 
         // Bungkus root node ke dalam Scene
@@ -32,7 +32,7 @@ public class Application extends javafx.application.Application {
         stage.setScene(scene);
 
         // Hilangkan title bar default
-        stage.initStyle(StageStyle.UNDECORATED);
+        // stage.initStyle(StageStyle.UNDECORATED);
 
         // Konfigurasi ukuran (px)
         stage.setMinWidth(1024);

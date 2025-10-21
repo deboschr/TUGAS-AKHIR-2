@@ -220,7 +220,7 @@
 	-fx-font-weight: bold;
 	-fx-text-fill: #f9fafb;
 	-fx-alignment: CENTER_LEFT;
-	-fx-padding: 0 0 0 10;
+	-fx-padding: 0;
 	-fx-font-size: 13px;
 }
 
@@ -247,8 +247,10 @@
 	-fx-background-color: #2b2b2b;
 }
 
-.result-table .filler {
+.result-table .filler,
+.result-table .corner {
 	-fx-background-color: #2b2b2b;
+	-fx-border-color: #2b2b2b;
 }
 
 .table-view .scroll-bar:vertical {
