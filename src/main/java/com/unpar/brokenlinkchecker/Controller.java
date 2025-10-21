@@ -96,11 +96,6 @@ public class Controller {
          return;
       }
 
-      // Warna tombol aktif
-      if (!startBtn.getStyleClass().contains("btn-start-active")) {
-         startBtn.getStyleClass().add("btn-start-active");
-      }
-
       // kosongkan data lama
       totalLinks.clear();
       webpageLinks.clear();
@@ -113,7 +108,6 @@ public class Controller {
    @FXML
    private void onStopClick() {
       if (crawler != null) {
-
          crawler.stop();
       }
    }
@@ -146,6 +140,7 @@ public class Controller {
    // ============================= BUTTON STATE & STYLE =============================
    private void initButtonState() {
       // kondisi awal
+      startBtn.setDisable(false);
       stopBtn.setDisable(true);
       exportButton.setDisable(true);
 
