@@ -22,28 +22,27 @@ Seluruh proses pemeriksaan berjalan secara **real-time**, dan hasilnya ditampilk
 
 ## Fitur
 
-- **Form Input URL**
+- **Form Input URL**  
     Pengguna dapat memasukkan *seed URL* secara lengkap, termasuk skema `http://` atau `https://`. Aplikasi tidak menambahkan skema secara otomatis untuk menghindari kesalahan akses pada situs yang hanya mendukung salah satu protokol.
 
-- **Tombol Kontrol Pemeriksaan**
+- **Tombol Kontrol**  
     Tersedia tombol **Start** dan **Stop** untuk memulai serta menghentikan proses pemeriksaan tautan kapan saja, sehingga pengguna memiliki kendali penuh atas jalannya proses.
 
-- **Ringkasan Hasil Pemeriksaan**
+- **Ringkasan Hasil**  
     Menampilkan informasi umum seperti jumlah total tautan yang diperiksa, jumlah tautan rusak (*broken links*), serta status proses pengecekan (IDLE, CHECKING, COMPLETED, atau STOPPED) yang diperbarui secara **real-time** selama proses berjalan.
 
-- **Filter Hasil Pemeriksaan**
+- **Filter Hasil**  
     Pengguna dapat memfilter hasil yang tampil di tabel berdasarkan **URL** (dengan opsi *equals*, *contains*, *starts with*, dan *ends with*) maupun **kode status HTTP** (dengan opsi *equals*, *greater than*, dan *less than*), untuk memudahkan pencarian tautan tertentu.
 
-- **Tabel Hasil**
+- **Tabel Hasil**  
     Semua hasil pemeriksaan ditampilkan pada satu tabel utama yang berisi daftar tautan rusak. Tabel ini diperbarui secara **real-time** menggunakan mekanisme *data binding* JavaFX.
 
-- **Detail Broken Link**
-    Setiap entri pada tabel hasil dapat diperluas untuk melihat daftar halaman asal tempat tautan rusak tersebut ditemukan, lengkap dengan **anchor text** yang digunakan di masing-masing halaman.
 
-- **Ekspor Hasil**
+- **Ekspor Hasil**  
     Pengguna dapat mengekspor seluruh hasil pemeriksaan ke **file Excel (.xlsx)** untuk dokumentasi atau analisis lebih lanjut.
 
-
+- **Detail Broken Link**  
+    Setiap entri pada tabel hasil dapat diperluas untuk melihat daftar halaman asal tempat tautan rusak tersebut ditemukan, lengkap dengan **anchor text** yang digunakan di masing-masing halaman.
 
 ## Cara Menjalankan
 
