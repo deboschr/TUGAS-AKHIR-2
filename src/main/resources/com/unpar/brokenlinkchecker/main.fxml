@@ -124,19 +124,19 @@
                 </VBox>
             </GridPane>
 
-            <!-- ===================== RESULT TABLE ===================== -->
+            <!-- ===================== RESULT SECTION ===================== -->
             <VBox spacing="12" VBox.vgrow="ALWAYS">
-                <HBox alignment="CENTER_LEFT" spacing="8">
+                <HBox alignment="CENTER_LEFT" >
                     <Label text="Result" styleClass="section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button fx:id="exportButton" text="Export" styleClass="btn-control" onAction="#onExportClick"/>
                 </HBox>
 
-                <!-- ====== TableView ====== -->
+                <!-- ====== Table Result ====== -->
                 <TableView fx:id="resultTable" styleClass="result-table" VBox.vgrow="NEVER">
                     <columns>
-                        <TableColumn fx:id="statusColumn" text="Status" prefWidth="200" />
-                        <TableColumn fx:id="urlColumn" text="URL" prefWidth="700" />
+                        <TableColumn fx:id="statusColumn" text="Status" />
+                        <TableColumn fx:id="urlColumn" text="URL" />
                     </columns>
                 </TableView>
 
