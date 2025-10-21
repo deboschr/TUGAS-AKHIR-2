@@ -139,20 +139,11 @@ public class Controller {
 
    // ============================= BUTTON STATE & STYLE =============================
    private void initButtonState() {
-      // kondisi awal
-      startBtn.setDisable(false);
-      stopBtn.setDisable(true);
-      exportButton.setDisable(true);
 
-      // hapus warna aktif dari start/stop di awal
-      startBtn.getStyleClass().remove("btn-start-active");
-      stopBtn.getStyleClass().remove("btn-stop-active");
-
-      // dengarkan perubahan status
+      // Perubahan status
       summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
          switch (status) {
             case IDLE -> {
-               // start selalu aktif, stop/export nonaktif
                startBtn.setDisable(false);
                stopBtn.setDisable(true);
                exportButton.setDisable(true);
@@ -161,29 +152,28 @@ public class Controller {
                stopBtn.getStyleClass().remove("btn-stop-active");
             }
             case CHECKING -> {
-               // stop aktif, export nonaktif
                startBtn.setDisable(false);
                stopBtn.setDisable(false);
                exportButton.setDisable(true);
 
                stopBtn.getStyleClass().remove("btn-stop-active");
+
+               if (!startBtn.getStyleClass().contains("btn-start-active")) {
+                  startBtn.getStyleClass().add("btn-start-active");
+               }
             }
             case STOPPED -> {
-               // stop nonaktif, export aktif
                startBtn.setDisable(false);
-               stopBtn.setDisable(true);
+               stopBtn.setDisable(false);
                exportButton.setDisable(false);
 
-               // hapus semua warna aktif
                startBtn.getStyleClass().remove("btn-start-active");
-               stopBtn.getStyleClass().remove("btn-stop-active");
 
-                        if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
-            stopBtn.getStyleClass().add("btn-stop-active");
-         }
+               if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
+                  stopBtn.getStyleClass().add("btn-stop-active");
+               }
             }
             case COMPLETED -> {
-               // stop nonaktif, export aktif
                startBtn.setDisable(false);
                stopBtn.setDisable(true);
                exportButton.setDisable(false);
