@@ -5,7 +5,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-public class SummaryCard {
+public class Summary {
    private final ObjectProperty<CheckingStatus> checkingStatus = new SimpleObjectProperty<>(CheckingStatus.IDLE);
    private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
    private final IntegerProperty webpages = new SimpleIntegerProperty(0);

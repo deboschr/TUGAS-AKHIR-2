@@ -65,7 +65,7 @@ public class Controller {
    private final ObservableList<Link> brokenLinks = FXCollections.observableArrayList();
 
    // Model summary card yang akan di-bind ke label
-   private final SummaryCard summaryCard = new SummaryCard();
+   private final Summary summaryCard = new Summary();
 
    @FXML
    public void initialize() {
@@ -189,13 +189,13 @@ public class Controller {
    // ============================= SUMMARY CARD =============================
    private void initSummaryCard() {
 
-      // Label mengikuti nilai di SummaryCard
+      // Label mengikuti nilai di Summary
       checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
       totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
       webpageLinksLabel.textProperty().bind(summaryCard.webpagesProperty().asString());
       brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
 
-      // SummaryCard mengikuti ukuran ObservableList
+      // Summary mengikuti ukuran ObservableList
       summaryCard.totalLinksProperty().bind(Bindings.size(totalLinks));
       summaryCard.webpagesProperty().bind(Bindings.size(webpageLinks));
       summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
