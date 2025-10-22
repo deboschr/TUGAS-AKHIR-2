@@ -221,7 +221,6 @@ public class Crawler {
             return new FetchResult(link, null);
         }
     }
-
     // =========================================================
     // Utility pengelola URL
     // =========================================================
