@@ -220,7 +220,7 @@
 	-fx-font-weight: bold;
 	-fx-text-fill: #f9fafb;
 	-fx-alignment: CENTER_LEFT;
-	-fx-padding: 0;
+	-fx-padding: 0 8;
 	-fx-font-size: 13px;
 }
 
