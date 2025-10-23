@@ -132,13 +132,21 @@
                     <Button fx:id="exportButton" text="Export" styleClass="btn-control" onAction="#onExportClick"/>
                 </HBox>
 
-                <!-- ====== Broken Links Table ====== -->
-                <TableView fx:id="resultTable" styleClass="broken-link-table" VBox.vgrow="ALWAYS">
+                <!-- ====== Table Result ====== -->
+                <TableView fx:id="resultTable" styleClass="result-table" VBox.vgrow="NEVER">
                     <columns>
                         <TableColumn fx:id="statusColumn" text="Status" />
                         <TableColumn fx:id="urlColumn" text="URL" />
                     </columns>
                 </TableView>
+
+                <!-- ====== Broken Links Table ====== -->
+                <!-- <TableView fx:id="resultTable" styleClass="broken-link-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="statusColumn" text="Status" />
+                        <TableColumn fx:id="urlColumn" text="URL" />
+                    </columns>
+                </TableView> -->
             </VBox>
 
         </VBox>

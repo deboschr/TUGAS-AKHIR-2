@@ -222,7 +222,7 @@ public class Controller {
       urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
       // Nonaktifkan resize manual kolom
-      resultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+      // resultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
       // Bungkus ObservableList dengan FilteredList
       FilteredList<Link> filteredLinks = new FilteredList<>(brokenLinks, p -> true);
