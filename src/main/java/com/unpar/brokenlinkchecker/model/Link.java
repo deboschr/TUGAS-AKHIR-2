@@ -41,6 +41,7 @@ public class Link {
       url.set(value);
    }
 
+   @SuppressWarnings("exports")
    public StringProperty urlProperty() {
       return url;
    }
@@ -55,6 +56,7 @@ public class Link {
       finalUrl.set(value);
    }
 
+   @SuppressWarnings("exports")
    public StringProperty finalUrlProperty() {
       return finalUrl;
    }
@@ -69,6 +71,7 @@ public class Link {
       statusCode.set(value);
    }
 
+   @SuppressWarnings("exports")
    public IntegerProperty statusProperty() {
       return statusCode;
    }
@@ -97,6 +100,7 @@ public class Link {
       contentType.set(value);
    }
 
+   @SuppressWarnings("exports")
    public StringProperty contentTypeProperty() {
       return contentType;
    }
@@ -111,6 +115,7 @@ public class Link {
       error.set(value);
    }
 
+   @SuppressWarnings("exports")
    public StringProperty errorProperty() {
       return error;
    }
