@@ -20,8 +20,8 @@
 	-fx-min-height: 36px;
 	-fx-padding: 8 0 8 0;
 	-fx-cursor: hand;
-	-fx-background-radius: 0;
 	-fx-border-radius: 0;
+	-fx-background-radius: 0;
 	-fx-background-insets: 0;
 	-fx-effect: none;
 }
@@ -220,7 +220,7 @@
 	-fx-font-weight: bold;
 	-fx-text-fill: #f9fafb;
 	-fx-alignment: CENTER_LEFT;
-	-fx-padding: 0;
+	-fx-padding: 0 10;
 	-fx-font-size: 13px;
 }
 
