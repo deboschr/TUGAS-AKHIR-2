@@ -140,16 +140,13 @@
                     </columns>
                 </TableView>
 
-                <!-- ====== Pagination ====== -->
-                <HBox fx:id="paginationContainer" alignment="CENTER" spacing="6" styleClass="pagination-box">
-                    <Button text="&lt;" styleClass="page-btn" />
-                    <Button text="1" styleClass="page-btn-active" />
-                    <Button text="2" styleClass="page-btn" />
-                    <Button text="3" styleClass="page-btn" />
-                    <Button text="4" styleClass="page-btn" />
-                    <Button text="5" styleClass="page-btn" />
-                    <Button text="&gt;" styleClass="page-btn" />
-                </HBox>
+                <!-- ====== Broken Links Table ====== -->
+                <TableView fx:id="resultTable" styleClass="broken-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="statusColumn" text="Status" />
+                        <TableColumn fx:id="urlColumn" text="Broken URL" />
+                    </columns>
+                </TableView>
             </VBox>
 
         </VBox>

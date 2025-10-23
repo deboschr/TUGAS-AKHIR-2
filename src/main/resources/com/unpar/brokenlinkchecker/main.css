@@ -297,3 +297,102 @@
 	-fx-border-color: #3b82f6;
 	-fx-text-fill: white;
 }
+
+
+/* ===================== BROKEN LINKS TABLE ===================== */
+.broken-table {
+    -fx-background-color: #1c1c1c;
+    -fx-border-color: #3b0d0d;
+    -fx-border-width: 1;
+    -fx-table-cell-border-color: #2a2a2a;
+    -fx-table-header-border-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* Header */
+.broken-table .column-header {
+    -fx-background-color: #2b1a1a; /* merah gelap */
+    -fx-pref-height: 44px;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #4b1d1d;
+}
+
+.broken-table .column-header .label {
+    -fx-text-fill: #fca5a5; /* pink terang */
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 0 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* Rows */
+.broken-table .table-row-cell {
+    -fx-cell-size: 34px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #f9fafb;
+    -fx-background-color: #1c1c1c;
+}
+
+.broken-table .table-row-cell:odd {
+    -fx-background-color: #1f1a1a;
+}
+.broken-table .table-row-cell:even {
+    -fx-background-color: #231b1b;
+}
+
+/* Hover */
+.broken-table .table-row-cell:hover {
+    -fx-background-color: #3a1a1a;
+}
+
+/* Cell Text */
+.broken-table .table-cell {
+    -fx-padding: 8 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* Scrollbar */
+.broken-table .scroll-bar:vertical,
+.broken-table .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.broken-table .scroll-bar .thumb {
+    -fx-background-color: rgba(239, 68, 68, 0.4); /* merah lembut */
+    -fx-background-radius: 5px;
+}
+
+.broken-table .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(239, 68, 68, 0.7);
+}
+
+/* Corner & filler */
+.broken-table .corner,
+.broken-table .filler {
+    -fx-background-color: #2b1a1a;
+}
+
+/* Hyperlink in URL column */
+.broken-table .hyperlink {
+    -fx-text-fill: #93c5fd; /* biru lembut */
+    -fx-underline: false;
+    -fx-cursor: hand;
+}
+
+.broken-table .hyperlink:hover {
+    -fx-underline: true;
+}
+
+/* Status text colors (by severity) */
+.broken-status-4xx {
+    -fx-text-fill: #facc15; /* kuning - client error */
+}
+
+.broken-status-5xx {
+    -fx-text-fill: #ef4444; /* merah - server error */
+}
+
+.broken-status-fail {
+    -fx-text-fill: #f87171; /* pink - koneksi gagal */
+}
