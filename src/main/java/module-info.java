@@ -9,5 +9,6 @@ module com.unpar.brokenlinkchecker {
 
     opens com.unpar.brokenlinkchecker to javafx.fxml;
 
+    exports com.unpar.brokenlinkchecker.model;
     exports com.unpar.brokenlinkchecker;
 }
