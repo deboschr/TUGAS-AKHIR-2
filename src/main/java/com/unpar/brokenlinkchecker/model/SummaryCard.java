@@ -35,6 +35,7 @@ public class SummaryCard {
       this.totalLinks.set(value);
    }
 
+   @SuppressWarnings("exports")
    public IntegerProperty totalLinksProperty() {
       return totalLinks;
    }
@@ -50,6 +51,7 @@ public class SummaryCard {
       this.webpages.set(value);
    }
 
+   @SuppressWarnings("exports")
    public IntegerProperty webpagesProperty() {
       return webpages;
    }
@@ -65,6 +67,7 @@ public class SummaryCard {
       this.brokenLinks.set(value);
    }
 
+   @SuppressWarnings("exports")
    public IntegerProperty brokenLinksProperty() {
       return brokenLinks;
    }
