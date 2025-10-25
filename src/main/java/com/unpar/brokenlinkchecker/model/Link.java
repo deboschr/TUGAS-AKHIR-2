@@ -1,7 +1,6 @@
 package com.unpar.brokenlinkchecker.model;
 
 import javafx.beans.property.*;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,17 +11,15 @@ public class Link {
    private final StringProperty url;
    private final StringProperty finalUrl;
    private final IntegerProperty statusCode;
-   private final ObjectProperty<Instant> accessTime;
    private final StringProperty contentType;
    private final StringProperty error;
 
    private final Map<Link, String> connections;
 
-   public Link(String url, String finalUrl, int statusCode, String contentType, String error, Instant accessTime) {
+   public Link(String url, String finalUrl, Integer statusCode, String contentType, String error) {
       this.url = new SimpleStringProperty(url);
       this.finalUrl = new SimpleStringProperty(finalUrl);
       this.statusCode = new SimpleIntegerProperty(statusCode);
-      this.accessTime = new SimpleObjectProperty<>(accessTime);
       this.contentType = new SimpleStringProperty(contentType);
       this.error = new SimpleStringProperty((error != null)
             ? error
@@ -63,7 +60,7 @@ public class Link {
 
    // ===============================================================================
    // Status Code
-   public int getStatusCode() {
+   public Integer getStatusCode() {
       return statusCode.get();
    }
 
@@ -74,20 +71,6 @@ public class Link {
    @SuppressWarnings("exports")
    public IntegerProperty statusProperty() {
       return statusCode;
-   }
-
-   // ===============================================================================
-   // Access Time
-   public Instant getAccessTime() {
-      return accessTime.get();
-   }
-
-   public void setAccessTime(Instant value) {
-      accessTime.set(value);
-   }
-
-   public ObjectProperty<Instant> accessTimeProperty() {
-      return accessTime;
    }
 
    // ===============================================================================

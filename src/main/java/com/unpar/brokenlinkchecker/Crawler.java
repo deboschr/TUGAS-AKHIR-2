@@ -65,14 +65,14 @@ public class Crawler {
         isRunning = true;
 
         // Notifikasi ke controller bahwa proses pemeriksaan dimulai
-        notifyController(checkingStatusConsumer, CheckingStatus.CHECKING);
+        sendData(checkingStatusConsumer, CheckingStatus.CHECKING);
 
         this.rootHost = getHostUrl(seedUrl);
         repositories.clear();
         frontier.clear();
 
         // Masukkan seed ke frontier
-        frontier.offer(new Link(seedUrl, null, 0, null, null, Instant.now()));
+        frontier.offer(new Link(seedUrl, null, null, null, null));
 
         while (isRunning && !frontier.isEmpty()) {
 
@@ -85,7 +85,7 @@ public class Crawler {
             }
 
             // Kirim link ke controller
-            notifyController(totalLinkConsumer, link.getUrl());
+            sendData(totalLinkConsumer, link.getUrl());
 
             // Fetch dan parse url dari webpage link
             FetchResult result = fetchUrl(link.getUrl(), true);
@@ -98,7 +98,7 @@ public class Crawler {
             // Skip dan kirim broken link kalau error
             if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != null) {
                 // Kirim link rusak ke controller
-                notifyController(brokenLinkConsumer, webpageLink);
+                sendData(brokenLinkConsumer, webpageLink);
                 continue;
             }
 
@@ -114,7 +114,7 @@ public class Crawler {
             }
 
             // Kirim webpage link ke controller
-            notifyController(webpageLinkConsumer, webpageLink);
+            sendData(webpageLinkConsumer, webpageLink);
 
             // Ekstrak seluruh url yang ada di webpage
             Map<String, String> linksOnWebpage = extractUrl(doc);
@@ -132,7 +132,7 @@ public class Crawler {
 
                 // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
                 if (entryHost != null && entryHost.equals(rootHost)) {
-                    Link entryLink = new Link(entryUrl, null, 0, null, null, Instant.now());
+                    Link entryLink = new Link(entryUrl, null, null, null, null);
 
                     // Set koneksi ke parentnya
                     entryLink.setConnection(webpageLink, entryAnchorText);
@@ -148,7 +148,7 @@ public class Crawler {
                     }
 
                     // Kirim link ke controller
-                    notifyController(totalLinkConsumer, entryUrl);
+                    sendData(totalLinkConsumer, entryUrl);
 
                     FetchResult entryRes = fetchUrl(entryUrl, false);
 
@@ -158,7 +158,7 @@ public class Crawler {
                     // Buat koneksi dengan parentnya dan kirim broken link
                     if (entryLink.getStatusCode() >= 400 || entryLink.getError() != null) {
                         entryLink.setConnection(webpageLink, entryAnchorText);
-                        notifyController(brokenLinkConsumer, entryLink);
+                        sendData(brokenLinkConsumer, entryLink);
                     }
 
                 }
@@ -169,13 +169,13 @@ public class Crawler {
 
         // kalau keluar dari loop artinya sudah selesai
         if (isRunning) {
-            notifyController(checkingStatusConsumer, CheckingStatus.COMPLETED);
+            sendData(checkingStatusConsumer, CheckingStatus.COMPLETED);
         }
     }
 
     public void stop() {
         isRunning = false;
-        notifyController(checkingStatusConsumer, CheckingStatus.STOPPED);
+        sendData(checkingStatusConsumer, CheckingStatus.STOPPED);
     }
 
     // =========================================================
@@ -206,7 +206,7 @@ public class Crawler {
                     }
                 }
 
-                Link link = new Link(url, res.request().url().toString(), res.code(), contentType, null, Instant.now());
+                Link link = new Link(url, res.request().url().toString(), res.code(), contentType, null);
                 return new FetchResult(link, doc);
             }
 
@@ -216,7 +216,7 @@ public class Crawler {
                 errorName = "UnknownError";
             }
 
-            Link link = new Link(url, null, 0, null, errorName, Instant.now());
+            Link link = new Link(url, null, null, null, errorName);
 
             return new FetchResult(link, null);
         }
@@ -342,7 +342,7 @@ public class Crawler {
      *                 di Controller
      * @param data     data yang akan dikirim ke consumer
      */
-    private <T> void notifyController(Consumer<T> consumer, T data) {
+    private <T> void sendData(Consumer<T> consumer, T data) {
         if (consumer != null) {
             Platform.runLater(() -> consumer.accept(data));
         }
