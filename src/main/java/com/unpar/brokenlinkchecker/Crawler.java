@@ -7,7 +7,6 @@ import com.unpar.brokenlinkchecker.model.FetchResult;
 import java.net.IDN;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +44,7 @@ public class Crawler {
     private String rootHost;
     // Untuk menyimoan antrian webpage yang akan di crawling (FIFO/BFS)
     private final Queue<Link> frontier = new ArrayDeque<>();
-    // Untuk menyimpan daftar unik setiap link yang ditemukan
+    // Untuk menyimpan daftar unik setiap URL yang ditemukan
     private final Set<String> repositories = new HashSet<>();
 
     private volatile boolean isRunning = false;
@@ -221,8 +220,9 @@ public class Crawler {
             return new FetchResult(link, null);
         }
     }
+
     // =========================================================
-    // Utility pengelola URL
+    // Utility
     // =========================================================
     private Map<String, String> extractUrl(Document doc) {
 
@@ -323,7 +323,7 @@ public class Crawler {
     }
 
     // =========================================================
-    // Helpers (stream to controller)
+    // Helpers
     // =========================================================
 
     /**
