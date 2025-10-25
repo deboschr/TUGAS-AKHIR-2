@@ -8,24 +8,26 @@ import com.unpar.brokenlinkchecker.util.HttpStatus;
 
 public class Link {
 
-   private final StringProperty url;
-   private final StringProperty finalUrl;
-   private final IntegerProperty statusCode;
-   private final StringProperty contentType;
-   private final StringProperty error;
+   private final StringProperty url; // URL utama (wajib ada)
+   private final StringProperty finalUrl; // URL hasil redirect (opsional)
+   private final IntegerProperty statusCode; // Kode status HTTP (0 = belum dicek)
+   private final StringProperty contentType; // Tipe konten (text/html, image/png, dll)
+   private final StringProperty error; // Pesan error (jika ada)
+   private final Map<Link, String> connections; // Hubungan antar link + anchor text
 
-   private final Map<Link, String> connections;
+   public Link(String url) {
 
-   public Link(String url, String finalUrl, Integer statusCode, String contentType, String error) {
+      if (url == null || url.isBlank()) {
+         throw new IllegalArgumentException("URL tidak boleh null atau kosong");
+      }
+
       this.url = new SimpleStringProperty(url);
-      this.finalUrl = new SimpleStringProperty(finalUrl);
-      this.statusCode = new SimpleIntegerProperty(statusCode);
-      this.contentType = new SimpleStringProperty(contentType);
-      this.error = new SimpleStringProperty((error != null)
-            ? error
-            : HttpStatus.getStatus(statusCode));
-
       this.connections = new HashMap<>();
+
+      this.statusCode = new SimpleIntegerProperty(0);
+      this.contentType = new SimpleStringProperty("");
+      this.finalUrl = new SimpleStringProperty("");
+      this.error = new SimpleStringProperty("");
    }
 
    // ===============================================================================
@@ -35,6 +37,10 @@ public class Link {
    }
 
    public void setUrl(String value) {
+      if (value == null || value.isBlank()) {
+         throw new IllegalArgumentException("URL tidak boleh null atau kosong");
+      }
+
       url.set(value);
    }
 
@@ -50,7 +56,7 @@ public class Link {
    }
 
    public void setFinalUrl(String value) {
-      finalUrl.set(value);
+      finalUrl.set(value != null ? value : "");
    }
 
    @SuppressWarnings("exports")
@@ -65,6 +71,11 @@ public class Link {
    }
 
    public void setStatusCode(int value) {
+      String status = HttpStatus.getStatus(value);
+      if (status != null) {
+         error.set(status);
+      }
+
       statusCode.set(value);
    }
 
@@ -80,7 +91,7 @@ public class Link {
    }
 
    public void setContentType(String value) {
-      contentType.set(value);
+      contentType.set(value != null ? value : "");
    }
 
    @SuppressWarnings("exports")
@@ -95,7 +106,7 @@ public class Link {
    }
 
    public void setError(String value) {
-      error.set(value);
+      error.set(value != null ? value : "");
    }
 
    @SuppressWarnings("exports")
@@ -106,21 +117,21 @@ public class Link {
    // ===============================================================================
    // Relasi antar link
 
+   public Map<Link, String> getConnection() {
+      return connections;
+   }
+
    public void setConnection(Link other, String anchorText) {
-      if (other == null || other == this)
+      if (other == null || other == this) {
          return;
+      }
 
       // Tambahkan koneksi dua arah
       this.connections.putIfAbsent(other, anchorText != null ? anchorText : "");
       other.connections.putIfAbsent(this, anchorText != null ? anchorText : "");
    }
 
-   public Map<Link, String> getConnection() {
-      return connections;
-   }
-
    public void clearConnection() {
       this.connections.clear();
    }
-
 }

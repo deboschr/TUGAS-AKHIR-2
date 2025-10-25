@@ -35,7 +35,7 @@ public class Crawler {
 
     // ==================== Callback (streaming data) ====================
     private final Consumer<CheckingStatus> checkingStatusConsumer;
-    private final Consumer<String> totalLinkConsumer;
+    private final Consumer<String> allLinkConsumer;
     private final Consumer<Link> webpageLinkConsumer;
     private final Consumer<Link> brokenLinkConsumer;
 
@@ -51,11 +51,11 @@ public class Crawler {
 
     public Crawler(
             Consumer<CheckingStatus> checkingStatusConsumer,
-            Consumer<String> totalLinkConsumer,
+            Consumer<String> allLinkConsumer,
             Consumer<Link> webpageLinkConsumer,
             Consumer<Link> brokenLinkConsumer) {
         this.checkingStatusConsumer = checkingStatusConsumer;
-        this.totalLinkConsumer = totalLinkConsumer;
+        this.allLinkConsumer = allLinkConsumer;
         this.webpageLinkConsumer = webpageLinkConsumer;
         this.brokenLinkConsumer = brokenLinkConsumer;
     }
@@ -71,31 +71,29 @@ public class Crawler {
         frontier.clear();
 
         // Masukkan seed ke frontier
-        frontier.offer(new Link(seedUrl, null, null, null, null));
+        frontier.offer(new Link(seedUrl));
 
         while (isRunning && !frontier.isEmpty()) {
 
             // Ambil link paling depan (FIFO)
-            Link link = frontier.poll();
+            Link webpageLink = frontier.poll();
 
             // Masukan ke daftar unik dan skip kalau pernah dikunjungi
-            if (!repositories.add(link.getUrl())) {
+            if (!repositories.add(webpageLink.getUrl())) {
                 continue;
             }
 
             // Kirim link ke controller
-            sendData(totalLinkConsumer, link.getUrl());
+            sendData(allLinkConsumer, webpageLink.getUrl());
 
             // Fetch dan parse url dari webpage link
-            FetchResult result = fetchUrl(link.getUrl(), true);
+            FetchResult result = fetchUrl(webpageLink, true);
 
-            // Ambil webpage link
-            Link webpageLink = result.link();
             // Ambil dokumen HTML
             Document doc = result.document();
 
             // Skip dan kirim broken link kalau error
-            if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != null) {
+            if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != "") {
                 // Kirim link rusak ke controller
                 sendData(brokenLinkConsumer, webpageLink);
                 continue;
@@ -129,15 +127,15 @@ public class Crawler {
                 // Ambil host
                 String entryHost = getHostUrl(entryUrl);
 
+                Link link = new Link(entry.getKey());
+
                 // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
                 if (entryHost != null && entryHost.equals(rootHost)) {
-                    Link entryLink = new Link(entryUrl, null, null, null, null);
-
                     // Set koneksi ke parentnya
-                    entryLink.setConnection(webpageLink, entryAnchorText);
+                    link.setConnection(webpageLink, entryAnchorText);
 
                     // Masukan ke antrian
-                    frontier.offer(entryLink);
+                    frontier.offer(link);
                 }
                 // Kalau tidak maka lansung kunjungi/cek tanpa parse
                 else {
@@ -147,9 +145,9 @@ public class Crawler {
                     }
 
                     // Kirim link ke controller
-                    sendData(totalLinkConsumer, entryUrl);
+                    sendData(allLinkConsumer, entryUrl);
 
-                    FetchResult entryRes = fetchUrl(entryUrl, false);
+                    FetchResult entryRes = fetchUrl(link, false);
 
                     // Ambil link
                     Link entryLink = entryRes.link();
@@ -180,10 +178,10 @@ public class Crawler {
     // =========================================================
     // Networking
     // =========================================================
-    private FetchResult fetchUrl(String url, Boolean isParseDoc) {
+    private FetchResult fetchUrl(Link link, Boolean isParseDoc) {
         try {
             Request request = new Request.Builder()
-                    .url(url)
+                    .url(link.getUrl())
                     .header("User-Agent", USER_AGENT)
                     .get()
                     .build();
@@ -205,7 +203,10 @@ public class Crawler {
                     }
                 }
 
-                Link link = new Link(url, res.request().url().toString(), res.code(), contentType, null);
+                link.setFinalUrl(res.request().url().toString());
+                link.setContentType(contentType);
+                link.setStatusCode(res.code());
+
                 return new FetchResult(link, doc);
             }
 
@@ -215,7 +216,7 @@ public class Crawler {
                 errorName = "UnknownError";
             }
 
-            Link link = new Link(url, null, null, null, errorName);
+            link.setError(errorName);
 
             return new FetchResult(link, null);
         }
