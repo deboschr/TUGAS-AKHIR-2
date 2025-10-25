@@ -35,9 +35,7 @@ public class Crawler {
 
     // ==================== Callback (streaming data) ====================
     private final Consumer<CheckingStatus> checkingStatusConsumer;
-    private final Consumer<String> allLinkConsumer;
-    private final Consumer<Link> webpageLinkConsumer;
-    private final Consumer<Link> brokenLinkConsumer;
+    private final Consumer<Link> linkConsumer;
 
     // ==================== Internal state ====================
     // Untuk mengidentifikasi webpage
@@ -45,19 +43,13 @@ public class Crawler {
     // Untuk menyimoan antrian webpage yang akan di crawling (FIFO/BFS)
     private final Queue<Link> frontier = new ArrayDeque<>();
     // Untuk menyimpan daftar unik setiap URL yang ditemukan
-    private final Set<String> repositories = new HashSet<>();
+    private final Map<String, Link> repositories = new HashMap<>();
 
     private volatile boolean isRunning = false;
 
-    public Crawler(
-            Consumer<CheckingStatus> checkingStatusConsumer,
-            Consumer<String> allLinkConsumer,
-            Consumer<Link> webpageLinkConsumer,
-            Consumer<Link> brokenLinkConsumer) {
+    public Crawler(Consumer<CheckingStatus> checkingStatusConsumer, Consumer<String> linkConsumer) {
         this.checkingStatusConsumer = checkingStatusConsumer;
-        this.allLinkConsumer = allLinkConsumer;
-        this.webpageLinkConsumer = webpageLinkConsumer;
-        this.brokenLinkConsumer = brokenLinkConsumer;
+        this.linkConsumer = linkConsumer;
     }
 
     public void start(String seedUrl) {
