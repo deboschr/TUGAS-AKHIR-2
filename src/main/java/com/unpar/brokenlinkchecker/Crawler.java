@@ -78,7 +78,7 @@ public class Crawler {
          // Ambil link paling depan (FIFO)
          Link currLink = frontier.poll();
 
-         if (repositories.putIfAbsent(seedUrl, currLink) != null) {
+         if (repositories.putIfAbsent(currLink.getUrl(), currLink) != null) {
             continue;
          }
 
@@ -116,7 +116,6 @@ public class Crawler {
                   synchronized (existingLink) {
                      existingLink.setConnection(currLink, anchorText);
                   }
-                  System.out.println("ini di skip : " + existingLink.getUrl());
                   // Skip ke iterasi berikutnya
                   return;
                }
@@ -130,11 +129,13 @@ public class Crawler {
 
                // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
                if (host.equalsIgnoreCase(rootHost)) {
+                  System.out.println("masuk frontier : " + link.getUrl());
                   // Masukan ke antrian paling belakang
                   frontier.offer(link);
                }
                // Kalau tidak maka lansung kunjungi/cek
                else {
+                  System.out.println("ga masuk frontier : " + link.getUrl());
                   // Fetch URL tanpa parse, karena kita ga butuh doc
                   fetchUrl(link, false);
 
