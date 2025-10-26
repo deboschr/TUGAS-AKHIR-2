@@ -60,10 +60,6 @@ public class Controller {
    private double yOffset = 0;
 
    // ObservableList untuk ditampilkan ke GUI
-   private final ObservableList<String> totalLinks = FXCollections.observableArrayList();
-   private final ObservableList<Link> webpageLinks = FXCollections.observableArrayList();
-   private final ObservableList<Link> brokenLinks = FXCollections.observableArrayList();
-
    private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
 
    // Model summary card yang akan di-bind ke label
@@ -77,11 +73,7 @@ public class Controller {
          initSummaryCard();
          initButtonState();
          
-         crawler = new Crawler(
-               checkingStatus -> summaryCard.setCheckingStatus(checkingStatus),
-               totalUrl -> totalLinks.add(totalUrl),
-               webpage -> webpageLinks.add(webpage),
-               broken -> brokenLinks.add(broken));
+         crawler = new Crawler(link -> allLinks.add(link));
 
       });
    }
@@ -99,9 +91,7 @@ public class Controller {
       }
 
       // kosongkan data lama
-      totalLinks.clear();
-      webpageLinks.clear();
-      brokenLinks.clear();
+      allLinks.clear();
 
       // jalanin di thread background
       new Thread(() -> crawler.start(cleanedSeedUrl)).start();
