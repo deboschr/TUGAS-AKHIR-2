@@ -22,9 +22,6 @@ import com.unpar.brokenlinkchecker.model.*;
 public class Controller {
 
    // ============================= FXML =============================
-   @FXML
-   private BorderPane root;
-
    // Title bar
    @FXML
    private HBox titleBar;
