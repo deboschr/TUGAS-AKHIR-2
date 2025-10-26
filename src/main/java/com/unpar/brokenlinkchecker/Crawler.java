@@ -116,6 +116,7 @@ public class Crawler {
                   synchronized (existingLink) {
                      existingLink.setConnection(currLink, anchorText);
                   }
+                  System.out.println("ini di skip : " + existingLink.getUrl());
                   // Skip ke iterasi berikutnya
                   return;
                }

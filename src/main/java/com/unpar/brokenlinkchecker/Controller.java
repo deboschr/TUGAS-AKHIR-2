@@ -224,14 +224,13 @@ public class Controller {
         statusColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
-        // Bungkus ObservableList dengan FilteredList
-        FilteredList<Link> filteredLinks = new FilteredList<>(allLinks, p -> true);
-
-        // Inisialisasi sistem filter
-        initTableFilter(filteredLinks);
+        // Filter hanya link rusak dari allLinks
+        FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link ->
+                link.getStatusCode() >= 400 || (link.getError() != null && !link.getError().isEmpty())
+        );
 
         // Set ke tabel
-        resultTable.setItems(filteredLinks);
+        resultTable.setItems(brokenOnly);
 
         // STATUS COLUMN — teks berwarna
         statusColumn.setCellFactory(col -> new TableCell<>() {
