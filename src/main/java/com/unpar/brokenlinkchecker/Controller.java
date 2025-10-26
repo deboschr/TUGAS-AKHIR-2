@@ -181,12 +181,12 @@ public class Controller {
       // Label mengikuti nilai di SummaryCard
       checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
       totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
-      webpageLinksLabel.textProperty().bind(summaryCard.webpagesProperty().asString());
+      webpageLinksLabel.textProperty().bind(summaryCard.webpageLinkProperty().asString());
       brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
 
       // SummaryCard mengikuti ukuran ObservableList
       summaryCard.totalLinksProperty().bind(Bindings.size(totalLinks));
-      summaryCard.webpagesProperty().bind(Bindings.size(webpageLinks));
+      summaryCard.webpageLinkProperty().bind(Bindings.size(webpageLinks));
       summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
 
       // Warna dinamis berdasarkan status
