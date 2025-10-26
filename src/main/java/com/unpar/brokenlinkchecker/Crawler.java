@@ -2,7 +2,6 @@ package com.unpar.brokenlinkchecker;
 
 import com.unpar.brokenlinkchecker.model.Link;
 import com.unpar.brokenlinkchecker.model.CheckingStatus;
-import com.unpar.brokenlinkchecker.model.FetchResult;
 
 import java.net.IDN;
 import java.net.URI;
@@ -72,17 +71,80 @@ public class Crawler {
       repositories.clear();
       frontier.clear();
 
-      // set inisial value
+      // set init value
       rootHost = getHostUrl(seedUrl);
-      frontier.offer(getOrCreateLink(seedUrl));
+      frontier.offer(new Link(seedUrl));
 
       while (isRunning && !frontier.isEmpty()) {
          // Ambil link paling depan (FIFO)
          Link webpageLink = frontier.poll();
 
-         if (repositories.containsKey(webpageLink.getUrl())) {
+         if (repositories.putIfAbsent(seedUrl, webpageLink) != null) {
             continue;
          }
+
+         // Fetch dan parse body dari webpage link
+         Document doc = fetchUrl(webpageLink, true);
+         
+         // Kirim link ke controller (all link)
+         send(linkConsumer, webpageLink);
+
+         if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != "") {
+            continue;
+         }
+
+         // Skip kalau dokumen kosong (bukan HTML) atau kalau beda host
+         String finalUrlHost = getHostUrl(webpageLink.getFinalUrl());
+         if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
+            continue;
+         }
+
+         // Ekstrak seluruh url yang ada di webpage
+         Map<String, String> linksOnWebpage = extractUrl(doc);
+         linksOnWebpage.forEach((url, anchorText) -> {
+            // Cek dulu apakah URL ini sudah ada di repositories
+            if (repositories.containsKey(url)) {
+               // Ambil Link yang sudah ada
+               Link existingLink = repositories.get(url);
+
+               // Hubungkan dengan webpage yang sedang diproses
+               existingLink.setConnection(webpageLink, anchorText);
+
+               // Skip iterasi berikutnya
+               return;
+            }
+
+            // Ambil hostnya buat dibandingan sama host seed url
+            String host = getHostUrl(url);
+
+            // Buat objek link baru dan bikin koneksi dengan webpage
+            Link link = new Link(url);
+            link.setConnection(webpageLink, anchorText);
+
+            // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
+            if (host.equalsIgnoreCase(rootHost)) {
+               // Masukan ke antrian paling belakang
+               frontier.offer(link);
+            }
+            // Kalau tidak maka lansung kunjungi/cek
+            else {
+               // Fetch URL tanpa parse, karena kita ga butuh doc
+               fetchUrl(link, false);
+
+                       // Simpan ke repositories kalau belum ada
+        repositories.putIfAbsent(url, link);
+
+               // Kirim link ke controller (all link)
+               send(linkConsumer, link);
+            }
+
+         });
+
+      }
+
+      // kalau keluar dari loop artinya sudah selesai
+      if (isRunning) {
+         send(checkingStatusConsumer, CheckingStatus.COMPLETED);
       }
    }
 
@@ -100,23 +162,26 @@ public class Crawler {
                .build();
 
          try (Response res = OK_HTTP.newCall(request).execute()) {
-            String contentType = res.header("Content-Type", "");
-            boolean isHtml = contentType != null && contentType.toLowerCase().contains("text/html");
 
             Document doc = null;
-            if (isParseDoc && res.code() == 200 && isHtml && res.body() != null) {
+            int statusCode = res.code();
+            String contentType = res.header("Content-Type", "");
+            String finalUrl = res.request().url().toString();
+
+            boolean isHtml = contentType.toLowerCase().contains("text/html");
+            if (isParseDoc && statusCode == 200 && isHtml && res.body() != null) {
                try {
                   String html = res.body().string();
 
-                  doc = Jsoup.parse(html, res.request().url().toString());
+                  doc = Jsoup.parse(html, finalUrl);
                } catch (Exception parseErr) {
                   doc = null;
                }
             }
 
-            link.setFinalUrl(res.request().url().toString());
+            link.setFinalUrl(finalUrl);
             link.setContentType(contentType);
-            link.setStatusCode(res.code());
+            link.setStatusCode(statusCode);
 
             return doc;
          }
@@ -132,10 +197,6 @@ public class Crawler {
          return null;
       }
    }
-
-   // =========================================================
-   // Utility
-   // =========================================================
 
    private Map<String, String> extractUrl(Document doc) {
 
@@ -154,6 +215,10 @@ public class Crawler {
 
       return urlMap;
    }
+
+   // =========================================================
+   // Utility
+   // =========================================================
 
    private String normalizeUrl(String rawUrl) {
 
@@ -214,45 +279,15 @@ public class Crawler {
          String host = uri.getHost();
 
          if (host == null || host.isEmpty()) {
-            return null;
+            return "";
          }
 
          // konversi ke format ASCII untuk domain internasional
          return IDN.toASCII(host.toLowerCase());
       } catch (IllegalArgumentException e) {
          // URL tidak valid secara sintaks
-         return null;
+         return "";
       }
-   }
-
-   /**
-    * Method ini gunanya buat ngambil objek Link dari "repositories" (map yang
-    * nyimpen semua link unik), atau bikin baru kalau belum ada.
-    *
-    * Jadi: kalau URL-nya udah pernah ditemukan, dia balikin objek Link yang sama.
-    * Tapi kalau belum pernah, dia langsung bikin Link baru, masukin ke map, dan
-    * return objeknya.
-    * 
-    * @param url string yang menjadi key dari map repository
-    * @return Objek link yang ada pada map repository
-    */
-   private Link getOrCreateLink(String url) {
-      /**
-       * ******************************************
-       * computeIfAbsent adalah versi lebih singkat dari:
-       * 
-       * if (!repositories.containsKey(url)) {
-       * repositories.put(url, new Link(url))
-       * }
-       * return repositories.get(url)
-       * 
-       * ******************************************
-       * Link::new disebut method reference di Java,
-       * artinya sama kaya lambda expression.
-       * 
-       * repositories.computeIfAbsent(url, key -> new Link(key));
-       */
-      return repositories.computeIfAbsent(url, Link::new);
    }
 
    /**
