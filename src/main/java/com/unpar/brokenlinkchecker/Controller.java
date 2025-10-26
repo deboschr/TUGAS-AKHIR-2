@@ -1,5 +1,8 @@
 package com.unpar.brokenlinkchecker;
 
+import com.unpar.brokenlinkchecker.model.CheckingStatus;
+import com.unpar.brokenlinkchecker.model.Link;
+import com.unpar.brokenlinkchecker.model.SummaryCard;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -7,439 +10,450 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import com.unpar.brokenlinkchecker.model.*;
-
 public class Controller {
+    // ============================= FXML =============================
+    // Title bar
+    @FXML
+    private HBox titleBar;
+    @FXML
+    private Button minimizeBtn, maximizeBtn, closeBtn;
 
-   // ============================= FXML =============================
-   // Title bar
-   @FXML
-   private HBox titleBar;
-   @FXML
-   private Button minimizeBtn, maximizeBtn, closeBtn;
+    // Input + Control Button
+    @FXML
+    private TextField seedUrlField;
+    @FXML
+    private Button startBtn, stopBtn, exportButton;
 
-   // Input + Control Button
-   @FXML
-   private TextField seedUrlField;
-   @FXML
-   private Button startBtn, stopBtn, exportButton;
+    // Summary
+    @FXML
+    private Label checkingStatusLabel, totalLinksLabel, webpageLinksLabel, brokenLinksLabel;
 
-   // Summary
-   @FXML
-   private Label checkingStatusLabel, totalLinksLabel, webpageLinksLabel, brokenLinksLabel;
+    // Filters
+    @FXML
+    private ComboBox<String> urlFilterOption, statusCodeFilterOption;
+    @FXML
+    private TextField urlFilterField, statusCodeFilterField;
 
-   // Filters
-   @FXML
-   private ComboBox<String> urlFilterOption, statusCodeFilterOption;
-   @FXML
-   private TextField urlFilterField, statusCodeFilterField;
+    // Result Table
+    @FXML
+    private TableView<Link> resultTable;
+    @FXML
+    private TableColumn<Link, String> statusColumn, urlColumn;
 
-   // Result Table
-   @FXML
-   private TableView<Link> resultTable;
-   @FXML
-   private TableColumn<Link, String> statusColumn, urlColumn;
+    // ============================= FIELDS =============================
+    private Crawler crawler;
 
-   // ============================= FIELDS =============================
-   private Crawler crawler;
+    private double xOffset = 0;
+    private double yOffset = 0;
 
-   private double xOffset = 0;
-   private double yOffset = 0;
+    private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
 
-   // ObservableList untuk ditampilkan ke GUI
-   private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
+    private final SummaryCard summaryCard = new SummaryCard();
 
-   // Model summary card yang akan di-bind ke label
-   private final SummaryCard summaryCard = new SummaryCard();
+    @FXML
+    public void initialize() {
+        Platform.runLater(() -> {
+            initTitleBar();
+            initResultTable();
+            initSummaryCard();
+            initButtonState();
 
-   @FXML
-   public void initialize() {
-      Platform.runLater(() -> {
-         initTitleBar();
-         initResultTable();
-         initSummaryCard();
-         initButtonState();
-         
-         crawler = new Crawler(link -> allLinks.add(link));
+            crawler = new Crawler(link -> allLinks.add(link));
+        });
+    }
 
-      });
-   }
+    // ============================= EVENT HANDLERS =============================
+    @FXML
+    private void onStartClick() {
+        String seedUrl = seedUrlField.getText().trim();
 
-   // ============================= EVENT HANDLERS =============================
-   @FXML
-   private void onStartClick() {
-      String seedUrl = seedUrlField.getText().trim();
+        String cleanedSeedUrl = validateSeedUrl(seedUrl);
 
-      String cleanedSeedUrl = validateSeedUrl(seedUrl);
-
-      if (cleanedSeedUrl == null) {
-         showAlert("Invalid URL. Please enter a valid URL.");
-         return;
-      }
-
-      // kosongkan data lama
-      allLinks.clear();
-
-      // jalanin di thread background
-      new Thread(() -> crawler.start(cleanedSeedUrl)).start();
-   }
-
-   @FXML
-   private void onStopClick() {
-      if (crawler != null) {
-         crawler.stop();
-      }
-   }
-
-   @FXML
-   private void onExportClick() {
-      showAlert("Export not implemented yet.");
-   }
-
-   // ============================= TITLE BAR =============================
-   private void initTitleBar() {
-      Stage stage = (Stage) titleBar.getScene().getWindow();
-
-      // biar bisa digeser manual
-      titleBar.setOnMousePressed((MouseEvent e) -> {
-         xOffset = e.getSceneX();
-         yOffset = e.getSceneY();
-      });
-
-      titleBar.setOnMouseDragged((MouseEvent e) -> {
-         stage.setX(e.getScreenX() - xOffset);
-         stage.setY(e.getScreenY() - yOffset);
-      });
-
-      minimizeBtn.setOnAction(e -> stage.setIconified(true));
-      maximizeBtn.setOnAction(e -> stage.setMaximized(!stage.isMaximized()));
-      closeBtn.setOnAction(e -> stage.close());
-   }
-
-   // ============================= BUTTON STATE & STYLE =============================
-   private void initButtonState() {
-
-      // Perubahan status
-      summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
-         switch (status) {
-            case IDLE -> {
-               startBtn.setDisable(false);
-               stopBtn.setDisable(true);
-               exportButton.setDisable(true);
-
-               startBtn.getStyleClass().remove("btn-start-active");
-               stopBtn.getStyleClass().remove("btn-stop-active");
-            }
-            case CHECKING -> {
-               startBtn.setDisable(false);
-               stopBtn.setDisable(false);
-               exportButton.setDisable(true);
-
-               stopBtn.getStyleClass().remove("btn-stop-active");
-
-               if (!startBtn.getStyleClass().contains("btn-start-active")) {
-                  startBtn.getStyleClass().add("btn-start-active");
-               }
-            }
-            case STOPPED -> {
-               startBtn.setDisable(false);
-               stopBtn.setDisable(false);
-               exportButton.setDisable(false);
-
-               startBtn.getStyleClass().remove("btn-start-active");
-
-               if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
-                  stopBtn.getStyleClass().add("btn-stop-active");
-               }
-            }
-            case COMPLETED -> {
-               startBtn.setDisable(false);
-               stopBtn.setDisable(true);
-               exportButton.setDisable(false);
-
-               // hapus semua warna aktif
-               startBtn.getStyleClass().remove("btn-start-active");
-               stopBtn.getStyleClass().remove("btn-stop-active");
-            }
-         }
-      });
-   }
-
-   // ============================= SUMMARY CARD =============================
-   private void initSummaryCard() {
-
-      // Label mengikuti nilai di SummaryCard
-      checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
-      totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
-      webpageLinksLabel.textProperty().bind(summaryCard.webpageLinkProperty().asString());
-      brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
-
-      // SummaryCard mengikuti ukuran ObservableList
-      summaryCard.totalLinksProperty().bind(Bindings.size(totalLinks));
-      summaryCard.webpageLinkProperty().bind(Bindings.size(webpageLinks));
-      summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
-
-      // Warna dinamis berdasarkan status
-      summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
-         switch (status) {
-            case IDLE -> checkingStatusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
-            case CHECKING -> checkingStatusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
-            case STOPPED -> checkingStatusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
-            case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
-         }
-      });
-   }
-
-   // ============================= RESULT TABLE =============================
-   private void initResultTable() {
-      // Atur lebar kolom
-      statusColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.2));
-      urlColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.8));
-
-      // Sumber data
-      statusColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
-      urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
-
-      // Bungkus ObservableList dengan FilteredList
-      FilteredList<Link> filteredLinks = new FilteredList<>(brokenLinks, p -> true);
-
-      // Inisialisasi sistem filter
-      initTableFilter(filteredLinks);
-
-      // Set ke tabel
-      resultTable.setItems(filteredLinks);
-
-      // STATUS COLUMN — teks berwarna
-      statusColumn.setCellFactory(col -> new TableCell<>() {
-         @Override
-         protected void updateItem(String status, boolean empty) {
-            super.updateItem(status, empty);
-            if (empty || status == null) {
-               setText(null);
-               setStyle("");
-            } else {
-               Link link = getTableView().getItems().get(getIndex());
-               int code = link.getStatusCode();
-               setText(status);
-
-               // warna merah untuk error
-               if (code >= 400 && code < 600)
-                  setStyle("-fx-text-fill: #ef4444;");
-               else
-                  setStyle("-fx-text-fill: #f9fafb;");
-            }
-         }
-      });
-
-      // URL COLUMN — hyperlink klik-buka di browser
-      urlColumn.setCellFactory(col -> new TableCell<>() {
-         private final Hyperlink link = new Hyperlink();
-
-         {
-            link.setOnAction(e -> {
-               String url = link.getText();
-               try {
-                  if (Desktop.isDesktopSupported()) {
-                     Desktop.getDesktop().browse(new URI(url));
-                  }
-               } catch (Exception ex) {
-                  ex.printStackTrace();
-               }
-            });
-         }
-
-         @Override
-         protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-               setGraphic(null);
-            } else {
-               link.setText(item);
-               link.setStyle("-fx-text-fill: #60a5fa; -fx-underline: true;");
-               setGraphic(link);
-            }
-         }
-      });
-   }
-
-   private void initTableFilter(FilteredList<Link> filteredLinks) {
-      Runnable updateFilter = () -> {
-         String urlOption = urlFilterOption.getValue();
-         String urlText = urlFilterField.getText();
-         String statusOption = statusCodeFilterOption.getValue();
-         String statusText = statusCodeFilterField.getText();
-
-         // Jika semua kosong → tampilkan semua data
-         if ((urlOption == null || urlOption.isBlank() || urlText == null || urlText.isBlank()) &&
-               (statusOption == null || statusOption.isBlank() || statusText == null || statusText.isBlank())) {
-            filteredLinks.setPredicate(p -> true);
+        if (cleanedSeedUrl == null) {
+            showAlert("Invalid URL. Please enter a valid URL.");
             return;
-         }
+        }
 
-         filteredLinks.setPredicate(link -> {
-            boolean urlMatches = true;
-            boolean statusMatches = true;
+        // kosongkan data lama
+        allLinks.clear();
+//        Update status jadi checking
+        summaryCard.setCheckingStatus(CheckingStatus.CHECKING);
 
-            // ===== URL filter =====
-            if (urlOption != null && !urlOption.isBlank() &&
-                  urlText != null && !urlText.isBlank()) {
+        // jalanin di thread background
+        new Thread(() -> {
+//            Jalankan crawler di backgroud thread
+            crawler.start(cleanedSeedUrl);
 
-               String url = link.getUrl().toLowerCase();
-               String keyword = urlText.toLowerCase();
+//            Kalau proses crawling udah beres, update status jadi completed
+            Platform.runLater(() -> summaryCard.setCheckingStatus(CheckingStatus.COMPLETED));
+        }).start();
+    }
 
-               switch (urlOption) {
-                  case "Equals" -> urlMatches = url.equals(keyword);
-                  case "Contains" -> urlMatches = url.contains(keyword);
-                  case "Starts With" -> urlMatches = url.startsWith(keyword);
-                  case "Ends With" -> urlMatches = url.endsWith(keyword);
-               }
+    @FXML
+    private void onStopClick() {
+        if (crawler != null) {
+            crawler.stop();
+            summaryCard.setCheckingStatus(CheckingStatus.STOPPED);
+        }
+    }
+
+    @FXML
+    private void onExportClick() {
+        showAlert("Export not implemented yet.");
+    }
+
+    // ============================= TITLE BAR =============================
+    private void initTitleBar() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+
+        titleBar.setOnMousePressed((MouseEvent e) -> {
+            xOffset = e.getSceneX();
+            yOffset = e.getSceneY();
+        });
+
+        titleBar.setOnMouseDragged((MouseEvent e) -> {
+            stage.setX(e.getScreenX() - xOffset);
+            stage.setY(e.getScreenY() - yOffset);
+        });
+
+        minimizeBtn.setOnAction(e -> stage.setIconified(true));
+        maximizeBtn.setOnAction(e -> stage.setMaximized(!stage.isMaximized()));
+        closeBtn.setOnAction(e -> stage.close());
+    }
+
+    // ============================= BUTTON STATE & STYLE =============================
+    private void initButtonState() {
+        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
+            switch (status) {
+                case IDLE -> {
+                    startBtn.setDisable(false);
+                    stopBtn.setDisable(true);
+                    exportButton.setDisable(true);
+
+                    startBtn.getStyleClass().remove("btn-start-active");
+                    stopBtn.getStyleClass().remove("btn-stop-active");
+                }
+                case CHECKING -> {
+                    startBtn.setDisable(false);
+                    stopBtn.setDisable(false);
+                    exportButton.setDisable(true);
+
+                    stopBtn.getStyleClass().remove("btn-stop-active");
+
+                    if (!startBtn.getStyleClass().contains("btn-start-active")) {
+                        startBtn.getStyleClass().add("btn-start-active");
+                    }
+                }
+                case STOPPED -> {
+                    startBtn.setDisable(false);
+                    stopBtn.setDisable(false);
+                    exportButton.setDisable(false);
+
+                    startBtn.getStyleClass().remove("btn-start-active");
+
+                    if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
+                        stopBtn.getStyleClass().add("btn-stop-active");
+                    }
+                }
+                case COMPLETED -> {
+                    startBtn.setDisable(false);
+                    stopBtn.setDisable(true);
+                    exportButton.setDisable(false);
+
+                    // hapus semua warna aktif
+                    startBtn.getStyleClass().remove("btn-start-active");
+                    stopBtn.getStyleClass().remove("btn-stop-active");
+                }
+            }
+        });
+    }
+
+    // ============================= SUMMARY CARD =============================
+    private void initSummaryCard() {
+
+        // Label mengikuti nilai di SummaryCard
+        checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
+        totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
+        webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
+        brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
+
+        // Total links: langsung binding ke ukuran allLinks
+        summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
+        // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
+        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() ->
+                        (int) allLinks.stream().filter(Link::isWebpage).count(),allLinks
+        ));
+
+        // Broken links: hitung link yang error-nya tidak kosong
+        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() ->
+                        (int) allLinks.stream()
+                                .filter(link -> !link.getError().isEmpty())
+                                .count(), allLinks
+        ));
+
+        // Warna dinamis berdasarkan status
+        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
+            switch (status) {
+                case IDLE -> checkingStatusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
+                case CHECKING -> checkingStatusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
+                case STOPPED -> checkingStatusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
+                case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
+            }
+        });
+    }
+
+    // ============================= RESULT TABLE =============================
+    private void initResultTable() {
+        // Atur lebar kolom
+        statusColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.2));
+        urlColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.8));
+
+        // Sumber data
+        statusColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
+        urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
+
+        // Bungkus ObservableList dengan FilteredList
+        FilteredList<Link> filteredLinks = new FilteredList<>(allLinks, p -> true);
+
+        // Inisialisasi sistem filter
+        initTableFilter(filteredLinks);
+
+        // Set ke tabel
+        resultTable.setItems(filteredLinks);
+
+        // STATUS COLUMN — teks berwarna
+        statusColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    Link link = getTableView().getItems().get(getIndex());
+                    int code = link.getStatusCode();
+                    setText(status);
+
+                    // warna merah untuk error
+                    if (code >= 400 && code < 600)
+                        setStyle("-fx-text-fill: #ef4444;");
+                    else
+                        setStyle("-fx-text-fill: #f9fafb;");
+                }
+            }
+        });
+
+        // URL COLUMN — hyperlink klik-buka di browser
+        urlColumn.setCellFactory(col -> new TableCell<>() {
+            private final Hyperlink link = new Hyperlink();
+
+            {
+                link.setOnAction(e -> {
+                    String url = link.getText();
+                    try {
+                        if (Desktop.isDesktopSupported()) {
+                            Desktop.getDesktop().browse(new URI(url));
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
             }
 
-            // ===== Status Code filter =====
-            if (statusOption != null && !statusOption.isBlank() &&
-                  statusText != null && !statusText.isBlank()) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    link.setText(item);
+                    link.setStyle("-fx-text-fill: #60a5fa; -fx-underline: true;");
+                    setGraphic(link);
+                }
+            }
+        });
+    }
 
-               try {
-                  int code = link.getStatusCode();
-                  int filterValue = Integer.parseInt(statusText);
+    private void initTableFilter(FilteredList<Link> filteredLinks) {
+        Runnable updateFilter = () -> {
+            String urlOption = urlFilterOption.getValue();
+            String urlText = urlFilterField.getText();
+            String statusOption = statusCodeFilterOption.getValue();
+            String statusText = statusCodeFilterField.getText();
 
-                  switch (statusOption) {
-                     case "Equals" -> statusMatches = code == filterValue;
-                     case "Greater Than" -> statusMatches = code > filterValue;
-                     case "Less Than" -> statusMatches = code < filterValue;
-                  }
-               } catch (NumberFormatException e) {
-                  statusMatches = false; // Input bukan angka
-               }
+            // Jika semua kosong → tampilkan semua data
+            if ((urlOption == null || urlOption.isBlank() || urlText == null || urlText.isBlank()) &&
+                    (statusOption == null || statusOption.isBlank() || statusText == null || statusText.isBlank())) {
+                filteredLinks.setPredicate(p -> true);
+                return;
             }
 
-            return urlMatches && statusMatches; // AND logic
-         });
-      };
+            filteredLinks.setPredicate(link -> {
+                boolean urlMatches = true;
+                boolean statusMatches = true;
 
-      // Listener untuk semua input filter
-      urlFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
-      urlFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
-      statusCodeFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
-      statusCodeFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
-   }
+                // ===== URL filter =====
+                if (urlOption != null && !urlOption.isBlank() &&
+                        urlText != null && !urlText.isBlank()) {
 
-   // ============================= UTILS =============================
-   private void showAlert(String message) {
-      Alert alert = new Alert(Alert.AlertType.INFORMATION);
-      alert.setHeaderText(null);
-      alert.setContentText(message);
-      alert.showAndWait();
-   }
+                    String url = link.getUrl().toLowerCase();
+                    String keyword = urlText.toLowerCase();
 
-   /**
-    * Validasi dan normalisasi seed URL.
-    * 
-    * Aturan:
-    * 1. Wajib punya scheme (http / https)
-    * 2. Wajib punya host
-    * 3. Hapus port jika default (80 untuk http, 443 untuk https)
-    * 4. Bersihkan path dari dot-segment (., ..)
-    * 5. Hapus fragment (#...)
-    * 
-    * @param rawUrl input mentah dari TextField
-    * @return URL yang sudah divalidasi dan dinormalisasi, atau null jika tidak
-    *         valid
-    */
-   private String validateSeedUrl(String rawUrl) {
-      if (rawUrl == null || rawUrl.isBlank())
-         return null;
+                    switch (urlOption) {
+                        case "Equals" -> urlMatches = url.equals(keyword);
+                        case "Contains" -> urlMatches = url.contains(keyword);
+                        case "Starts With" -> urlMatches = url.startsWith(keyword);
+                        case "Ends With" -> urlMatches = url.endsWith(keyword);
+                    }
+                }
 
-      try {
-         // tambahkan skema default jika user lupa (misal "example.com" →
-         // "http://example.com")
-         if (!rawUrl.matches("(?i)^https?://.*")) {
-            rawUrl = "http://" + rawUrl.trim();
-         }
+                // ===== Status Code filter =====
+                if (statusOption != null && !statusOption.isBlank() &&
+                        statusText != null && !statusText.isBlank()) {
 
-         URI uri = new URI(rawUrl.trim());
+                    try {
+                        int code = link.getStatusCode();
+                        int filterValue = Integer.parseInt(statusText);
 
-         String scheme = uri.getScheme();
-         String host = uri.getHost();
-         int port = uri.getPort();
-         String path = uri.getRawPath();
-         String query = uri.getRawQuery();
+                        switch (statusOption) {
+                            case "Equals" -> statusMatches = code == filterValue;
+                            case "Greater Than" -> statusMatches = code > filterValue;
+                            case "Less Than" -> statusMatches = code < filterValue;
+                        }
+                    } catch (NumberFormatException e) {
+                        statusMatches = false; // Input bukan angka
+                    }
+                }
 
-         // ===== validasi dasar =====
-         if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-            return null; // skema tidak valid
-         }
+                return urlMatches && statusMatches; // AND logic
+            });
+        };
 
-         if (host == null || host.isEmpty()) {
-            return null; // host wajib ada
-         }
+        // Listener untuk semua input filter
+        urlFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
+        urlFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
+        statusCodeFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
+        statusCodeFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
+    }
 
-         // ===== bersihkan port =====
-         if ((scheme.equalsIgnoreCase("http") && port == 80) ||
-               (scheme.equalsIgnoreCase("https") && port == 443)) {
-            port = -1; // hapus port default
-         }
+    // ============================= UTILS =============================
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 
-         // ===== bersihkan path (dot segment) =====
-         path = normalizePath(path);
+    /**
+     * Validasi dan normalisasi seed URL.
+     *
+     * Aturan:
+     * 1. Wajib punya scheme (http / https)
+     * 2. Wajib punya host
+     * 3. Hapus port jika default (80 untuk http, 443 untuk https)
+     * 4. Bersihkan path dari dot-segment (., ..)
+     * 5. Hapus fragment (#...)
+     *
+     * @param rawUrl input mentah dari TextField
+     * @return URL yang sudah divalidasi dan dinormalisasi, atau null jika tidak
+     *         valid
+     */
+    private String validateSeedUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank())
+            return null;
 
-         // ===== rakit ulang tanpa fragment =====
-         URI cleaned = new URI(
-               scheme.toLowerCase(),
-               null,
-               host.toLowerCase(),
-               port,
-               path,
-               query,
-               null // fragment dihapus
-         );
-
-         return cleaned.toASCIIString();
-
-      } catch (Exception e) {
-         return null; // URL tidak valid
-      }
-   }
-
-   /**
-    * Bersihkan dot-segment (., ..) dari path sesuai RFC 3986 Section 5.2.4
-    */
-   private String normalizePath(String path) {
-      if (path == null || path.isEmpty()) {
-         return "/";
-      }
-
-      Deque<String> segments = new ArrayDeque<>();
-
-      for (String part : path.split("/")) {
-         if (part.equals("") || part.equals(".")) {
-            continue;
-         } else if (part.equals("..")) {
-            if (!segments.isEmpty()) {
-               segments.removeLast();
+        try {
+            // tambahkan skema default jika user lupa (misal "example.com" →
+            // "http://example.com")
+            if (!rawUrl.matches("(?i)^https?://.*")) {
+                rawUrl = "http://" + rawUrl.trim();
             }
-         } else {
-            segments.add(part);
-         }
-      }
 
-      StringBuilder sb = new StringBuilder();
+            URI uri = new URI(rawUrl.trim());
 
-      for (String seg : segments) {
-         sb.append("/").append(seg);
-      }
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            int port = uri.getPort();
+            String path = uri.getRawPath();
+            String query = uri.getRawQuery();
 
-      return sb.isEmpty() ? "/" : sb.toString();
-   }
+            // ===== validasi dasar =====
+            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+                return null; // skema tidak valid
+            }
+
+            if (host == null || host.isEmpty()) {
+                return null; // host wajib ada
+            }
+
+            // ===== bersihkan port =====
+            if ((scheme.equalsIgnoreCase("http") && port == 80) ||
+                    (scheme.equalsIgnoreCase("https") && port == 443)) {
+                port = -1; // hapus port default
+            }
+
+            // ===== bersihkan path (dot segment) =====
+            path = normalizePath(path);
+
+            // ===== rakit ulang tanpa fragment =====
+            URI cleaned = new URI(
+                    scheme.toLowerCase(),
+                    null,
+                    host.toLowerCase(),
+                    port,
+                    path,
+                    query,
+                    null // fragment dihapus
+            );
+
+            return cleaned.toASCIIString();
+
+        } catch (Exception e) {
+            return null; // URL tidak valid
+        }
+    }
+
+    /**
+     * Bersihkan dot-segment (., ..) dari path sesuai RFC 3986 Section 5.2.4
+     */
+    private String normalizePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return "/";
+        }
+
+        Deque<String> segments = new ArrayDeque<>();
+
+        for (String part : path.split("/")) {
+            if (part.equals("") || part.equals(".")) {
+                continue;
+            } else if (part.equals("..")) {
+                if (!segments.isEmpty()) {
+                    segments.removeLast();
+                }
+            } else {
+                segments.add(part);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String seg : segments) {
+            sb.append("/").append(seg);
+        }
+
+        return sb.isEmpty() ? "/" : sb.toString();
+    }
 
 }
