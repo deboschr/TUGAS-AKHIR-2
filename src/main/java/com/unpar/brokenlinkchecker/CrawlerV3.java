@@ -346,9 +346,26 @@ public class CrawlerV3 {
         return repositories.computeIfAbsent(url, Link::new);
     }
 
+    /**
+     * Method ini dipakai buat ngirim data hasil proses balik ke Controller, tapi
+     * dengan cara yang aman dari thread lain.
+     * 
+     * - Kalau aplikasi lagi jalanin proses di background thread (misalnya
+     * crawling), kita gak bisa langsung ubah komponen di UI, karena JavaFX cuma
+     * boleh ubah UI dari thread khusus yang namanya "JavaFX Application Thread".
+     * - Nah, biar aman dari thread conflict, kita panggil `Platform.runLater()`,
+     * supaya kode di dalamnya dijalankan nanti di thread UI itu.
+     * 
+     * 
+     * @param <T>      tipe data yang akan dikirim
+     * @param consumer objek Consumer yang menerima data dari Crawler untuk diproses
+     *                 di Controller
+     * @param data     data yang akan dikirim ke consumer
+     */
     private <T> void send(Consumer<T> consumer, T data) {
         if (consumer != null) {
             Platform.runLater(() -> consumer.accept(data));
         }
     }
+
 }

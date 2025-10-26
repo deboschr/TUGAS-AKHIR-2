@@ -38,8 +38,8 @@ public class Crawler {
    // Untuk mengidentifikasi webpage
    private String rootHost;
 
-   // Untuk menyimoan antrian url webpage yang akan di crawling (FIFO/BFS)
-   private final Queue<String> frontier = new ArrayDeque<>();
+   // Untuk menyimoan antrian URL webpage yang akan di crawling (FIFO/BFS)
+   private final Queue<Link> frontier = new ArrayDeque<>();
 
    // Untuk menyimpan daftar unik setiap URL yang ditemukan
    private final Map<String, Link> repositories = new HashMap<>();
@@ -64,16 +64,73 @@ public class Crawler {
    // =========================================================
 
    public void start(String seedUrl) {
+      // set status
+      isRunning = true;
+      send(checkingStatusConsumer, CheckingStatus.CHECKING);
 
+      // reset penyimpanan
+      repositories.clear();
+      frontier.clear();
+
+      // set inisial value
+      rootHost = getHostUrl(seedUrl);
+      frontier.offer(getOrCreateLink(seedUrl));
+
+      while (isRunning && !frontier.isEmpty()) {
+         // Ambil link paling depan (FIFO)
+         Link webpageLink = frontier.poll();
+
+         if (repositories.containsKey(webpageLink.getUrl())) {
+            continue;
+         }
+      }
    }
 
    public void stop() {
-
+      isRunning = false;
+      send(checkingStatusConsumer, CheckingStatus.STOPPED);
    }
 
    private Document fetchUrl(Link link, Boolean isParseDoc) {
+      try {
+         Request request = new Request.Builder()
+               .url(link.getUrl())
+               .header("User-Agent", USER_AGENT)
+               .get()
+               .build();
 
-      return null;
+         try (Response res = OK_HTTP.newCall(request).execute()) {
+            String contentType = res.header("Content-Type", "");
+            boolean isHtml = contentType != null && contentType.toLowerCase().contains("text/html");
+
+            Document doc = null;
+            if (isParseDoc && res.code() == 200 && isHtml && res.body() != null) {
+               try {
+                  String html = res.body().string();
+
+                  doc = Jsoup.parse(html, res.request().url().toString());
+               } catch (Exception parseErr) {
+                  doc = null;
+               }
+            }
+
+            link.setFinalUrl(res.request().url().toString());
+            link.setContentType(contentType);
+            link.setStatusCode(res.code());
+
+            return doc;
+         }
+
+      } catch (Throwable e) {
+         String errorName = e.getClass().getSimpleName();
+         if (errorName == null || errorName.isBlank()) {
+            errorName = "UnknownError";
+         }
+
+         link.setError(errorName);
+
+         return null;
+      }
    }
 
    // =========================================================
@@ -175,6 +232,9 @@ public class Crawler {
     * Jadi: kalau URL-nya udah pernah ditemukan, dia balikin objek Link yang sama.
     * Tapi kalau belum pernah, dia langsung bikin Link baru, masukin ke map, dan
     * return objeknya.
+    * 
+    * @param url string yang menjadi key dari map repository
+    * @return Objek link yang ada pada map repository
     */
    private Link getOrCreateLink(String url) {
       /**
@@ -194,4 +254,27 @@ public class Crawler {
        */
       return repositories.computeIfAbsent(url, Link::new);
    }
+
+   /**
+    * Method ini dipakai buat ngirim data hasil proses balik ke Controller, tapi
+    * dengan cara yang aman dari thread lain.
+    * 
+    * - Kalau aplikasi lagi jalanin proses di background thread (misalnya
+    * crawling), kita gak bisa langsung ubah komponen di UI, karena JavaFX cuma
+    * boleh ubah UI dari thread khusus yang namanya "JavaFX Application Thread".
+    * - Nah, biar aman dari thread conflict, kita panggil `Platform.runLater()`,
+    * supaya kode di dalamnya dijalankan nanti di thread UI itu.
+    * 
+    * 
+    * @param <T>      tipe data yang akan dikirim
+    * @param consumer objek Consumer yang menerima data dari Crawler untuk diproses
+    *                 di Controller
+    * @param data     data yang akan dikirim ke consumer
+    */
+   private <T> void send(Consumer<T> consumer, T data) {
+      if (consumer != null) {
+         Platform.runLater(() -> consumer.accept(data));
+      }
+   }
+
 }
