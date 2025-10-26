@@ -52,14 +52,11 @@ public class Crawler {
    private volatile boolean isRunning = false;
 
    // ===================== Callback =====================
-   // Untuk mengirim status pengecekan
-   private final Consumer<CheckingStatus> checkingStatusConsumer;
 
    // Untuk mengirim link yang ditemukan
    private final Consumer<Link> linkConsumer;
 
-   public Crawler(Consumer<CheckingStatus> checkingStatusConsumer, Consumer<Link> linkConsumer) {
-      this.checkingStatusConsumer = checkingStatusConsumer;
+   public Crawler(Consumer<Link> linkConsumer) {
       this.linkConsumer = linkConsumer;
    }
 
