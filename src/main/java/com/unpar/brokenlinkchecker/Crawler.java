@@ -45,6 +45,9 @@ public class Crawler {
    // Untuk menyimpan daftar unik setiap URL yang ditemukan
    private final Map<String, Link> repositories = new ConcurrentHashMap<>();
 
+   // Untuk menyimpan rate limiter per host biar tiap host punya batas request-nya
+   private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
+
    // Untuk menandai status proses
    private volatile boolean isRunning = false;
 
@@ -72,6 +75,7 @@ public class Crawler {
       // reset penyimpanan
       repositories.clear();
       frontier.clear();
+      rateLimiters.clear();
 
       // set init value
       rootHost = getHostUrl(seedUrl);
@@ -171,6 +175,10 @@ public class Crawler {
 
    private Document fetchUrl(Link link, Boolean isParseDoc) {
       try {
+         String host = getHostUrl(link.getUrl());
+         RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
+         limiter.delay();
+
          Request request = new Request.Builder()
                .url(link.getUrl())
                .header("User-Agent", USER_AGENT)
@@ -328,4 +336,44 @@ public class Crawler {
       }
    }
 
+   // =========================================================
+   // Rate Limiter
+   // =========================================================
+
+   private static class RateLimiter {
+      // Waktu jarak antar request, karena 500ms maka hanya 2 req per detik
+      private static final long INTERVAL = 500L;
+
+      // Waktu dari request terakhir
+      private volatile long lastRequestTime = 0L;
+
+      /**
+       * Method utama untuk mengatur delay atau jarak waktu antar satu request ke
+       * request yang lain.
+       *
+       * synchronized artinya cuma satu thread dalam satu waktu yang bisa menjalankan
+       * method ini untuk 1 host yang sama. Jadi kalau ada 3 thread yang akses host
+       * yang sama barengan, mereka akan ngantri.
+       */
+      public synchronized void delay() {
+         // Waktu saat ini dalam epoch
+         long now = System.currentTimeMillis();
+
+         // Waktu untuk menggu
+         long waitTime = lastRequestTime + INTERVAL - now;
+
+         // Kalau masih belum lewat 500 ms dari request terakhir, tunggu dulu
+         if (waitTime > 0) {
+            try {
+               Thread.sleep(waitTime);
+            } catch (InterruptedException e) {
+               // Kalau thread dibatalkan, set flag interrupted biar caller tahu
+               Thread.currentThread().interrupt();
+            }
+         }
+
+         // update waktu terakhir dengan waktu sekarang
+         lastRequestTime = System.currentTimeMillis();
+      }
+   }
 }
