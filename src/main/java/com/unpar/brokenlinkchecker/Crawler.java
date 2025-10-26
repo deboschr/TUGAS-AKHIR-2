@@ -8,12 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -149,8 +146,8 @@ public class Crawler {
 
             }));
 
-            // Tunggu semua task di halaman ini selesai sebelum lanjut ke halaman BFS
-            // berikutnya di frontier
+            // Tunggu semua task di halaman ini selesai sebelum lanjut ke frontier
+            // berikutnya
             executor.shutdown();
             executor.awaitTermination(30, TimeUnit.SECONDS);
 
