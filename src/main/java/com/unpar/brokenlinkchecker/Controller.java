@@ -64,6 +64,8 @@ public class Controller {
    private final ObservableList<Link> webpageLinks = FXCollections.observableArrayList();
    private final ObservableList<Link> brokenLinks = FXCollections.observableArrayList();
 
+   private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
+
    // Model summary card yang akan di-bind ke label
    private final SummaryCard summaryCard = new SummaryCard();
 

@@ -67,7 +67,6 @@ public class Crawler {
    public void start(String seedUrl) {
       // set status
       isRunning = true;
-      send(checkingStatusConsumer, CheckingStatus.CHECKING);
 
       // reset penyimpanan
       repositories.clear();
@@ -90,7 +89,7 @@ public class Crawler {
          Document doc = fetchUrl(webpageLink, true);
 
          // Kirim link ke controller (all link)
-         send(linkConsumer, webpageLink);
+         send(webpageLink);
 
          if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != "") {
             continue;
@@ -142,8 +141,8 @@ public class Crawler {
                   // Simpan ke repositories kalau belum ada
                   repositories.putIfAbsent(url, link);
 
-                  // Kirim link ke controller (all link)
-                  send(linkConsumer, link);
+                  // Kirim link ke controller
+                  send(link);
                }
 
             }));
@@ -158,16 +157,10 @@ public class Crawler {
          }
 
       }
-
-      // kalau keluar dari loop artinya sudah selesai
-      if (isRunning) {
-         send(checkingStatusConsumer, CheckingStatus.COMPLETED);
-      }
    }
 
    public void stop() {
       isRunning = false;
-      send(checkingStatusConsumer, CheckingStatus.STOPPED);
    }
 
    private Document fetchUrl(Link link, Boolean isParseDoc) {
@@ -312,30 +305,21 @@ public class Crawler {
    }
 
    /**
-    * Method ini dipakai buat ngirim data hasil proses balik ke Controller, tapi
-    * dengan cara yang aman dari thread lain.
+    * Method ini bertugas buat ngirim objek link yang ditemukan selama proses
+    * crawling ke Controller.
     * 
-    * - Kalau aplikasi lagi jalanin proses di background thread (misalnya
-    * crawling), kita gak bisa langsung ubah komponen di UI, karena JavaFX cuma
-    * boleh ubah UI dari thread khusus yang namanya "JavaFX Application Thread".
-    * - Nah, biar aman dari thread conflict, kita panggil `Platform.runLater()`,
-    * supaya kode di dalamnya dijalankan nanti di thread UI itu.
+    * Proses crawling dijalankan di background thread, sedangkan JavaFX cuma boleh
+    * update komponen GUI dari thread utamanya (JavaFX Application Thread). Jadi
+    * biar gak error, kita bungkus pemanggilan consumer pakai Platform.runLater(),
+    * supaya dijalankan di thread UI dengan aman.
     * 
-    * 
-    * @param <T>      tipe data yang akan dikirim
-    * @param consumer objek Consumer yang menerima data dari Crawler untuk diproses
-    *                 di Controller
-    * @param data     data yang akan dikirim ke consumer
+    * @param link objek link yang ditemukan selama proses crawling
     */
-   private <T> void send(Consumer<T> consumer, T data) {
-      if (consumer != null) {
-         Platform.runLater(() -> consumer.accept(data));
+   private void send(Link link) {
+      if (linkConsumer != null) {
+         Platform.runLater(() -> linkConsumer.accept(link));
       }
    }
-
-   // =========================================================
-   // Rate Limiter
-   // =========================================================
 
    private static class RateLimiter {
       // Waktu jarak antar request, karena 500ms maka hanya 2 req per detik
