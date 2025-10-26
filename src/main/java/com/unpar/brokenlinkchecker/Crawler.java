@@ -12,6 +12,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -25,12 +28,11 @@ import org.jsoup.nodes.Element;
 
 public class Crawler {
    // ===================== Konstanta =====================
-   private static final String USER_AGENT = "BrokenLinkChecker/1.0 (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
-   private static final int TIMEOUT = 10000;
+   private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
    private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder()
          .followRedirects(true)
-         .connectTimeout(TIMEOUT, TimeUnit.MILLISECONDS)
-         .readTimeout(TIMEOUT, TimeUnit.MILLISECONDS)
+         .connectTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membangun koneksi ke server
+         .readTimeout(20, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
          .build();
 
    // ==================== Internal state ====================
@@ -41,7 +43,7 @@ public class Crawler {
    private final Queue<Link> frontier = new ArrayDeque<>();
 
    // Untuk menyimpan daftar unik setiap URL yang ditemukan
-   private final Map<String, Link> repositories = new HashMap<>();
+   private final Map<String, Link> repositories = new ConcurrentHashMap<>();
 
    // Untuk menandai status proses
    private volatile boolean isRunning = false;
@@ -85,7 +87,7 @@ public class Crawler {
 
          // Fetch dan parse body dari webpage link
          Document doc = fetchUrl(webpageLink, true);
-         
+
          // Kirim link ke controller (all link)
          send(linkConsumer, webpageLink);
 
@@ -101,44 +103,58 @@ public class Crawler {
 
          // Ekstrak seluruh url yang ada di webpage
          Map<String, String> linksOnWebpage = extractUrl(doc);
-         linksOnWebpage.forEach((url, anchorText) -> {
-            // Cek dulu apakah URL ini sudah ada di repositories
-            if (repositories.containsKey(url)) {
-               // Ambil Link yang sudah ada
+
+         // Jalankan pemrosesan tiap link di virtual thread terpisah karena nanti
+         // fetching url itu I/O bound
+         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+            linksOnWebpage.forEach((url, anchorText) -> executor.submit(() -> {
+
+               // Cek dulu apakah URL ini sudah ada di repositories
                Link existingLink = repositories.get(url);
+               if (existingLink != null) {
+                  // Pake synchronized untuk mencegah race condition pada objek existingLink
+                  synchronized (existingLink) {
+                     existingLink.setConnection(webpageLink, anchorText);
+                  }
+                  // Skip ke iterasi berikutnya
+                  return;
+               }
 
-               // Hubungkan dengan webpage yang sedang diproses
-               existingLink.setConnection(webpageLink, anchorText);
+               // Ambil hostnya buat dibandingan sama host seed url
+               String host = getHostUrl(url);
 
-               // Skip iterasi berikutnya
-               return;
-            }
+               // Buat objek link baru dan bikin koneksi dengan webpage
+               Link link = new Link(url);
+               link.setConnection(webpageLink, anchorText);
 
-            // Ambil hostnya buat dibandingan sama host seed url
-            String host = getHostUrl(url);
+               // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
+               if (host.equalsIgnoreCase(rootHost)) {
+                  // Masukan ke antrian paling belakang
+                  frontier.offer(link);
+               }
+               // Kalau tidak maka lansung kunjungi/cek
+               else {
+                  // Fetch URL tanpa parse, karena kita ga butuh doc
+                  fetchUrl(link, false);
 
-            // Buat objek link baru dan bikin koneksi dengan webpage
-            Link link = new Link(url);
-            link.setConnection(webpageLink, anchorText);
+                  // Simpan ke repositories kalau belum ada
+                  repositories.putIfAbsent(url, link);
 
-            // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
-            if (host.equalsIgnoreCase(rootHost)) {
-               // Masukan ke antrian paling belakang
-               frontier.offer(link);
-            }
-            // Kalau tidak maka lansung kunjungi/cek
-            else {
-               // Fetch URL tanpa parse, karena kita ga butuh doc
-               fetchUrl(link, false);
+                  // Kirim link ke controller (all link)
+                  send(linkConsumer, link);
+               }
 
-                       // Simpan ke repositories kalau belum ada
-        repositories.putIfAbsent(url, link);
+            }));
 
-               // Kirim link ke controller (all link)
-               send(linkConsumer, link);
-            }
+            // Tunggu semua task di halaman ini selesai sebelum lanjut ke halaman BFS
+            // berikutnya di frontier
+            executor.shutdown();
+            executor.awaitTermination(30, TimeUnit.SECONDS);
 
-         });
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
 
       }
 
