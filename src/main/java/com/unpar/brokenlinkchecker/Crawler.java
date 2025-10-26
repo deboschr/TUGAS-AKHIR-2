@@ -79,33 +79,35 @@ public class Crawler {
 
       while (isRunning && !frontier.isEmpty()) {
          // Ambil link paling depan (FIFO)
-         Link webpageLink = frontier.poll();
+         Link currLink = frontier.poll();
 
-         if (repositories.putIfAbsent(seedUrl, webpageLink) != null) {
+         if (repositories.putIfAbsent(seedUrl, currLink) != null) {
             continue;
          }
 
          // Fetch dan parse body dari webpage link
-         Document doc = fetchUrl(webpageLink, true);
+         Document doc = fetchUrl(currLink, true);
 
-         // Kirim link ke controller (all link)
-         send(webpageLink);
+         // Kirim link ke controller
+         send(currLink);
 
-         if (webpageLink.getStatusCode() >= 400 || webpageLink.getError() != "") {
+         if (currLink.getStatusCode() >= 400 || currLink.getError() != "") {
             continue;
          }
 
          // Skip kalau dokumen kosong (bukan HTML) atau kalau beda host
-         String finalUrlHost = getHostUrl(webpageLink.getFinalUrl());
+         String finalUrlHost = getHostUrl(currLink.getFinalUrl());
          if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
             continue;
          }
 
+         // Tetapkan sebagai webpage
+         currLink.setIsWebpage(true);
+
          // Ekstrak seluruh url yang ada di webpage
          Map<String, String> linksOnWebpage = extractUrl(doc);
 
-         // Jalankan pemrosesan tiap link di virtual thread terpisah karena nanti
-         // fetching url itu I/O bound
+         // Jalankan pemrosesan tiap link di virtual thread terpisah
          try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
             linksOnWebpage.forEach((url, anchorText) -> executor.submit(() -> {
@@ -115,7 +117,7 @@ public class Crawler {
                if (existingLink != null) {
                   // Pake synchronized untuk mencegah race condition pada objek existingLink
                   synchronized (existingLink) {
-                     existingLink.setConnection(webpageLink, anchorText);
+                     existingLink.setConnection(currLink, anchorText);
                   }
                   // Skip ke iterasi berikutnya
                   return;
@@ -126,7 +128,7 @@ public class Crawler {
 
                // Buat objek link baru dan bikin koneksi dengan webpage
                Link link = new Link(url);
-               link.setConnection(webpageLink, anchorText);
+               link.setConnection(currLink, anchorText);
 
                // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
                if (host.equalsIgnoreCase(rootHost)) {

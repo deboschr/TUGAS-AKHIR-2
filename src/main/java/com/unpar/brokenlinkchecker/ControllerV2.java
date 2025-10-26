@@ -1,5 +1,6 @@
 package com.unpar.brokenlinkchecker;
 
+import com.unpar.brokenlinkchecker.model.CheckingStatus;
 import com.unpar.brokenlinkchecker.model.Link;
 import com.unpar.brokenlinkchecker.model.SummaryCard;
 import javafx.application.Platform;
@@ -87,23 +88,29 @@ public class ControllerV2 {
 
         // kosongkan data lama
         allLinks.clear();
+//        Update status jadi checking
+        summaryCard.setCheckingStatus(CheckingStatus.CHECKING);
 
         // jalanin di thread background
-        new Thread(() -> crawler.start(cleanedSeedUrl)).start();
+        new Thread(() -> {
+//            Jalankan crawler di backgroud thread
+            crawler.start(cleanedSeedUrl);
+
+//            Kalau proses crawling udah beres, update status jadi completed
+            Platform.runLater(() -> summaryCard.setCheckingStatus(CheckingStatus.COMPLETED));
+        }).start();
     }
 
     @FXML
     private void onStopClick() {
         if (crawler != null) {
             crawler.stop();
+            summaryCard.setCheckingStatus(CheckingStatus.STOPPED);
         }
     }
 
     @FXML
     private void onExportClick() {
-//
-//
-//
         showAlert("Export not implemented yet.");
     }
 
@@ -111,7 +118,6 @@ public class ControllerV2 {
     private void initTitleBar() {
         Stage stage = (Stage) titleBar.getScene().getWindow();
 
-        // biar bisa digeser manual
         titleBar.setOnMousePressed((MouseEvent e) -> {
             xOffset = e.getSceneX();
             yOffset = e.getSceneY();
@@ -129,8 +135,6 @@ public class ControllerV2 {
 
     // ============================= BUTTON STATE & STYLE =============================
     private void initButtonState() {
-
-        // Perubahan status
         summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
             switch (status) {
                 case IDLE -> {
@@ -186,7 +190,7 @@ public class ControllerV2 {
         brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
 
         // SummaryCard mengikuti ukuran ObservableList
-        summaryCard.totalLinksProperty().bind(Bindings.size(totalLinks));
+        summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
         summaryCard.webpagesProperty().bind(Bindings.size(webpageLinks));
         summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
 
@@ -212,7 +216,7 @@ public class ControllerV2 {
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
         // Bungkus ObservableList dengan FilteredList
-        FilteredList<Link> filteredLinks = new FilteredList<>(brokenLinks, p -> true);
+        FilteredList<Link> filteredLinks = new FilteredList<>(allLinks, p -> true);
 
         // Inisialisasi sistem filter
         initTableFilter(filteredLinks);

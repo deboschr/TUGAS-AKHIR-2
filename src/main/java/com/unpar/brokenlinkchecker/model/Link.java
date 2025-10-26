@@ -8,12 +8,14 @@ import com.unpar.brokenlinkchecker.util.HttpStatus;
 
 public class Link {
 
-   private final StringProperty url; // URL utama (wajib ada)
-   private final StringProperty finalUrl; // URL hasil redirect (opsional)
-   private final IntegerProperty statusCode; // Kode status HTTP (0 = belum dicek)
-   private final StringProperty contentType; // Tipe konten (text/html, image/png, dll)
-   private final StringProperty error; // Pesan error (jika ada)
+   private final StringProperty url; // URL utama
+   private final StringProperty finalUrl; // URL hasil redirect
+   private final IntegerProperty statusCode; // Kode status HTTP
+   private final StringProperty contentType; // Tipe konten
+   private final StringProperty error; // Pesan error
+   private final BooleanProperty isWebpage; // Buat nentuin apakah halaman atau bukan
    private final Map<Link, String> connections; // Hubungan antar link + anchor text
+
 
    public Link(String url) {
 
@@ -28,6 +30,7 @@ public class Link {
       this.contentType = new SimpleStringProperty("");
       this.finalUrl = new SimpleStringProperty("");
       this.error = new SimpleStringProperty("");
+      this.isWebpage = new SimpleBooleanProperty(false);
    }
 
    // ===============================================================================
@@ -112,6 +115,21 @@ public class Link {
    @SuppressWarnings("exports")
    public StringProperty errorProperty() {
       return error;
+   }
+
+   // =======================================================================
+   // isWebpage
+   public boolean isWebpage() {
+      return isWebpage.get();
+   }
+
+   public void setIsWebpage(boolean value) {
+      isWebpage.set(value);
+   }
+
+   @SuppressWarnings("exports")
+   public BooleanProperty isWebpageProperty() {
+      return isWebpage;
    }
 
    // ===============================================================================

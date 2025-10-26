@@ -8,7 +8,7 @@ import javafx.beans.property.SimpleObjectProperty;
 public class SummaryCard {
    private final ObjectProperty<CheckingStatus> checkingStatus = new SimpleObjectProperty<>(CheckingStatus.IDLE);
    private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
-   private final IntegerProperty webpages = new SimpleIntegerProperty(0);
+   private final IntegerProperty webpageLinks = new SimpleIntegerProperty(0);
    private final IntegerProperty brokenLinks = new SimpleIntegerProperty(0);
 
    // ===============================================================================
@@ -44,16 +44,16 @@ public class SummaryCard {
    // Webpages
 
    public int getWebpages() {
-      return webpages.get();
+      return webpageLinks.get();
    }
 
    public void setWebpages(int value) {
-      this.webpages.set(value);
+      this.webpageLinks.set(value);
    }
 
    @SuppressWarnings("exports")
-   public IntegerProperty webpagesProperty() {
-      return webpages;
+   public IntegerProperty webpageLinksProperty() {
+      return webpageLinks;
    }
 
    // ===============================================================================
