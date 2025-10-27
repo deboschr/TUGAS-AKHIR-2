@@ -1,7 +1,6 @@
 package com.unpar.brokenlinkchecker;
 
 import com.unpar.brokenlinkchecker.model.Link;
-import com.unpar.brokenlinkchecker.model.CheckingStatus;
 
 import java.net.IDN;
 import java.net.URI;
