@@ -3,10 +3,13 @@ package com.unpar.brokenlinkchecker.controllers;
 import com.unpar.brokenlinkchecker.models.Link;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.awt.Desktop;
@@ -14,27 +17,43 @@ import java.net.URI;
 import java.util.Map;
 
 public class LinkDetailController {
-
     @FXML
-    private TextField urlField;
+    private HBox titleBar;
     @FXML
-    private TextField finalUrlField;
+    private Button closeBtn;
     @FXML
-    private TextField contentTypeField;
-    @FXML
-    private TextField statusField;
+    private TextField urlField, finalUrlField, contentTypeField, statusField;
     @FXML
     private TableView<Map.Entry<Link, String>> sourceTable;
     @FXML
-    private TableColumn<Map.Entry<Link, String>, String> anchorColumn;
-    @FXML
-    private TableColumn<Map.Entry<Link, String>, String> sourceColumn;
-    @FXML
-    private Button closeBtn;
+    private TableColumn<Map.Entry<Link, String>, String> anchorColumn, sourceColumn;
+
+    private final ObservableList<Map.Entry<Link, String>> webpageLinks = FXCollections.observableArrayList();
+    private double xOffset;
+    private double yOffset;
 
     @FXML
     private void initialize() {
-        closeBtn.setOnAction(e -> ((Stage) closeBtn.getScene().getWindow()).close());
+        initTitleBar();
+        makeUrlClickable(urlField);
+        makeUrlClickable(finalUrlField);
+    }
+
+    // ============================= TITLE BAR =============================
+    private void initTitleBar() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+
+        titleBar.setOnMousePressed((MouseEvent e) -> {
+            xOffset = e.getSceneX();
+            yOffset = e.getSceneY();
+        });
+
+        titleBar.setOnMouseDragged((MouseEvent e) -> {
+            stage.setX(e.getScreenX() - xOffset);
+            stage.setY(e.getScreenY() - yOffset);
+        });
+
+        closeBtn.setOnAction(e -> stage.close());
     }
 
     public void setLink(Link link) {
@@ -46,7 +65,8 @@ public class LinkDetailController {
 
 
         // isi tabel source
-        sourceTable.setItems(FXCollections.observableArrayList(link.getConnection().entrySet()));
+        webpageLinks.setAll(link.getConnection().entrySet());
+        sourceTable.setItems(webpageLinks);
 
         // Kolom anchor text
         anchorColumn.setCellValueFactory(cellData ->
@@ -82,5 +102,19 @@ public class LinkDetailController {
                 }
             }
         });
+    }
+
+    private void makeUrlClickable(TextField field) {
+        field.setOnMouseClicked(e -> {
+            String url = field.getText();
+            if (url != null && !url.isEmpty()) {
+                try {
+                    Desktop.getDesktop().browse(new URI(url));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        field.setStyle("-fx-text-fill: #60a5fa; -fx-cursor: hand;");
     }
 }

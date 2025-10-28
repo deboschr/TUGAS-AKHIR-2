@@ -20,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.awt.*;
 import java.net.URI;
@@ -232,7 +233,7 @@ public class MainController {
 
         // Filter hanya link rusak dari allLinks
         FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link ->
-                link.getStatusCode() >= 400 || (link.getError() != null && !link.getError().isEmpty())
+                !link.getError().isEmpty()
         );
 
         // Set ke tabel
@@ -318,6 +319,7 @@ public class MainController {
 
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
+            stage.initStyle(StageStyle.UNDECORATED);
             stage.setTitle("Broken Link Detail");
             stage.setResizable(false);
             stage.show();

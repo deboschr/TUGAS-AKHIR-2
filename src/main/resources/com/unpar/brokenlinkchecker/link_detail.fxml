@@ -32,9 +32,6 @@
                     <Label text="URL" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="label"/>
                     <TextField fx:id="urlField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"
                                styleClass="text-field"/>
-                    <TextArea fx:id="urlField" editable="false" wrapText="false" prefRowCount="1"
-                              styleClass="text-field single-line"/>
-
 
                     <Label text="Final URL" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="label"/>
                     <TextField fx:id="finalUrlField" editable="false" GridPane.rowIndex="1" GridPane.columnIndex="1"
@@ -49,10 +46,6 @@
                                styleClass="text-field"/>
                 </GridPane>
             </VBox>
-
-            <Separator/>
-
-            <!--            <Label text="Source Webpages" styleClass="section-title"/>-->
 
             <TableView fx:id="sourceTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                 <columns>
