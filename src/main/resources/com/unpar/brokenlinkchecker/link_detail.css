@@ -1,0 +1,138 @@
+/* ======================= ROOT ======================= */
+.root {
+	-fx-background-color: #2c2c2c;
+	-fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+
+/* ======================= TITLE BAR ======================= */
+.title-bar {
+	-fx-background-color: #383838;
+	-fx-alignment: center-right;
+	-fx-padding: 8 12;
+}
+
+.title-btn {
+	-fx-background-color: transparent;
+	-fx-text-fill: #d1d5db;
+	-fx-font-size: 16px;
+	-fx-min-width: 40px;
+	-fx-min-height: 32px;
+	-fx-cursor: hand;
+}
+
+.title-btn:hover {
+	-fx-background-color: #494949;
+	-fx-text-fill: white;
+}
+
+.close-btn:hover {
+	-fx-background-color: #dc2626;
+	-fx-text-fill: white;
+}
+
+/* ======================= FORM ======================= */
+.card {
+	-fx-background-color: #1e1e1e;
+	-fx-border-color: #494949;
+	-fx-border-radius: 10;
+	-fx-background-radius: 10;
+}
+
+.label {
+	-fx-text-fill: #f9fafb;
+	-fx-font-size: 13px;
+	-fx-font-weight: 600;
+}
+
+.text-field {
+	-fx-background-color: #2b2b2b;
+	-fx-text-fill: #f9fafb;
+	-fx-border-color: #494949;
+	-fx-border-radius: 6;
+	-fx-background-radius: 6;
+	-fx-font-size: 13px;
+	-fx-padding: 6 10;
+}
+
+.text-field:disabled,
+.text-field:readonly {
+	-fx-opacity: 1.0;
+}
+
+/* ======================= STATUS ======================= */
+.status-ok {
+	-fx-text-fill: #10b981; /* hijau */
+	-fx-font-weight: bold;
+}
+
+.status-client-error {
+	-fx-text-fill: #f59e0b; /* oranye */
+	-fx-font-weight: bold;
+}
+
+.status-server-error {
+	-fx-text-fill: #ef4444; /* merah */
+	-fx-font-weight: bold;
+}
+
+/* ======================= TABLE ======================= */
+.table-view {
+	-fx-background-color: #1e1e1e;
+	-fx-border-color: #303030;
+	-fx-table-cell-border-color: #303030;
+	-fx-padding: 0;
+}
+
+.table-view .column-header-background {
+	-fx-background-color: #2b2b2b;
+}
+
+.table-view .column-header .label {
+	-fx-text-fill: #f9fafb;
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+	-fx-alignment: CENTER_LEFT;
+	-fx-padding: 4 8;
+}
+
+.table-view .table-row-cell {
+	-fx-background-color: #1e1e1e;
+	-fx-cell-size: 28px;
+}
+
+.table-view .table-row-cell:hover {
+	-fx-background-color: #2a2a2a;
+}
+
+.table-view .table-cell {
+	-fx-text-fill: #f9fafb;
+	-fx-padding: 6 8;
+}
+
+.hyperlink {
+	-fx-text-fill: #60a5fa;
+}
+
+.hyperlink:hover {
+	-fx-text-fill: #93c5fd;
+	-fx-underline: true;
+}
+
+/* ======================= SEPARATOR ======================= */
+.separator .line {
+	-fx-border-color: #494949;
+}
+
+/* ======================= SCROLLBAR ======================= */
+.table-view .scroll-bar:vertical {
+	-fx-background-color: transparent;
+}
+
+.table-view .scroll-bar .thumb {
+	-fx-background-color: rgba(107, 114, 128, 0.6);
+	-fx-background-radius: 5px;
+}
+
+.table-view .scroll-bar .thumb:hover {
+	-fx-background-color: rgba(156, 163, 175, 0.8);
+}

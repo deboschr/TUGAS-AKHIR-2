@@ -1,10 +1,10 @@
-package com.unpar.brokenlinkchecker.model;
+package com.unpar.brokenlinkchecker.models;
 
 import javafx.beans.property.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.unpar.brokenlinkchecker.util.HttpStatus;
+import com.unpar.brokenlinkchecker.utils.HttpStatus;
 
 public class Link {
 

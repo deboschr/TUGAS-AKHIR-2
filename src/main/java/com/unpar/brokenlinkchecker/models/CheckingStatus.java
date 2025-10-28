@@ -1,4 +1,4 @@
-package com.unpar.brokenlinkchecker.model;
+package com.unpar.brokenlinkchecker.models;
 
 public enum CheckingStatus {
     IDLE,

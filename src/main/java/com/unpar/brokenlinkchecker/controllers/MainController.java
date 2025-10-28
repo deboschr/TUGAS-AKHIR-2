@@ -1,14 +1,18 @@
-package com.unpar.brokenlinkchecker;
+package com.unpar.brokenlinkchecker.controllers;
 
-import com.unpar.brokenlinkchecker.model.CheckingStatus;
-import com.unpar.brokenlinkchecker.model.Link;
-import com.unpar.brokenlinkchecker.model.SummaryCard;
+import com.unpar.brokenlinkchecker.cores.Crawler;
+import com.unpar.brokenlinkchecker.models.CheckingStatus;
+import com.unpar.brokenlinkchecker.models.Link;
+import com.unpar.brokenlinkchecker.models.Summary;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -22,7 +26,7 @@ import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class Controller {
+public class MainController {
     // ============================= FXML =============================
     // Title bar
     @FXML
@@ -60,7 +64,7 @@ public class Controller {
 
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
 
-    private final SummaryCard summaryCard = new SummaryCard();
+    private final Summary summaryCard = new Summary();
 
     @FXML
     public void initialize() {
@@ -86,18 +90,20 @@ public class Controller {
             return;
         }
 
-        // kosongkan data lama
+        // Kosongkan data lama
         allLinks.clear();
-//        Update status jadi checking
+        // Update status jadi checking
         summaryCard.setCheckingStatus(CheckingStatus.CHECKING);
 
         // jalanin di thread background
         new Thread(() -> {
-//            Jalankan crawler di backgroud thread
+            // Jalankan crawler di backgroud thread
             crawler.start(cleanedSeedUrl);
 
-//            Kalau proses crawling udah beres, update status jadi completed
-            Platform.runLater(() -> summaryCard.setCheckingStatus(CheckingStatus.COMPLETED));
+            // Kalau proses crawling udah beres secara alami, update status jadi completed
+            if (!crawler.isStopped()) {
+                Platform.runLater(() -> summaryCard.setCheckingStatus(CheckingStatus.COMPLETED));
+            }
         }).start();
     }
 
@@ -183,7 +189,7 @@ public class Controller {
     // ============================= SUMMARY CARD =============================
     private void initSummaryCard() {
 
-        // Label mengikuti nilai di SummaryCard
+        // Label mengikuti nilai di Summary
         checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
         totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
         webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
@@ -193,14 +199,14 @@ public class Controller {
         summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
         // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
         summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() ->
-                        (int) allLinks.stream().filter(Link::isWebpage).count(),allLinks
+                (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks
         ));
 
         // Broken links: hitung link yang error-nya tidak kosong
         summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() ->
-                        (int) allLinks.stream()
-                                .filter(link -> !link.getError().isEmpty())
-                                .count(), allLinks
+                (int) allLinks.stream()
+                        .filter(link -> !link.getError().isEmpty())
+                        .count(), allLinks
         ));
 
         // Warna dinamis berdasarkan status
@@ -231,6 +237,19 @@ public class Controller {
 
         // Set ke tabel
         resultTable.setItems(brokenOnly);
+
+        // Kalau baris di klik maka akan buka jendela baru
+        resultTable.setRowFactory(tv -> {
+            TableRow<Link> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 1) {
+                    Link selected = row.getItem();
+                    showLinkDetailWindow(selected);
+                }
+            });
+            return row;
+        });
+
 
         // STATUS COLUMN — teks berwarna
         statusColumn.setCellFactory(col -> new TableCell<>() {
@@ -285,66 +304,27 @@ public class Controller {
         });
     }
 
-    private void initTableFilter(FilteredList<Link> filteredLinks) {
-        Runnable updateFilter = () -> {
-            String urlOption = urlFilterOption.getValue();
-            String urlText = urlFilterField.getText();
-            String statusOption = statusCodeFilterOption.getValue();
-            String statusText = statusCodeFilterField.getText();
+    private void initTableFilter() {
+    }
 
-            // Jika semua kosong → tampilkan semua data
-            if ((urlOption == null || urlOption.isBlank() || urlText == null || urlText.isBlank()) &&
-                    (statusOption == null || statusOption.isBlank() || statusText == null || statusText.isBlank())) {
-                filteredLinks.setPredicate(p -> true);
-                return;
-            }
+    // ============================= UTILS =============================
+    private void showLinkDetailWindow(Link link) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/link_detail.fxml"));
+            Parent root = loader.load();
 
-            filteredLinks.setPredicate(link -> {
-                boolean urlMatches = true;
-                boolean statusMatches = true;
+            LinkDetailController controller = loader.getController();
+            controller.setLink(link);
 
-                // ===== URL filter =====
-                if (urlOption != null && !urlOption.isBlank() &&
-                        urlText != null && !urlText.isBlank()) {
-
-                    String url = link.getUrl().toLowerCase();
-                    String keyword = urlText.toLowerCase();
-
-                    switch (urlOption) {
-                        case "Equals" -> urlMatches = url.equals(keyword);
-                        case "Contains" -> urlMatches = url.contains(keyword);
-                        case "Starts With" -> urlMatches = url.startsWith(keyword);
-                        case "Ends With" -> urlMatches = url.endsWith(keyword);
-                    }
-                }
-
-                // ===== Status Code filter =====
-                if (statusOption != null && !statusOption.isBlank() &&
-                        statusText != null && !statusText.isBlank()) {
-
-                    try {
-                        int code = link.getStatusCode();
-                        int filterValue = Integer.parseInt(statusText);
-
-                        switch (statusOption) {
-                            case "Equals" -> statusMatches = code == filterValue;
-                            case "Greater Than" -> statusMatches = code > filterValue;
-                            case "Less Than" -> statusMatches = code < filterValue;
-                        }
-                    } catch (NumberFormatException e) {
-                        statusMatches = false; // Input bukan angka
-                    }
-                }
-
-                return urlMatches && statusMatches; // AND logic
-            });
-        };
-
-        // Listener untuk semua input filter
-        urlFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
-        urlFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
-        statusCodeFilterOption.valueProperty().addListener((obs, o, n) -> updateFilter.run());
-        statusCodeFilterField.textProperty().addListener((obs, o, n) -> updateFilter.run());
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Broken Link Detail");
+            stage.setResizable(false);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Failed to open detail window: " + e.getMessage());
+        }
     }
 
     // ============================= UTILS =============================
@@ -367,7 +347,7 @@ public class Controller {
      *
      * @param rawUrl input mentah dari TextField
      * @return URL yang sudah divalidasi dan dinormalisasi, atau null jika tidak
-     *         valid
+     * valid
      */
     private String validateSeedUrl(String rawUrl) {
         if (rawUrl == null || rawUrl.isBlank())

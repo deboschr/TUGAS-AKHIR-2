@@ -9,7 +9,7 @@
 <BorderPane 
    fx:id="root" 
    xmlns:fx="http://javafx.com/fxml" 
-   fx:controller="com.unpar.brokenlinkchecker.Controller" 
+   fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
    stylesheets="@main.css">
 
     <top>

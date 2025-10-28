@@ -1,11 +1,11 @@
-package com.unpar.brokenlinkchecker.model;
+package com.unpar.brokenlinkchecker.models;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-public class SummaryCard {
+public class Summary {
    private final ObjectProperty<CheckingStatus> checkingStatus = new SimpleObjectProperty<>(CheckingStatus.IDLE);
    private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
    private final IntegerProperty webpageLinks = new SimpleIntegerProperty(0);

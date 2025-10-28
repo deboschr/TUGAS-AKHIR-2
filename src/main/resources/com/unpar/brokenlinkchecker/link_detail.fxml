@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.unpar.brokenlinkchecker.controllers.LinkDetailController"
+            prefWidth="720" prefHeight="480"
+            stylesheets="@link_detail.css">
+
+    <top>
+        <HBox alignment="CENTER_RIGHT" padding="10" style="-fx-background-color: #383838;">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="✕" fx:id="closeBtn" styleClass="title-btn close-btn"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="12" padding="20" styleClass="card">
+            <!-- Info Link -->
+            <GridPane hgap="12" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="20"/>
+                    <ColumnConstraints percentWidth="80"/>
+                </columnConstraints>
+
+                <Label text="URL:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="summary-subtitle"/>
+                <TextField fx:id="urlField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Final URL:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="summary-subtitle"/>
+                <TextField fx:id="finalUrlField" editable="false" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Content Type:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="summary-subtitle"/>
+                <TextField fx:id="contentTypeField" editable="false" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Status:" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="summary-subtitle"/>
+                <TextField fx:id="statusField" editable="false" GridPane.rowIndex="3" GridPane.columnIndex="1" style="-fx-text-fill: #ef4444;"/>
+            </GridPane>
+
+            <Separator/>
+
+            <!-- Table Source -->
+            <Label text="Source Webpages" styleClass="section-title"/>
+
+            <TableView fx:id="sourceTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="anchorColumn" text="Anchor text" prefWidth="200"/>
+                    <TableColumn fx:id="sourceColumn" text="Source Webpage" prefWidth="500"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

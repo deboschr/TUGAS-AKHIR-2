@@ -7,8 +7,13 @@ module com.unpar.brokenlinkchecker {
     requires okhttp3;
     requires okio;
 
-    opens com.unpar.brokenlinkchecker to javafx.fxml;
 
-    exports com.unpar.brokenlinkchecker.model;
     exports com.unpar.brokenlinkchecker;
+    exports com.unpar.brokenlinkchecker.models;
+    exports com.unpar.brokenlinkchecker.cores;
+    exports com.unpar.brokenlinkchecker.controllers;
+
+    opens com.unpar.brokenlinkchecker to javafx.fxml;
+    opens com.unpar.brokenlinkchecker.cores to javafx.fxml;
+    opens com.unpar.brokenlinkchecker.controllers to javafx.fxml;
 }
