@@ -8,8 +8,27 @@
 .title-bar {
 	-fx-background-color: #383838;
 	-fx-alignment: center-right;
-	-fx-padding: 8 12;
 }
+
+.title-btn {
+	-fx-background-color: transparent;
+	-fx-text-fill: #d1d5db;
+	-fx-font-size: 16px;
+	-fx-min-width: 48px;
+	-fx-min-height: 36px;
+	-fx-padding: 8 0 8 0;
+	-fx-cursor: hand;
+	-fx-border-radius: 0;
+	-fx-background-radius: 0;
+	-fx-background-insets: 0;
+	-fx-effect: none;
+}
+
+.title-btn:hover {
+	-fx-background-color: #494949;
+	-fx-text-fill: white;
+}
+
 
 /* ======================= CONTENT ======================= */
 .content-root {
@@ -61,15 +80,19 @@
 	-fx-table-cell-border-color: #303030;
 }
 
-.table-view .column-header-background {
-	-fx-background-color: #2c2c2c;
+/* Header */
+.table-view .column-header {
+	-fx-background-color: #2b2b2b;
+	-fx-border-color: #303030;
+	-fx-pref-height: 40px;
 }
 
 .table-view .column-header .label {
-	-fx-text-fill: #f9fafb;
-	-fx-font-size: 13px;
 	-fx-font-weight: bold;
-	-fx-padding: 4 8;
+	-fx-text-fill: #f9fafb;
+	-fx-alignment: CENTER_LEFT;
+	-fx-padding: 0 10;
+	-fx-font-size: 13px;
 }
 
 .table-view .table-row-cell {

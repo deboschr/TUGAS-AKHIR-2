@@ -14,7 +14,7 @@
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="&#x2715;" fx:id="closeBtn" styleClass="title-btn close-btn"/>
+            <Button text="&#x2715;" fx:id="closeBtn" styleClass="title-btn"/>
         </HBox>
     </top>
 

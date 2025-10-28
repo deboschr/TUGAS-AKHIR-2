@@ -1,6 +1,7 @@
 package com.unpar.brokenlinkchecker.controllers;
 
 import com.unpar.brokenlinkchecker.models.Link;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -41,20 +42,23 @@ public class LinkDetailController {
 
     // ============================= TITLE BAR =============================
     private void initTitleBar() {
-        Stage stage = (Stage) titleBar.getScene().getWindow();
+        Platform.runLater(() -> {
+            Stage stage = (Stage) titleBar.getScene().getWindow();
 
-        titleBar.setOnMousePressed((MouseEvent e) -> {
-            xOffset = e.getSceneX();
-            yOffset = e.getSceneY();
+            titleBar.setOnMousePressed((MouseEvent e) -> {
+                xOffset = e.getSceneX();
+                yOffset = e.getSceneY();
+            });
+
+            titleBar.setOnMouseDragged((MouseEvent e) -> {
+                stage.setX(e.getScreenX() - xOffset);
+                stage.setY(e.getScreenY() - yOffset);
+            });
+
+            closeBtn.setOnAction(e -> stage.close());
         });
-
-        titleBar.setOnMouseDragged((MouseEvent e) -> {
-            stage.setX(e.getScreenX() - xOffset);
-            stage.setY(e.getScreenY() - yOffset);
-        });
-
-        closeBtn.setOnAction(e -> stage.close());
     }
+
 
     public void setLink(Link link) {
         // isi field utama
@@ -69,12 +73,10 @@ public class LinkDetailController {
         sourceTable.setItems(webpageLinks);
 
         // Kolom anchor text
-        anchorColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().getValue()));
+        anchorColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
 
         // Kolom Webpage URL
-        sourceColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
+        sourceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
 
         // hyperlink di kolom Webpage URL
         sourceColumn.setCellFactory(col -> new TableCell<>() {
