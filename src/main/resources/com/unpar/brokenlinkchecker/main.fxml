@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.collections.FXCollections?>
 <?import java.lang.String?>
@@ -50,7 +49,7 @@
                 </columnConstraints>
 
                 <!-- ===== SUMMARY ===== -->
-                <VBox fx:id="summaryCard" styleClass="card" spacing="12" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                <VBox styleClass="card" spacing="12" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
                     <Label text="Summary" styleClass="section-title" />
 
                     <HBox spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">

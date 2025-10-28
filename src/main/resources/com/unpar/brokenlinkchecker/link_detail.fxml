@@ -14,7 +14,7 @@
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="✕" fx:id="closeBtn" styleClass="title-btn close-btn"/>
+            <Button text="&#x2715;" fx:id="closeBtn" styleClass="title-btn close-btn"/>
         </HBox>
     </top>
 
@@ -29,23 +29,30 @@
                         <ColumnConstraints percentWidth="80"/>
                     </columnConstraints>
 
-                    <Label text="URL:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="label"/>
-                    <TextField fx:id="urlField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="text-field"/>
+                    <Label text="URL" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="label"/>
+                    <TextField fx:id="urlField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                               styleClass="text-field"/>
+                    <TextArea fx:id="urlField" editable="false" wrapText="false" prefRowCount="1"
+                              styleClass="text-field single-line"/>
 
-                    <Label text="Final URL:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="label"/>
-                    <TextField fx:id="finalUrlField" editable="false" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="text-field"/>
 
-                    <Label text="Content Type:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="label"/>
-                    <TextField fx:id="contentTypeField" editable="false" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="text-field"/>
+                    <Label text="Final URL" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="label"/>
+                    <TextField fx:id="finalUrlField" editable="false" GridPane.rowIndex="1" GridPane.columnIndex="1"
+                               styleClass="text-field"/>
 
-                    <Label text="Status:" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="label"/>
-                    <TextField fx:id="statusField" editable="false" GridPane.rowIndex="3" GridPane.columnIndex="1" styleClass="text-field"/>
+                    <Label text="Content Type" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="label"/>
+                    <TextField fx:id="contentTypeField" editable="false" GridPane.rowIndex="2" GridPane.columnIndex="1"
+                               styleClass="text-field"/>
+
+                    <Label text="Status" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="label"/>
+                    <TextField fx:id="statusField" editable="false" GridPane.rowIndex="3" GridPane.columnIndex="1"
+                               styleClass="text-field"/>
                 </GridPane>
             </VBox>
 
             <Separator/>
 
-            <Label text="Source Webpages" styleClass="section-title"/>
+            <!--            <Label text="Source Webpages" styleClass="section-title"/>-->
 
             <TableView fx:id="sourceTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                 <columns>

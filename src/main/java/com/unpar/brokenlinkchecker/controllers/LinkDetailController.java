@@ -15,14 +15,22 @@ import java.util.Map;
 
 public class LinkDetailController {
 
-    @FXML private TextField urlField;
-    @FXML private TextField finalUrlField;
-    @FXML private TextField contentTypeField;
-    @FXML private TextField statusField;
-    @FXML private TableView<Map.Entry<Link, String>> sourceTable;
-    @FXML private TableColumn<Map.Entry<Link, String>, String> anchorColumn;
-    @FXML private TableColumn<Map.Entry<Link, String>, String> sourceColumn;
-    @FXML private Button closeBtn;
+    @FXML
+    private TextField urlField;
+    @FXML
+    private TextField finalUrlField;
+    @FXML
+    private TextField contentTypeField;
+    @FXML
+    private TextField statusField;
+    @FXML
+    private TableView<Map.Entry<Link, String>> sourceTable;
+    @FXML
+    private TableColumn<Map.Entry<Link, String>, String> anchorColumn;
+    @FXML
+    private TableColumn<Map.Entry<Link, String>, String> sourceColumn;
+    @FXML
+    private Button closeBtn;
 
     @FXML
     private void initialize() {
@@ -34,32 +42,21 @@ public class LinkDetailController {
         urlField.setText(link.getUrl());
         finalUrlField.setText(link.getFinalUrl());
         contentTypeField.setText(link.getContentType());
+        statusField.setText(link.getError());
 
-        // status dengan warna sesuai kategori
-        int code = link.getStatusCode();
-        if (code >= 500) {
-            statusField.setText(link.getError());
-            statusField.getStyleClass().add("status-server-error");
-        } else if (code >= 400) {
-            statusField.setText(link.getError());
-            statusField.getStyleClass().add("status-client-error");
-        } else {
-            statusField.setText(link.getError().isEmpty()
-                    ? String.valueOf(link.getStatusCode())
-                    : link.getError());
-            statusField.getStyleClass().add("status-ok");
-        }
 
         // isi tabel source
         sourceTable.setItems(FXCollections.observableArrayList(link.getConnection().entrySet()));
 
+        // Kolom anchor text
         anchorColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().getValue())); // anchor text
+                new SimpleStringProperty(cellData.getValue().getValue()));
 
+        // Kolom Webpage URL
         sourceColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().getKey().getUrl())); // source URL
+                new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
 
-        // hyperlink di kolom source
+        // hyperlink di kolom Webpage URL
         sourceColumn.setCellFactory(col -> new TableCell<>() {
             private final Hyperlink linkView = new Hyperlink();
 
