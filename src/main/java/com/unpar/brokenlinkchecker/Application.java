@@ -75,7 +75,7 @@ public class Application extends javafx.application.Application {
             Stage notifStage = new Stage(StageStyle.UNDECORATED);
             notifStage.setScene(scene);
             notifStage.initOwner(primaryStage);
-            notifStage.initModality(Modality.NONE);
+            notifStage.initModality(Modality.APPLICATION_MODAL);
             notifStage.centerOnScreen();
 
             NotificationController controller = loader.getController();

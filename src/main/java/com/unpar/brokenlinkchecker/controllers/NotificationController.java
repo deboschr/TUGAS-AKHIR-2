@@ -46,7 +46,8 @@ public class NotificationController {
 
     /**
      * Menampilkan notifikasi dengan tipe dan pesan yang sesuai.
-     * @param type "ERROR" atau "WARNING"
+     *
+     * @param type    "ERROR" atau "WARNING"
      * @param message pesan yang akan ditampilkan
      */
     public void setNotification(String type, String message) {

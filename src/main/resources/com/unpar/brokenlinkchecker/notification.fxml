@@ -12,17 +12,17 @@
     <!-- ================== TITLE BAR ================== -->
     <top>
         <HBox fx:id="titleBar" alignment="CENTER_LEFT" styleClass="title-bar">
-            <Label fx:id="titleLabel" text="ERROR" styleClass="title-text" />
+            <Label fx:id="titleLabel" styleClass="title-text" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button fx:id="closeBtn" text="✕" styleClass="title-btn close-btn"/>
+            <Button fx:id="closeBtn" text="&#x2715;" styleClass="title-btn"/>
         </HBox>
     </top>
 
     <!-- ================== CONTENT ================== -->
     <center>
-        <HBox spacing="16" alignment="CENTER_LEFT" styleClass="content-area" padding="20">
-            <Label fx:id="iconLabel" text="⚠" styleClass="icon-label"/>
-            <Label fx:id="messageLabel" text="Something went wrong..." wrapText="true" styleClass="message-text" />
+        <HBox spacing="16" alignment="CENTER_LEFT" styleClass="content-area">
+            <Label fx:id="iconLabel" styleClass="icon-label"/>
+            <Label fx:id="messageLabel"  wrapText="true" styleClass="message-text" />
         </HBox>
     </center>
 </BorderPane>
