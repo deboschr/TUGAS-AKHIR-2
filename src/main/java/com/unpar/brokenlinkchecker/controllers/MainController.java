@@ -1,5 +1,6 @@
 package com.unpar.brokenlinkchecker.controllers;
 
+import com.unpar.brokenlinkchecker.Application;
 import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.CheckingStatus;
 import com.unpar.brokenlinkchecker.models.Link;
@@ -28,44 +29,33 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class MainController {
-    // ============================= FXML =============================
-    // Title bar
+    // ======================== GUI Component ========================
     @FXML
     private HBox titleBar;
     @FXML
-    private Button minimizeBtn, maximizeBtn, closeBtn;
-
-    // Input + Control Button
-    @FXML
-    private TextField seedUrlField;
-    @FXML
-    private Button startBtn, stopBtn, exportButton;
-
-    // Summary
+    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportButton;
     @FXML
     private Label checkingStatusLabel, totalLinksLabel, webpageLinksLabel, brokenLinksLabel;
-
-    // Filters
+    @FXML
+    private TextField seedUrlField, urlFilterField, statusCodeFilterField;
     @FXML
     private ComboBox<String> urlFilterOption, statusCodeFilterOption;
-    @FXML
-    private TextField urlFilterField, statusCodeFilterField;
-
-    // Result Table
     @FXML
     private TableView<Link> resultTable;
     @FXML
     private TableColumn<Link, String> statusColumn, urlColumn;
 
-    // ============================= FIELDS =============================
-    private Crawler crawler;
-
-    private double xOffset = 0;
-    private double yOffset = 0;
-
+    // ======================== Data Model ===========================
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
-
     private final Summary summaryCard = new Summary();
+
+    // ======================== Drag Window ==========================
+    private double xOffset;
+    private double yOffset;
+
+
+    // ===============================================================
+    private Crawler crawler;
 
     @FXML
     public void initialize() {
@@ -87,7 +77,7 @@ public class MainController {
         String cleanedSeedUrl = validateSeedUrl(seedUrl);
 
         if (cleanedSeedUrl == null) {
-            showAlert("Invalid URL. Please enter a valid URL.");
+            Application.openAlertWindow("WARNING", "Please enter a valid seed URL before starting.");
             return;
         }
 
@@ -118,7 +108,11 @@ public class MainController {
 
     @FXML
     private void onExportClick() {
-        showAlert("Export not implemented yet.");
+        if (allLinks.isEmpty()) {
+            Application.openAlertWindow("ERROR", "No data to export.");
+            return;
+        }
+        Application.openAlertWindow("WARNING", "Export feature not implemented yet.");
     }
 
     // ============================= TITLE BAR =============================
@@ -244,8 +238,8 @@ public class MainController {
             TableRow<Link> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (!row.isEmpty() && event.getClickCount() == 1) {
-                    Link selected = row.getItem();
-                    showLinkDetailWindow(selected);
+                    Link clickedLink = row.getItem();
+                    Application.openLinkWindow(clickedLink);
                 }
             });
             return row;
@@ -311,10 +305,10 @@ public class MainController {
     // ============================= UTILS =============================
     private void showLinkDetailWindow(Link link) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/link_detail.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/link.fxml"));
             Parent root = loader.load();
 
-            LinkDetailController controller = loader.getController();
+            LinkController controller = loader.getController();
             controller.setLink(link);
 
             Stage stage = new Stage();

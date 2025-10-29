@@ -6,8 +6,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -17,7 +15,7 @@ import java.awt.Desktop;
 import java.net.URI;
 import java.util.Map;
 
-public class LinkDetailController {
+public class LinkController {
     @FXML
     private HBox titleBar;
     @FXML
@@ -25,9 +23,9 @@ public class LinkDetailController {
     @FXML
     private TextField urlField, finalUrlField, contentTypeField, statusField;
     @FXML
-    private TableView<Map.Entry<Link, String>> sourceTable;
+    private TableView<Map.Entry<Link, String>> webpageLinkTable;
     @FXML
-    private TableColumn<Map.Entry<Link, String>, String> anchorColumn, sourceColumn;
+    private TableColumn<Map.Entry<Link, String>, String> anchorTextColumn, webpageUrlColumn;
 
     private final ObservableList<Map.Entry<Link, String>> webpageLinks = FXCollections.observableArrayList();
     private double xOffset;
@@ -36,11 +34,8 @@ public class LinkDetailController {
     @FXML
     private void initialize() {
         initTitleBar();
-        makeUrlClickable(urlField);
-        makeUrlClickable(finalUrlField);
     }
 
-    // ============================= TITLE BAR =============================
     private void initTitleBar() {
         Platform.runLater(() -> {
             Stage stage = (Stage) titleBar.getScene().getWindow();
@@ -59,7 +54,6 @@ public class LinkDetailController {
         });
     }
 
-
     public void setLink(Link link) {
         // isi field utama
         urlField.setText(link.getUrl());
@@ -67,19 +61,20 @@ public class LinkDetailController {
         contentTypeField.setText(link.getContentType());
         statusField.setText(link.getError());
 
+        makeFieldClickable(urlField);
+        makeFieldClickable(finalUrlField);
+
 
         // isi tabel source
         webpageLinks.setAll(link.getConnection().entrySet());
-        sourceTable.setItems(webpageLinks);
+        webpageLinkTable.setItems(webpageLinks);
 
-        // Kolom anchor text
-        anchorColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
-
-        // Kolom Webpage URL
-        sourceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
+        // Set value dari kolom
+        anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
+        webpageUrlColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
 
         // hyperlink di kolom Webpage URL
-        sourceColumn.setCellFactory(col -> new TableCell<>() {
+        webpageUrlColumn.setCellFactory(col -> new TableCell<>() {
             private final Hyperlink linkView = new Hyperlink();
 
             {
@@ -106,7 +101,7 @@ public class LinkDetailController {
         });
     }
 
-    private void makeUrlClickable(TextField field) {
+    private void makeFieldClickable(TextField field) {
         field.setOnMouseClicked(e -> {
             String url = field.getText();
             if (url != null && !url.isEmpty()) {

@@ -1,0 +1,60 @@
+/* ======================= ROOT ======================= */
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+
+/* ======================= TITLE BAR ======================= */
+.title-bar {
+    -fx-padding: 8 12;
+    -fx-background-color: #383838;
+    -fx-alignment: center-left;
+}
+
+.title-text {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.title-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d1d5db;
+    -fx-font-size: 14px;
+    -fx-min-width: 32px;
+    -fx-min-height: 28px;
+    -fx-cursor: hand;
+}
+
+.title-btn:hover {
+    -fx-background-color: #494949;
+    -fx-text-fill: white;
+}
+
+.close-btn:hover {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+}
+
+/* ======================= CONTENT ======================= */
+.content-area {
+    -fx-background-color: #1e1e1e;
+}
+
+.icon-label {
+    -fx-font-size: 42px;
+    -fx-font-weight: bold;
+    -fx-min-width: 50px;
+    -fx-alignment: center;
+}
+
+.message-text {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 14px;
+    -fx-wrap-text: true;
+}
+
+/* ======================= HOVER EFFECT ======================= */
+.root:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 12, 0, 0, 3);
+}
