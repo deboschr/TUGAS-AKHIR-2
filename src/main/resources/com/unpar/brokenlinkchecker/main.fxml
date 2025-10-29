@@ -5,8 +5,7 @@
 <?import javafx.collections.FXCollections?>
 <?import java.lang.String?>
 
-<BorderPane 
-   fx:id="root" 
+<BorderPane
    xmlns:fx="http://javafx.com/fxml" 
    fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
    stylesheets="@main.css">
@@ -35,7 +34,7 @@
         <VBox spacing="24" styleClass="content-root">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
-            <HBox fx:id="inputContainer" spacing="10" alignment="CENTER_LEFT" styleClass="input-wrapper">
+            <HBox spacing="10" alignment="CENTER_LEFT" styleClass="input-wrapper">
                 <TextField fx:id="seedUrlField" promptText="Enter Seed URL..." HBox.hgrow="ALWAYS" styleClass="input-field"/>
                 <Button fx:id="startBtn" text="Start" styleClass="btn-control" onAction="#onStartClick"/>
                 <Button fx:id="stopBtn" text="Stop" styleClass="btn-control" onAction="#onStopClick"/>
@@ -80,7 +79,7 @@
                 </VBox>
 
                 <!-- ===== FILTERS ===== -->
-                <VBox fx:id="filtersCard" styleClass="card" spacing="12" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                <VBox styleClass="card" spacing="12" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="Filters" styleClass="section-title" />
 
                     <GridPane hgap="8" vgap="12">
