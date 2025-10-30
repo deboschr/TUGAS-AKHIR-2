@@ -38,6 +38,8 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.17.2'
     implementation 'com.squareup.okhttp3:okhttp:5.2.1'
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
+    implementation 'com.google.code.gson:gson:2.11.0'
+
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")

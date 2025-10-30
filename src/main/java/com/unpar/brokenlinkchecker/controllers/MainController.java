@@ -108,12 +108,41 @@ public class MainController {
 
     @FXML
     private void onExportClick() {
-        if (allLinks.isEmpty()) {
-            Application.openAlertWindow("ERROR", "No data to export.");
+        if (currentStatus != CheckingStatus.STOPPED && currentStatus != CheckingStatus.COMPLETED) {
+            Application.openAlertWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
             return;
         }
-        Application.openAlertWindow("WARNING", "Export feature not implemented yet.");
+
+        if (brokenLinkTable.getItems().isEmpty()) {
+            Application.openAlertWindow("WARNING", "Tidak ada data untuk diexport.");
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Simpan hasil export");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
+                new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
+                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json")
+        );
+        File file = chooser.showSaveDialog(null);
+        if (file == null) return;
+
+        try {
+            if (file.getName().endsWith(".xlsx")) {
+                Exporter.exportToExcel(brokenLinks, file);
+            } else if (file.getName().endsWith(".csv")) {
+                Exporter.exportToCsv(brokenLinks, file);
+            } else if (file.getName().endsWith(".json")) {
+                Exporter.exportToJson(brokenLinks, file);
+            }
+            Application.openAlertWindow("SUCCESS", "Data berhasil diexport!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Application.openAlertWindow("ERROR", "Gagal mengekspor data.");
+        }
     }
+
 
     // ============================= TITLE BAR =============================
     private void initTitleBar() {
@@ -193,16 +222,10 @@ public class MainController {
         // Total links: langsung binding ke ukuran allLinks
         summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
         // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
-        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() ->
-                (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks
-        ));
+        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks));
 
         // Broken links: hitung link yang error-nya tidak kosong
-        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() ->
-                (int) allLinks.stream()
-                        .filter(link -> !link.getError().isEmpty())
-                        .count(), allLinks
-        ));
+        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(link -> !link.getError().isEmpty()).count(), allLinks));
 
         // Warna dinamis berdasarkan status
         summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
@@ -226,9 +249,7 @@ public class MainController {
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
         // Filter hanya link rusak dari allLinks
-        FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link ->
-                !link.getError().isEmpty()
-        );
+        FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
 
         // Set ke tabel
         resultTable.setItems(brokenOnly);
@@ -260,10 +281,8 @@ public class MainController {
                     setText(status);
 
                     // warna merah untuk error
-                    if (code >= 400 && code < 600)
-                        setStyle("-fx-text-fill: #ef4444;");
-                    else
-                        setStyle("-fx-text-fill: #f9fafb;");
+                    if (code >= 400 && code < 600) setStyle("-fx-text-fill: #ef4444;");
+                    else setStyle("-fx-text-fill: #f9fafb;");
                 }
             }
         });
@@ -346,8 +365,7 @@ public class MainController {
      * valid
      */
     private String validateSeedUrl(String rawUrl) {
-        if (rawUrl == null || rawUrl.isBlank())
-            return null;
+        if (rawUrl == null || rawUrl.isBlank()) return null;
 
         try {
             // tambahkan skema default jika user lupa (misal "example.com" →
@@ -374,8 +392,7 @@ public class MainController {
             }
 
             // ===== bersihkan port =====
-            if ((scheme.equalsIgnoreCase("http") && port == 80) ||
-                    (scheme.equalsIgnoreCase("https") && port == 443)) {
+            if ((scheme.equalsIgnoreCase("http") && port == 80) || (scheme.equalsIgnoreCase("https") && port == 443)) {
                 port = -1; // hapus port default
             }
 
@@ -383,14 +400,7 @@ public class MainController {
             path = normalizePath(path);
 
             // ===== rakit ulang tanpa fragment =====
-            URI cleaned = new URI(
-                    scheme.toLowerCase(),
-                    null,
-                    host.toLowerCase(),
-                    port,
-                    path,
-                    query,
-                    null // fragment dihapus
+            URI cleaned = new URI(scheme.toLowerCase(), null, host.toLowerCase(), port, path, query, null // fragment dihapus
             );
 
             return cleaned.toASCIIString();
