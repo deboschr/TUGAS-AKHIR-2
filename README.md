@@ -1,12 +1,10 @@
 # Broken Link Checker
 
-## Note
+## NOTE
 
 - **Filter**  
   Fitur ini belum selesai
 - **Pagination**  
-  Fitur ini belum selesai
-- **Export**  
   Fitur ini belum selesai
 
 ## Deskripsi

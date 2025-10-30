@@ -5,6 +5,7 @@ import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.CheckingStatus;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
+import com.unpar.brokenlinkchecker.utils.Exporter;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -20,10 +21,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.awt.*;
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -43,7 +46,7 @@ public class MainController {
     @FXML
     private TableView<Link> resultTable;
     @FXML
-    private TableColumn<Link, String> statusColumn, urlColumn;
+    private TableColumn<Link, String> errorColumn, urlColumn;
 
     // ======================== Data Model ===========================
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
@@ -77,7 +80,7 @@ public class MainController {
         String cleanedSeedUrl = validateSeedUrl(seedUrl);
 
         if (cleanedSeedUrl == null) {
-            Application.openAlertWindow("WARNING", "Please enter a valid seed URL before starting.");
+            Application.openNotificationWindow("WARNING", "Please enter a valid seed URL before starting.");
             return;
         }
 
@@ -108,16 +111,21 @@ public class MainController {
 
     @FXML
     private void onExportClick() {
-        if (currentStatus != CheckingStatus.STOPPED && currentStatus != CheckingStatus.COMPLETED) {
-            Application.openAlertWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
+        // Pastikan proses sudah selesai
+        CheckingStatus status = summaryCard.getCheckingStatus();
+        if (status != CheckingStatus.STOPPED && status != CheckingStatus.COMPLETED) {
+            Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
             return;
         }
 
-        if (brokenLinkTable.getItems().isEmpty()) {
-            Application.openAlertWindow("WARNING", "Tidak ada data untuk diexport.");
+        // Ambil hanya broken links (error ≠ kosong)
+        var brokenLinks = allLinks.filtered(link -> !link.getError().isEmpty());
+        if (brokenLinks.isEmpty()) {
+            Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
             return;
         }
 
+        // Dialog penyimpanan file
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Simpan hasil export");
         chooser.getExtensionFilters().addAll(
@@ -125,22 +133,36 @@ public class MainController {
                 new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("JSON (*.json)", "*.json")
         );
+
         File file = chooser.showSaveDialog(null);
         if (file == null) return;
 
-        try {
-            if (file.getName().endsWith(".xlsx")) {
-                Exporter.exportToExcel(brokenLinks, file);
-            } else if (file.getName().endsWith(".csv")) {
-                Exporter.exportToCsv(brokenLinks, file);
-            } else if (file.getName().endsWith(".json")) {
-                Exporter.exportToJson(brokenLinks, file);
+        // Jalankan export di background thread agar UI tidak freeze
+        new Thread(() -> {
+            try {
+                String name = file.getName().toLowerCase();
+
+                if (name.endsWith(".xlsx")) {
+                    Exporter.exportToExcel(brokenLinks, file);
+                } else if (name.endsWith(".csv")) {
+                    Exporter.exportToCsv(brokenLinks, file);
+                } else if (name.endsWith(".json")) {
+                    Exporter.exportToJson(brokenLinks, file);
+                } else {
+                    Platform.runLater(() ->
+                            Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
+                    return;
+                }
+
+                Platform.runLater(() ->
+                        Application.openNotificationWindow("SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() ->
+                        Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
             }
-            Application.openAlertWindow("SUCCESS", "Data berhasil diexport!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            Application.openAlertWindow("ERROR", "Gagal mengekspor data.");
-        }
+        }).start();
     }
 
 
@@ -241,11 +263,11 @@ public class MainController {
     // ============================= RESULT TABLE =============================
     private void initResultTable() {
         // Atur lebar kolom
-        statusColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.2));
+        errorColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.2));
         urlColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.8));
 
         // Sumber data
-        statusColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
+        errorColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
         // Filter hanya link rusak dari allLinks
@@ -268,7 +290,7 @@ public class MainController {
 
 
         // STATUS COLUMN — teks berwarna
-        statusColumn.setCellFactory(col -> new TableCell<>() {
+        errorColumn.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
@@ -321,35 +343,8 @@ public class MainController {
     private void initTableFilter() {
     }
 
-    // ============================= UTILS =============================
-    private void showLinkDetailWindow(Link link) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/unpar/brokenlinkchecker/link.fxml"));
-            Parent root = loader.load();
-
-            LinkController controller = loader.getController();
-            controller.setLink(link);
-
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.initStyle(StageStyle.UNDECORATED);
-            stage.setTitle("Broken Link Detail");
-            stage.setResizable(false);
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Failed to open detail window: " + e.getMessage());
-        }
-    }
 
     // ============================= UTILS =============================
-    private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
     /**
      * Validasi dan normalisasi seed URL.
      *

@@ -66,8 +66,8 @@ public class Application extends javafx.application.Application {
         }
     }
 
-    // ======================== ALERT WINDOW =======================
-    public static void openAlertWindow(String type, String message) {
+    // ======================== NOTIFICATION WINDOW =======================
+    public static void openNotificationWindow(String type, String message) {
         try {
             FXMLLoader loader = new FXMLLoader(Application.class.getResource("/com/unpar/brokenlinkchecker/notification.fxml"));
             Scene scene = new Scene(loader.load());
