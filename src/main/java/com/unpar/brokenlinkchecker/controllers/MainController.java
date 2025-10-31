@@ -34,7 +34,7 @@ import java.util.Deque;
 public class MainController {
     // ======================== GUI Component ========================
     @FXML
-    private HBox titleBar;
+    private HBox titleBar, paginationBar;
     @FXML
     private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportButton;
     @FXML
@@ -56,6 +56,13 @@ public class MainController {
     private double xOffset;
     private double yOffset;
 
+    // ======================== Pagination ==========================
+    private static final int ROWS_PER_PAGE = 3;
+    private static final int MAX_VISIBLE_PAGES = 5;
+
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private ObservableList<Link> currentPageData = FXCollections.observableArrayList();
 
     // ===============================================================
     private Crawler crawler;
@@ -294,8 +301,6 @@ public class MainController {
             return row;
         });
 
-
-        // STATUS COLUMN — teks berwarna
         errorColumn.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -346,6 +351,8 @@ public class MainController {
                 }
             }
         });
+
+        setPagination(view);
     }
 
     private void setTableFilter(FilteredList<Link> view) {
@@ -396,6 +403,83 @@ public class MainController {
         urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
         statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
         statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+    }
+
+    // ============================= PAGINATION =============================
+    private void setPagination(FilteredList<Link> view) {
+        updatePagination(view);
+
+        // kalau data berubah (misal filter diganti), pagination reset
+        view.addListener((javafx.collections.ListChangeListener<Link>) c -> {
+            currentPage = 1;
+            updatePagination(view);
+        });
+    }
+
+    private void updatePagination(FilteredList<Link> view) {
+        int totalRows = view.size();
+        totalPages = (int) Math.ceil((double) totalRows / ROWS_PER_PAGE);
+        if (totalPages == 0) totalPages = 1;
+
+        // pastikan current page masih valid
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // ambil subset sesuai halaman
+        int fromIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, totalRows);
+        currentPageData.setAll(view.subList(fromIndex, toIndex));
+
+        brokenLinkTable.setItems(currentPageData);
+        renderPaginationButtons(view);
+    }
+
+    private void renderPaginationButtons(FilteredList<Link> view) {
+        paginationBar.getChildren().clear();
+
+        // tombol PREV
+        Button prevBtn = new Button("<");
+        prevBtn.getStyleClass().add("page-btn");
+        prevBtn.setDisable(currentPage <= 1);
+        prevBtn.setOnAction(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                updatePagination(view);
+            }
+        });
+        paginationBar.getChildren().add(prevBtn);
+
+        // hitung range halaman yang ditampilkan
+        int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
+        int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
+        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES)
+            startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+
+        // tombol nomor halaman
+        for (int i = startPage; i <= endPage; i++) {
+            Button pageBtn = new Button(String.valueOf(i));
+            pageBtn.getStyleClass().add("page-btn");
+            if (i == currentPage) {
+                pageBtn.getStyleClass().add("active");
+            }
+            final int pageIndex = i;
+            pageBtn.setOnAction(e -> {
+                currentPage = pageIndex;
+                updatePagination(view);
+            });
+            paginationBar.getChildren().add(pageBtn);
+        }
+
+        // tombol NEXT
+        Button nextBtn = new Button(">");
+        nextBtn.getStyleClass().add("page-btn");
+        nextBtn.setDisable(currentPage >= totalPages);
+        nextBtn.setOnAction(e -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination(view);
+            }
+        });
+        paginationBar.getChildren().add(nextBtn);
     }
 
     // ============================= UTILS =============================

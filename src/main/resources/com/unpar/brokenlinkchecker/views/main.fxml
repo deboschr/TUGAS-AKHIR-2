@@ -145,6 +145,9 @@
                         <TableColumn fx:id="urlColumn" text="URL" prefWidth="800"/>
                     </columns>
                 </TableView>
+                
+                <!-- ====== Pagination ====== -->
+                <HBox fx:id="paginationBar" alignment="CENTER" spacing="4" styleClass="pagination-bar" />
             </VBox>
 
         </VBox>
