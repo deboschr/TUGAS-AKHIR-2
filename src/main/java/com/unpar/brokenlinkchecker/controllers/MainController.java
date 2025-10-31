@@ -262,9 +262,9 @@ public class MainController {
 
     // ============================= RESULT TABLE =============================
     private void setResultTable() {
-        // Atur lebar kolom
-        errorColumn.prefWidthProperty().bind(brokenLinkTable.widthProperty().multiply(0.2));
-        urlColumn.prefWidthProperty().bind(brokenLinkTable.widthProperty().multiply(0.8));
+
+        // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
+        brokenLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Sumber data
         errorColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());

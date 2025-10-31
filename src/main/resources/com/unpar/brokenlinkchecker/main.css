@@ -199,7 +199,7 @@
 }
 
 /* ===================== RESULT TABLE ===================== */
-.result-table {
+.table-view {
 	-fx-background-color: #1e1e1e;
 	-fx-border-color: #303030;
 	/* -fx-border-radius: 8;
@@ -210,13 +210,13 @@
 }
 
 /* Header */
-.result-table .column-header {
+.table-view .column-header {
 	-fx-background-color: #2b2b2b;
 	-fx-border-color: #303030;
 	-fx-pref-height: 40px;
 }
 
-.result-table .column-header .label {
+.table-view .column-header .label {
 	-fx-font-weight: bold;
 	-fx-text-fill: #f9fafb;
 	-fx-alignment: CENTER_LEFT;
@@ -225,30 +225,30 @@
 }
 
 /* Body */
-.result-table .table-row-cell {
+.table-view .table-row-cell {
 	-fx-background-color: #1e1e1e;
 	-fx-text-fill: #f9fafb;
 	-fx-cell-size: 32px;
 }
 
-.result-table .table-cell {
+.table-view .table-cell {
 	-fx-border-color: #303030;
 	-fx-padding: 6 8;
 	-fx-alignment: CENTER_LEFT;
 }
 
-.result-table .table-row-cell:hover {
+.table-view .table-row-cell:hover {
 	-fx-background-color: #2a2a2a;
 }
 
 /* ===================== Scrollbar TableView ===================== */
 
-.result-table .column-header-background {
+.table-view .column-header-background {
 	-fx-background-color: #2b2b2b;
 }
 
-.result-table .filler,
-.result-table .corner {
+.table-view .filler,
+.table-view .corner {
 	-fx-background-color: #2b2b2b;
 	-fx-border-color: #2b2b2b;
 }

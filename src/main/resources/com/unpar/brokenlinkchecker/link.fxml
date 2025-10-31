@@ -46,7 +46,7 @@
                 </GridPane>
             </VBox>
 
-            <TableView fx:id="webpageLinkTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+            <TableView fx:id="webpageLinkTable" styleClass="table-view" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="anchorTextColumn" text="Anchor text" prefWidth="200"/>
                     <TableColumn fx:id="webpageUrlColumn" text="Webpage URL" prefWidth="500"/>

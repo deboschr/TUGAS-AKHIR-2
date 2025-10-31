@@ -64,13 +64,23 @@ public class LinkController {
         makeFieldClickable(urlField);
         makeFieldClickable(finalUrlField);
 
-        // set isi tabel
-        webpageLinks.setAll(link.getConnection().entrySet());
-        webpageLinkTable.setItems(webpageLinks);
+        setTableView(link);
+    }
+
+    private void setTableView(Link link) {
+
+        // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
+        webpageLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
 
         // Set value dari kolom
         anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
         webpageUrlColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
+
+        // set isi tabel
+        webpageLinks.setAll(link.getConnection().entrySet());
+        webpageLinkTable.setItems(webpageLinks);
+
 
         // hyperlink di kolom Webpage URL
         webpageUrlColumn.setCellFactory(col -> new TableCell<>() {
