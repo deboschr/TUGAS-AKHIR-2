@@ -39,8 +39,8 @@
                     <TextField fx:id="contentTypeField" editable="false" GridPane.rowIndex="2" GridPane.columnIndex="1"
                                styleClass="text-field"/>
 
-                    <Label text="Status" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="label"/>
-                    <TextField fx:id="statusField" editable="false" GridPane.rowIndex="3" GridPane.columnIndex="1"
+                    <Label text="Error" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="label"/>
+                    <TextField fx:id="errorField" editable="false" GridPane.rowIndex="3" GridPane.columnIndex="1"
                                styleClass="text-field"/>
                 </GridPane>
             </VBox>

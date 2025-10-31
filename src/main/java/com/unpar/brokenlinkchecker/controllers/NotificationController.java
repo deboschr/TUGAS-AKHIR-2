@@ -22,10 +22,10 @@ public class NotificationController {
 
     @FXML
     private void initialize() {
-        initTitleBar();
+        setTitleBar();
     }
 
-    private void initTitleBar() {
+    private void setTitleBar() {
         Platform.runLater(() -> {
             Stage stage = (Stage) titleBar.getScene().getWindow();
 

@@ -12,9 +12,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -23,7 +20,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.awt.*;
 import java.io.File;
@@ -72,8 +68,8 @@ public class MainController {
         Platform.runLater(() -> {
             setTitleBar();
             setButtonState();
-            setSummaryCard();
-            setResultTable();
+            setSummary();
+            setTableView();
 
             crawler = new Crawler(link -> allLinks.add(link));
         });
@@ -240,7 +236,7 @@ public class MainController {
     }
 
     // ============================= SUMMARY CARD =============================
-    private void setSummaryCard() {
+    private void setSummary() {
 
         // Label mengikuti nilai di Summary
         checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
@@ -268,7 +264,7 @@ public class MainController {
     }
 
     // ============================= RESULT TABLE =============================
-    private void setResultTable() {
+    private void setTableView() {
 
         // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
         brokenLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);

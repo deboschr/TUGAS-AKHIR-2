@@ -21,7 +21,7 @@ public class LinkController {
     @FXML
     private Button closeBtn;
     @FXML
-    private TextField urlField, finalUrlField, contentTypeField, statusField;
+    private TextField urlField, finalUrlField, contentTypeField, errorField;
     @FXML
     private TableView<Map.Entry<Link, String>> webpageLinkTable;
     @FXML
@@ -33,10 +33,10 @@ public class LinkController {
 
     @FXML
     private void initialize() {
-        initTitleBar();
+        setTitleBar();
     }
 
-    private void initTitleBar() {
+    private void setTitleBar() {
         Platform.runLater(() -> {
             Stage stage = (Stage) titleBar.getScene().getWindow();
 
@@ -59,7 +59,7 @@ public class LinkController {
         urlField.setText(link.getUrl());
         finalUrlField.setText(link.getFinalUrl());
         contentTypeField.setText(link.getContentType());
-        statusField.setText(link.getError());
+        errorField.setText(link.getError());
 
         makeFieldClickable(urlField);
         makeFieldClickable(finalUrlField);
