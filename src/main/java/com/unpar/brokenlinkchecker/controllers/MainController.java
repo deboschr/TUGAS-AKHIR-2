@@ -270,11 +270,23 @@ public class MainController {
         errorColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
-        // Filter hanya link rusak dari allLinks
+        // // Filter hanya link rusak dari allLinks
+        // FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
+        //
+        // // Set ke tabel
+        // resultTable.setItems(brokenOnly);
+
+        // Layer 1: hanya broken links
         FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
 
+        // Layer 2: filter view (URL & Status Code)
+        FilteredList<Link> view = new FilteredList<>(brokenOnly, l -> true);
+
         // Set ke tabel
-        resultTable.setItems(brokenOnly);
+        resultTable.setItems(view);
+
+        // Hook filter UI -> predicate 'view'
+        initTableFilter(view);
 
         // Kalau baris di klik maka akan buka jendela baru
         resultTable.setRowFactory(tv -> {
@@ -340,9 +352,55 @@ public class MainController {
         });
     }
 
-    private void initTableFilter() {
-    }
+    private void initTableFilter(FilteredList<Link> view) {
+        Runnable apply = () -> view.setPredicate(link -> {
+            // ===== URL filter =====
+            boolean urlOk = true;
+            String urlCond = urlFilterOption.getValue();
+            String urlText = urlFilterField.getText();
 
+            if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
+                String u = link.getUrl().toLowerCase();
+                String q = urlText.toLowerCase();
+                urlOk = switch (urlCond) {
+                    case "Equals"     -> u.equals(q);
+                    case "Contains"   -> u.contains(q);
+                    case "Starts With"-> u.startsWith(q);
+                    case "Ends With"  -> u.endsWith(q);
+                    default           -> true;
+                };
+            }
+
+            // ===== Status Code filter =====
+            boolean statusOk = true;
+            String scCond = statusCodeFilterOption.getValue();
+            String scText = statusCodeFilterField.getText();
+
+            if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
+                try {
+                    int in = Integer.parseInt(scText.trim());
+                    int code = link.getStatusCode();
+                    statusOk = switch (scCond) {
+                        case "Equals"       -> code == in;
+                        case "Greater Than" -> code >  in;
+                        case "Less Than"    -> code <  in;
+                        default             -> true;
+                    };
+                } catch (NumberFormatException ignore) {
+                    statusOk = true; // input tak valid → anggap filter off
+                }
+            }
+
+            // hanya tampil jika lolos semua filter aktif
+            return urlOk && statusOk;
+        });
+
+        // live update
+        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+    }
 
     // ============================= UTILS =============================
     /**
