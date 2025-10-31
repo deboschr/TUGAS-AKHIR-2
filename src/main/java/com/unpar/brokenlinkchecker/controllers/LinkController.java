@@ -103,7 +103,6 @@ public class LinkController {
                     setGraphic(null);
                 } else {
                     linkView.setText(item);
-                    linkView.setStyle("-fx-text-fill: #60a5fa;");
                     setGraphic(linkView);
                 }
             }

@@ -204,9 +204,9 @@
 	-fx-border-color: #303030;
 	-fx-table-cell-border-color: #303030;
 	/* -fx-border-radius: 8;
-	-fx-background-radius: 8; */
+	-fx-background-radius: 8;
 	-fx-table-header-border-color: #303030;
-	-fx-padding: 0;
+	-fx-padding: 0; */
 }
 
 /* Header */
@@ -220,32 +220,41 @@
 	-fx-font-weight: bold;
 	-fx-text-fill: #f9fafb;
 	-fx-alignment: CENTER_LEFT;
-	-fx-padding: 0 8;
+	-fx-padding: 0 10;
 	-fx-font-size: 13px;
+}
+
+.table-view .column-header-background {
+	-fx-background-color: #2b2b2b;
 }
 
 /* Body */
 .table-view .table-row-cell {
 	-fx-background-color: #1e1e1e;
-	-fx-text-fill: #f9fafb;
-	-fx-cell-size: 32px;
-}
-
-.table-view .table-cell {
-	-fx-border-color: #303030;
-	-fx-padding: 6 8;
-	-fx-alignment: CENTER_LEFT;
 }
 
 .table-view .table-row-cell:hover {
 	-fx-background-color: #2a2a2a;
 }
 
-/* ===================== Scrollbar TableView ===================== */
-
-.table-view .column-header-background {
-	-fx-background-color: #2b2b2b;
+.table-view .table-cell {
+	-fx-text-fill: #f9fafb;
+	-fx-border-color: #303030;
+	-fx-padding: 6 8;
 }
+
+/* Hyperlink */
+
+.hyperlink {
+	-fx-text-fill: #60a5fa;
+}
+
+.hyperlink:hover {
+	-fx-text-fill: #93c5fd;
+	-fx-underline: true;
+}
+
+/* ===================== Scrollbar TableView ===================== */
 
 .table-view .filler,
 .table-view .corner {
@@ -253,7 +262,8 @@
 	-fx-border-color: #2b2b2b;
 }
 
-.table-view .scroll-bar:vertical {
+.table-view .scroll-bar:vertical,
+.table-view .scroll-bar:horizontal {
 	-fx-background-color: transparent;
 }
 

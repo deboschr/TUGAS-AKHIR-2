@@ -318,7 +318,7 @@ public class MainController {
             }
         });
 
-        // URL COLUMN — hyperlink klik-buka di browser
+        // hyperlink di kolom URL
         urlColumn.setCellFactory(col -> new TableCell<>() {
             private final Hyperlink link = new Hyperlink();
 
@@ -342,7 +342,6 @@ public class MainController {
                     setGraphic(null);
                 } else {
                     link.setText(item);
-                    link.setStyle("-fx-text-fill: #60a5fa; -fx-underline: true;");
                     setGraphic(link);
                 }
             }
