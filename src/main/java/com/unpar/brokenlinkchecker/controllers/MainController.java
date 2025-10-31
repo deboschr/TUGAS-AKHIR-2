@@ -44,7 +44,7 @@ public class MainController {
     @FXML
     private ComboBox<String> urlFilterOption, statusCodeFilterOption;
     @FXML
-    private TableView<Link> resultTable;
+    private TableView<Link> brokenLinkTable;
     @FXML
     private TableColumn<Link, String> errorColumn, urlColumn;
 
@@ -63,10 +63,10 @@ public class MainController {
     @FXML
     public void initialize() {
         Platform.runLater(() -> {
-            initTitleBar();
-            initResultTable();
-            initSummaryCard();
-            initButtonState();
+            setTitleBar();
+            setButtonState();
+            setSummaryCard();
+            setResultTable();
 
             crawler = new Crawler(link -> allLinks.add(link));
         });
@@ -167,7 +167,7 @@ public class MainController {
 
 
     // ============================= TITLE BAR =============================
-    private void initTitleBar() {
+    private void setTitleBar() {
         Stage stage = (Stage) titleBar.getScene().getWindow();
 
         titleBar.setOnMousePressed((MouseEvent e) -> {
@@ -186,7 +186,7 @@ public class MainController {
     }
 
     // ============================= BUTTON STATE & STYLE =============================
-    private void initButtonState() {
+    private void setButtonState() {
         summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
             switch (status) {
                 case IDLE -> {
@@ -233,7 +233,7 @@ public class MainController {
     }
 
     // ============================= SUMMARY CARD =============================
-    private void initSummaryCard() {
+    private void setSummaryCard() {
 
         // Label mengikuti nilai di Summary
         checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
@@ -261,35 +261,29 @@ public class MainController {
     }
 
     // ============================= RESULT TABLE =============================
-    private void initResultTable() {
+    private void setResultTable() {
         // Atur lebar kolom
-        errorColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.2));
-        urlColumn.prefWidthProperty().bind(resultTable.widthProperty().multiply(0.8));
+        errorColumn.prefWidthProperty().bind(brokenLinkTable.widthProperty().multiply(0.2));
+        urlColumn.prefWidthProperty().bind(brokenLinkTable.widthProperty().multiply(0.8));
 
         // Sumber data
         errorColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
 
-        // // Filter hanya link rusak dari allLinks
-        // FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
-        //
-        // // Set ke tabel
-        // resultTable.setItems(brokenOnly);
-
-        // Layer 1: hanya broken links
+        // Filter layer 1: hanya broken links
         FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
 
-        // Layer 2: filter view (URL & Status Code)
+        // Filter layer 2: filter view
         FilteredList<Link> view = new FilteredList<>(brokenOnly, l -> true);
 
         // Set ke tabel
-        resultTable.setItems(view);
+        brokenLinkTable.setItems(view);
 
         // Hook filter UI -> predicate 'view'
-        initTableFilter(view);
+        setTableFilter(view);
 
         // Kalau baris di klik maka akan buka jendela baru
-        resultTable.setRowFactory(tv -> {
+        brokenLinkTable.setRowFactory(tv -> {
             TableRow<Link> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (!row.isEmpty() && event.getClickCount() == 1) {
@@ -314,9 +308,12 @@ public class MainController {
                     int code = link.getStatusCode();
                     setText(status);
 
-                    // warna merah untuk error
-                    if (code >= 400 && code < 600) setStyle("-fx-text-fill: #ef4444;");
-                    else setStyle("-fx-text-fill: #f9fafb;");
+                    // warna merah untuk error dari status code
+                    if (code >= 400 && code < 600) {
+                        setStyle("-fx-text-fill: #ef4444;");
+                    } else {
+                        setStyle("-fx-text-fill: #f9fafb;");
+                    }
                 }
             }
         });
@@ -352,7 +349,7 @@ public class MainController {
         });
     }
 
-    private void initTableFilter(FilteredList<Link> view) {
+    private void setTableFilter(FilteredList<Link> view) {
         Runnable apply = () -> view.setPredicate(link -> {
             // ===== URL filter =====
             boolean urlOk = true;

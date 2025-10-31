@@ -55,7 +55,7 @@ public class LinkController {
     }
 
     public void setLink(Link link) {
-        // isi field utama
+        // set value dari field
         urlField.setText(link.getUrl());
         finalUrlField.setText(link.getFinalUrl());
         contentTypeField.setText(link.getContentType());
@@ -64,8 +64,7 @@ public class LinkController {
         makeFieldClickable(urlField);
         makeFieldClickable(finalUrlField);
 
-
-        // isi tabel source
+        // set isi tabel
         webpageLinks.setAll(link.getConnection().entrySet());
         webpageLinkTable.setItems(webpageLinks);
 

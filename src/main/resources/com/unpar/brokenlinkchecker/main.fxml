@@ -139,7 +139,7 @@
                 </HBox>
 
                 <!-- ====== Table Result ====== -->
-                <TableView fx:id="resultTable" styleClass="result-table" VBox.vgrow="NEVER">
+                <TableView fx:id="brokenLinkTable" styleClass="result-table" VBox.vgrow="NEVER">
                     <columns>
                         <TableColumn fx:id="errorColumn" text="Error"/>
                         <TableColumn fx:id="urlColumn" text="URL"/>
