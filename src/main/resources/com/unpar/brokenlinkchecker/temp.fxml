@@ -1,0 +1,46 @@
+<VBox styleClass="card" spacing="12" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+    <Label text="Filters" styleClass="section-title"/>
+
+    <GridPane hgap="8" vgap="12">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="15"/>
+            <ColumnConstraints percentWidth="85"/>
+        </columnConstraints>
+
+        <!-- URL Filter -->
+        <Label text="URL" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="summary-subtitle"/>
+        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
+            <ComboBox fx:id="urlFilterOption" prefWidth="150" promptText="Condition"
+                      styleClass="filter-combo">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Equals"/>
+                        <String fx:value="Contains"/>
+                        <String fx:value="Starts With"/>
+                        <String fx:value="Ends With"/>
+                    </FXCollections>
+                </items>
+            </ComboBox>
+            <TextField fx:id="urlFilterField" promptText="Enter URL..." HBox.hgrow="ALWAYS"
+                       styleClass="filter-field"/>
+        </HBox>
+
+        <!-- Status Code Filter -->
+        <Label text="Status Code" GridPane.columnIndex="0" GridPane.rowIndex="1"
+               styleClass="summary-subtitle"/>
+        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
+            <ComboBox fx:id="statusCodeFilterOption" prefWidth="150" promptText="Condition"
+                      styleClass="filter-combo">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Equals"/>
+                        <String fx:value="Greater Than"/>
+                        <String fx:value="Less Than"/>
+                    </FXCollections>
+                </items>
+            </ComboBox>
+            <TextField fx:id="statusCodeFilterField" promptText="Enter Status Code..."
+                       HBox.hgrow="ALWAYS" styleClass="filter-field"/>
+        </HBox>
+    </GridPane>
+</VBox>

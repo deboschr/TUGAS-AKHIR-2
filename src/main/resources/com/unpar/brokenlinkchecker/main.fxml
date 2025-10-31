@@ -126,6 +126,8 @@
                         </HBox>
                     </GridPane>
                 </VBox>
+
+
             </GridPane>
 
             <!-- ===================== RESULT SECTION ===================== -->
