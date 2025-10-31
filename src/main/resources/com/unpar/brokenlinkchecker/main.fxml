@@ -141,8 +141,8 @@
                 <!-- ====== Table Result ====== -->
                 <TableView fx:id="brokenLinkTable" styleClass="table-view" VBox.vgrow="NEVER">
                     <columns>
-                        <TableColumn fx:id="errorColumn" text="Error"/>
-                        <TableColumn fx:id="urlColumn" text="URL"/>
+                        <TableColumn fx:id="errorColumn" text="Error" prefWidth="200"/>
+                        <TableColumn fx:id="urlColumn" text="URL" prefWidth="800"/>
                     </columns>
                 </TableView>
             </VBox>
