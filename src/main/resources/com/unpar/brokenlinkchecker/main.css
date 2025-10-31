@@ -20,8 +20,8 @@
 	-fx-min-height: 36px;
 	-fx-padding: 8 0 8 0;
 	-fx-cursor: hand;
-	-fx-background-radius: 0;
 	-fx-border-radius: 0;
+	-fx-background-radius: 0;
 	-fx-background-insets: 0;
 	-fx-effect: none;
 }
@@ -203,10 +203,6 @@
 	-fx-background-color: #1e1e1e;
 	-fx-border-color: #303030;
 	-fx-table-cell-border-color: #303030;
-	/* -fx-border-radius: 8;
-	-fx-background-radius: 8;
-	-fx-table-header-border-color: #303030;
-	-fx-padding: 0; */
 }
 
 /* Header */
@@ -268,12 +264,12 @@
 }
 
 .table-view .scroll-bar .thumb {
-	-fx-background-color: rgba(107, 114, 128, 0.6);
+	-fx-background-color: #6B7280;
 	-fx-background-radius: 5px;
 }
 
 .table-view .scroll-bar .thumb:hover {
-	-fx-background-color: rgba(156, 163, 175, 0.8);
+	-fx-background-color: #9ca3afcc;
 }
 
 /* ===================== Pagination ===================== */
