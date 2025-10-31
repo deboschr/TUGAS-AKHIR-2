@@ -6,8 +6,7 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.unpar.brokenlinkchecker.controllers.LinkController"
             prefWidth="720" prefHeight="480"
-            stylesheets="@link.css"
-            styleClass="window-root">
+            stylesheets="@../styles/link.css">
 
     <!-- ===================== TITLE BAR ===================== -->
     <top>

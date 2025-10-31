@@ -57,7 +57,7 @@ public class MainController {
     private double yOffset;
 
     // ======================== Pagination ==========================
-    private static final int ROWS_PER_PAGE = 3;
+    private static final int ROWS_PER_PAGE = 15;
     private static final int MAX_VISIBLE_PAGES = 5;
 
     private int currentPage = 1;
@@ -357,7 +357,6 @@ public class MainController {
 
     private void setTableFilter(FilteredList<Link> view) {
         Runnable apply = () -> view.setPredicate(link -> {
-            // ===== URL filter =====
             boolean urlOk = true;
             String urlCond = urlFilterOption.getValue();
             String urlText = urlFilterField.getText();
@@ -436,9 +435,9 @@ public class MainController {
     private void renderPaginationButtons(FilteredList<Link> view) {
         paginationBar.getChildren().clear();
 
-        // tombol PREV
-        Button prevBtn = new Button("<");
-        prevBtn.getStyleClass().add("page-btn");
+        // Tombol PREV
+        Button prevBtn = new Button("<<");
+        prevBtn.getStyleClass().addAll("pagination-btn", "prev");
         prevBtn.setDisable(currentPage <= 1);
         prevBtn.setOnAction(e -> {
             if (currentPage > 1) {
@@ -448,30 +447,31 @@ public class MainController {
         });
         paginationBar.getChildren().add(prevBtn);
 
-        // hitung range halaman yang ditampilkan
+        // Tombol nomor halaman
         int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
         int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
         if (endPage - startPage + 1 < MAX_VISIBLE_PAGES)
             startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
 
-        // tombol nomor halaman
         for (int i = startPage; i <= endPage; i++) {
             Button pageBtn = new Button(String.valueOf(i));
-            pageBtn.getStyleClass().add("page-btn");
+            pageBtn.getStyleClass().add("pagination-btn");
             if (i == currentPage) {
                 pageBtn.getStyleClass().add("active");
             }
+
             final int pageIndex = i;
             pageBtn.setOnAction(e -> {
                 currentPage = pageIndex;
                 updatePagination(view);
             });
+
             paginationBar.getChildren().add(pageBtn);
         }
 
-        // tombol NEXT
-        Button nextBtn = new Button(">");
-        nextBtn.getStyleClass().add("page-btn");
+        // Tombol NEXT
+        Button nextBtn = new Button(">>");
+        nextBtn.getStyleClass().addAll("pagination-btn", "next");
         nextBtn.setDisable(currentPage >= totalPages);
         nextBtn.setOnAction(e -> {
             if (currentPage < totalPages) {

@@ -8,7 +8,7 @@
 <BorderPane
         xmlns:fx="http://javafx.com/fxml"
         fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
-        stylesheets="@main.css">
+        stylesheets="@../styles/main.css">
 
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
@@ -30,14 +30,16 @@
 
 
     <center>
-        <!-- <ScrollPane fx:id="scrollRoot" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background: transparent;"></ScrollPane> -->
+        <!-- <ScrollPane fx:id="scrollRoot" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER"
+        vbarPolicy="AS_NEEDED" style="-fx-background: transparent;"></ScrollPane> -->
         <VBox spacing="24" styleClass="content-root">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
             <HBox spacing="10" alignment="CENTER_LEFT" styleClass="input-wrapper">
                 <TextField fx:id="seedUrlField" promptText="Enter Seed URL..." HBox.hgrow="ALWAYS"
                            styleClass="input-field"/>
-                <Button fx:id="startBtn" text="Start" styleClass="btn-control" onAction="#onStartClick"/>
+                <Button fx:id="startBtn" text="Start" styleClass="btn-control"
+                        onAction="#onStartClick"/>
                 <Button fx:id="stopBtn" text="Stop" styleClass="btn-control" onAction="#onStopClick"/>
             </HBox>
 
@@ -49,7 +51,8 @@
                 </columnConstraints>
 
                 <!-- ===== SUMMARY ===== -->
-                <VBox styleClass="card" spacing="12" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                <VBox styleClass="card" spacing="12" GridPane.columnIndex="0"
+                      GridPane.hgrow="ALWAYS">
                     <Label text="Summary" styleClass="section-title"/>
 
                     <HBox spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
@@ -80,7 +83,8 @@
                 </VBox>
 
                 <!-- ===== FILTERS ===== -->
-                <VBox styleClass="card" spacing="12" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                <VBox styleClass="card" spacing="12" GridPane.columnIndex="1"
+                      GridPane.hgrow="ALWAYS">
                     <Label text="Filters" styleClass="section-title"/>
 
                     <GridPane hgap="8" vgap="12">
@@ -90,8 +94,10 @@
                         </columnConstraints>
 
                         <!-- URL Filter -->
-                        <Label text="URL" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="summary-subtitle"/>
-                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
+                        <Label text="URL" GridPane.columnIndex="0" GridPane.rowIndex="0"
+                               styleClass="summary-subtitle"/>
+                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                              alignment="CENTER_LEFT">
                             <ComboBox fx:id="urlFilterOption" prefWidth="150" promptText="Condition"
                                       styleClass="filter-combo">
                                 <items>
@@ -103,15 +109,18 @@
                                     </FXCollections>
                                 </items>
                             </ComboBox>
-                            <TextField fx:id="urlFilterField" promptText="Enter URL..." HBox.hgrow="ALWAYS"
+                            <TextField fx:id="urlFilterField" promptText="Enter URL..."
+                                       HBox.hgrow="ALWAYS"
                                        styleClass="filter-field"/>
                         </HBox>
 
                         <!-- Status Code Filter -->
                         <Label text="Status Code" GridPane.columnIndex="0" GridPane.rowIndex="1"
                                styleClass="summary-subtitle"/>
-                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
-                            <ComboBox fx:id="statusCodeFilterOption" prefWidth="150" promptText="Condition"
+                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1"
+                              alignment="CENTER_LEFT">
+                            <ComboBox fx:id="statusCodeFilterOption" prefWidth="150"
+                                      promptText="Condition"
                                       styleClass="filter-combo">
                                 <items>
                                     <FXCollections fx:factory="observableArrayList">
@@ -121,7 +130,8 @@
                                     </FXCollections>
                                 </items>
                             </ComboBox>
-                            <TextField fx:id="statusCodeFilterField" promptText="Enter Status Code..."
+                            <TextField fx:id="statusCodeFilterField"
+                                       promptText="Enter Status Code..."
                                        HBox.hgrow="ALWAYS" styleClass="filter-field"/>
                         </HBox>
                     </GridPane>
@@ -135,7 +145,8 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Result" styleClass="section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="exportButton" text="Export" styleClass="btn-control" onAction="#onExportClick"/>
+                    <Button fx:id="exportButton" text="Export" styleClass="btn-control"
+                            onAction="#onExportClick"/>
                 </HBox>
 
                 <!-- ====== Table Result ====== -->
@@ -145,9 +156,12 @@
                         <TableColumn fx:id="urlColumn" text="URL" prefWidth="800"/>
                     </columns>
                 </TableView>
-                
+
                 <!-- ====== Pagination ====== -->
-                <HBox fx:id="paginationBar" alignment="CENTER" spacing="4" styleClass="pagination-bar" />
+                <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar">
+
+                </HBox>
+
             </VBox>
 
         </VBox>

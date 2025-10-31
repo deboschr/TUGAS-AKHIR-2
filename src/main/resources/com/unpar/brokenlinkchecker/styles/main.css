@@ -272,30 +272,63 @@
 	-fx-background-color: #9ca3afcc;
 }
 
-/* ===================== Pagination ===================== */
+/* ===================== PAGINATION CONTAINER ===================== */
 .pagination-bar {
-	-fx-padding: 8;
+	-fx-background-color: transparent;
+	-fx-padding: 5;
+	-fx-alignment: center;
 }
 
-.pagination-bar .button {
-	-fx-background-color: #3a3a3a;
-	-fx-text-fill: #f9fafb;
+.pagination-btn {
+	-fx-background-color: #494949;
+	-fx-text-fill: #ffffff;
 	-fx-font-weight: bold;
-	-fx-padding: 4 10;
-	-fx-background-radius: 6;
+	-fx-font-size: 14px;
+	-fx-padding: 0;
+	-fx-background-radius: 0;
 	-fx-cursor: hand;
+	-fx-border-color: #3b3b3b;
+	-fx-border-width: 2;
+	-fx-background-insets: 0;
+	-fx-border-insets: -1;
+
+	/* ukuran tetap */
+	-fx-pref-width: 45px;
+	-fx-pref-height: 35px;
+	-fx-min-width: 45px;
+	-fx-min-height: 35px;
+	-fx-max-width: 45px;
+	-fx-max-height: 35px;
+
+	/* teks di tengah */
+	-fx-alignment: center;
 }
 
-.pagination-bar .button:hover {
-	-fx-background-color: #4b4b4b;
+.pagination-btn:hover {
+	-fx-background-color: #7f7f7f;
 }
 
-.pagination-bar .button:disabled {
+.pagination-btn.active {
+	-fx-background-color: transparent;
+}
+
+.pagination-btn.prev {
+	-fx-background-radius: 10 0 0 10;
+	-fx-border-radius: 10 0 0 10;
+	-fx-font-size: 17px;
+}
+.pagination-btn.next {
+	-fx-background-radius: 0 10 10 0;
+	-fx-border-radius: 0 10 10 0;
+	-fx-font-size: 17px;
+}
+
+.pagination-btn.prev:hover,
+.pagination-btn.next:hover {
+	-fx-background-color: #4d4d4d;
+}
+
+.pagination-btn:disabled {
 	-fx-opacity: 0.5;
 	-fx-cursor: default;
-}
-
-.pagination-bar .button.active-page {
-	-fx-background-color: #60a5fa;
-	-fx-text-fill: #ffffff;
 }

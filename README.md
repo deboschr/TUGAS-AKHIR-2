@@ -1,12 +1,5 @@
 # Broken Link Checker
 
-## NOTE
-
-- **Filter**  
-  Fitur ini belum selesai
-- **Pagination**  
-  Fitur ini belum selesai
-
 ## Deskripsi
 
 **Broken Link Checker** adalah aplikasi desktop berbasis **JavaFX** yang dikembangkan untuk membantu pengguna memeriksa tautan rusak (*broken links*) yang ada pada sebuah situs web. Aplikasi ini menerima *seed URL* sebagai titik awal, lalu melakukan proses **crawling** terhadap seluruh halaman yang berada dalam domain yang sama.  

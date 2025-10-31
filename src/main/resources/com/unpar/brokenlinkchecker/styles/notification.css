@@ -1,8 +1,3 @@
-/* ======================= ROOT ======================= */
-.root {
-    -fx-font-family: "Segoe UI", "Inter", sans-serif;
-}
-
 /* ======================= TITLE BAR ======================= */
 .title-bar {
     -fx-alignment: center-left;
