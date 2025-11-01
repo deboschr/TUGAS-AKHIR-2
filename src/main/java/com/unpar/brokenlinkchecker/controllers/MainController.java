@@ -5,7 +5,7 @@ import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.CheckingStatus;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
-import com.unpar.brokenlinkchecker.utils.Exporter;
+import com.unpar.brokenlinkchecker.utils.ExportHandler;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -145,11 +145,11 @@ public class MainController {
                 String name = file.getName().toLowerCase();
 
                 if (name.endsWith(".xlsx")) {
-                    Exporter.exportToExcel(brokenLinks, file);
+                    ExportHandler.exportToExcel(brokenLinks, file);
                 } else if (name.endsWith(".csv")) {
-                    Exporter.exportToCsv(brokenLinks, file);
+                    ExportHandler.exportToCsv(brokenLinks, file);
                 } else if (name.endsWith(".json")) {
-                    Exporter.exportToJson(brokenLinks, file);
+                    ExportHandler.exportToJson(brokenLinks, file);
                 } else {
                     Platform.runLater(() ->
                             Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
