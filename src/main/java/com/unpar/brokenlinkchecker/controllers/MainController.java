@@ -234,84 +234,6 @@ public class MainController {
         });
     }
 
-    // ============================= SUMMARY CARD =============================
-    private void setSummary() {
-
-        // Label mengikuti nilai di Summary
-        checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
-        totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
-        webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
-        brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
-
-        // Total links: langsung binding ke ukuran allLinks
-        summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
-        // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
-        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks));
-
-        // Broken links: hitung link yang error-nya tidak kosong
-        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(link -> !link.getError().isEmpty()).count(), allLinks));
-
-        // Warna dinamis berdasarkan status
-        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
-            switch (status) {
-                case IDLE -> checkingStatusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
-                case CHECKING -> checkingStatusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
-                case STOPPED -> checkingStatusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
-                case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
-            }
-        });
-    }
-
-    // ============================= FILTER CARD ==============================
-    private void setTableFilter(FilteredList<Link> view) {
-        Runnable apply = () -> view.setPredicate(link -> {
-            boolean urlOk = true;
-            String urlCond = urlFilterOption.getValue();
-            String urlText = urlFilterField.getText();
-
-            if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
-                String u = link.getUrl().toLowerCase();
-                String q = urlText.toLowerCase();
-                urlOk = switch (urlCond) {
-                    case "Equals"     -> u.equals(q);
-                    case "Contains"   -> u.contains(q);
-                    case "Starts With"-> u.startsWith(q);
-                    case "Ends With"  -> u.endsWith(q);
-                    default           -> true;
-                };
-            }
-
-            // ===== Status Code filter =====
-            boolean statusOk = true;
-            String scCond = statusCodeFilterOption.getValue();
-            String scText = statusCodeFilterField.getText();
-
-            if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
-                try {
-                    int in = Integer.parseInt(scText.trim());
-                    int code = link.getStatusCode();
-                    statusOk = switch (scCond) {
-                        case "Equals"       -> code == in;
-                        case "Greater Than" -> code >  in;
-                        case "Less Than"    -> code <  in;
-                        default             -> true;
-                    };
-                } catch (NumberFormatException ignore) {
-                    statusOk = true; // input tak valid → anggap filter off
-                }
-            }
-
-            // hanya tampil jika lolos semua filter aktif
-            return urlOk && statusOk;
-        });
-
-        // live update
-        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
-    }
-
     // ============================= RESULT TABLE =============================
     private void setTableView() {
 
@@ -398,6 +320,86 @@ public class MainController {
         });
 
         setPagination(view);
+    }
+
+    // ============================= SUMMARY CARD =============================
+    private void setSummary() {
+
+        // Label mengikuti nilai di Summary
+        checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
+        totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
+        webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
+        brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
+
+        // Total links: langsung binding ke ukuran allLinks
+        summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
+        // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
+        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks));
+
+        // Broken links: hitung link yang error-nya tidak kosong
+        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(link -> !link.getError().isEmpty()).count(), allLinks));
+
+        // Warna dinamis berdasarkan status
+        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
+            switch (status) {
+                case IDLE -> checkingStatusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
+                case CHECKING -> checkingStatusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
+                case STOPPED -> checkingStatusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
+                case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
+            }
+        });
+    }
+
+    // ============================= FILTER CARD ==============================
+    private void setTableFilter(FilteredList<Link> view) {
+        Runnable apply = () -> view.setPredicate(link -> {
+
+            // ===== URL filter =====
+            boolean urlOk = true;
+            String urlCond = urlFilterOption.getValue();
+            String urlText = urlFilterField.getText();
+
+            if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
+                String u = link.getUrl().toLowerCase();
+                String q = urlText.toLowerCase();
+                urlOk = switch (urlCond) {
+                    case "Equals"     -> u.equals(q);
+                    case "Contains"   -> u.contains(q);
+                    case "Starts With"-> u.startsWith(q);
+                    case "Ends With"  -> u.endsWith(q);
+                    default           -> true;
+                };
+            }
+
+            // ===== Status Code filter =====
+            boolean statusOk = true;
+            String scCond = statusCodeFilterOption.getValue();
+            String scText = statusCodeFilterField.getText();
+
+            if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
+                try {
+                    int in = Integer.parseInt(scText.trim());
+                    int code = link.getStatusCode();
+                    statusOk = switch (scCond) {
+                        case "Equals"       -> code == in;
+                        case "Greater Than" -> code >  in;
+                        case "Less Than"    -> code <  in;
+                        default             -> true;
+                    };
+                } catch (NumberFormatException ignore) {
+                    statusOk = true; // input tak valid → anggap filter off
+                }
+            }
+
+            // hanya tampil jika lolos semua filter aktif
+            return urlOk && statusOk;
+        });
+
+        // live update
+        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
     }
 
     // ============================= PAGINATION ===============================

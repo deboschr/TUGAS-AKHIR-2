@@ -83,7 +83,7 @@ public class Crawler {
             currLink.setIsWebpage(true);
 
             // Ekstrak seluruh url yang ada di webpage
-            Map<String, String> linksOnWebpage = extractUrl(doc);
+            Map<String, String> linksOnWebpage = extractLink(doc);
 
             // Jalankan pemrosesan tiap link di virtual thread terpisah
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -146,7 +146,7 @@ public class Crawler {
         isStopped = true;
     }
 
-    private Map<String, String> extractUrl(Document doc) {
+    private Map<String, String> extractLink(Document doc) {
 
         Map<String, String> urlMap = new HashMap<>();
 

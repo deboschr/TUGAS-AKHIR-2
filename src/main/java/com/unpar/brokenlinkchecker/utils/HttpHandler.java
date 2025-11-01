@@ -1,6 +1,5 @@
 package com.unpar.brokenlinkchecker.utils;
 
-import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.Link;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -8,7 +7,6 @@ import okhttp3.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
