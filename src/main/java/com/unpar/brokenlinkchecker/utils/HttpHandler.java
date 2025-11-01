@@ -28,10 +28,6 @@ public class HttpHandler {
 
     private Document fetch(Link link, Boolean isParseDoc) {
         try {
-            String host = UrlHandler.getHost(link.getUrl());
-            RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
-            limiter.delay();
-
             Request request = new Request.Builder().url(link.getUrl()).header("User-Agent", USER_AGENT).get().build();
 
             try (Response res = OK_HTTP.newCall(request).execute()) {
@@ -41,6 +37,7 @@ public class HttpHandler {
                 String contentType = res.header("Content-Type", "");
                 String finalUrl = res.request().url().toString();
 
+                assert contentType != null;
                 boolean isHtml = contentType.toLowerCase().contains("text/html");
                 if (isParseDoc && statusCode == 200 && isHtml) {
                     try {

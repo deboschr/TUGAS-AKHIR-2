@@ -110,7 +110,7 @@ public class Crawler {
                     if (existingLink != null) {
                         // Pake synchronized untuk mencegah race condition pada objek existingLink
                         synchronized (existingLink) {
-                            existingLink.setConnection(currLink, anchorText);
+                            existingLink.addConnection(currLink, anchorText);
                         }
                         // Skip ke iterasi berikutnya
                         return;
@@ -121,7 +121,7 @@ public class Crawler {
 
                     // Buat objek link baru dan bikin koneksi dengan webpage
                     Link link = new Link(url);
-                    link.setConnection(currLink, anchorText);
+                    link.addConnection(currLink, anchorText);
 
                     // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
                     if (host.equalsIgnoreCase(rootHost)) {

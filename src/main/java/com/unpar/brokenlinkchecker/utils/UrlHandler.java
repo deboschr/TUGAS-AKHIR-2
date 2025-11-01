@@ -18,7 +18,7 @@ public class UrlHandler {
      * 5. Hapus fragment (#...)
      *
      * @param rawUrl input mentah
-     * @return URL hasil normalisasi atau null jika tidak valid
+     * @return URL hasil normalisasi atau null jika tidak memenuhi aturan atau URL asli kalau sintaks tidak valid
      */
     public static String normalizeUrl(String rawUrl) {
         // URL tidak boleh null atau string kosong
@@ -62,14 +62,7 @@ public class UrlHandler {
 
 
             // ===== rakit ulang tanpa fragment =====
-            URI cleaned = new URI(
-                    scheme.toLowerCase(),
-                    null,
-                    host.toLowerCase(),
-                    port,
-                    path,
-                    query,
-                    null // fragment dihapus
+            URI cleaned = new URI(scheme.toLowerCase(), null, host.toLowerCase(), port, path, query, null // fragment dihapus
             );
 
             return cleaned.toASCIIString();

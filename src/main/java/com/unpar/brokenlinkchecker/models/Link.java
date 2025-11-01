@@ -1,10 +1,9 @@
 package com.unpar.brokenlinkchecker.models;
 
+import com.unpar.brokenlinkchecker.utils.HttpHandler;
 import javafx.beans.property.*;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.unpar.brokenlinkchecker.utils.HttpStatus;
 
 public class Link {
 
@@ -47,7 +46,6 @@ public class Link {
       url.set(value);
    }
 
-   @SuppressWarnings("exports")
    public StringProperty urlProperty() {
       return url;
    }
@@ -62,7 +60,6 @@ public class Link {
       finalUrl.set(value != null ? value : "");
    }
 
-   @SuppressWarnings("exports")
    public StringProperty finalUrlProperty() {
       return finalUrl;
    }
@@ -74,7 +71,7 @@ public class Link {
    }
 
    public void setStatusCode(int value) {
-      String status = HttpStatus.getStatus(value);
+      String status = HttpHandler.getErrorStatus(value);
       if (status != null) {
          error.set(status);
       }
@@ -82,7 +79,6 @@ public class Link {
       statusCode.set(value);
    }
 
-   @SuppressWarnings("exports")
    public IntegerProperty statusProperty() {
       return statusCode;
    }
@@ -97,7 +93,6 @@ public class Link {
       contentType.set(value != null ? value : "");
    }
 
-   @SuppressWarnings("exports")
    public StringProperty contentTypeProperty() {
       return contentType;
    }
@@ -112,7 +107,6 @@ public class Link {
       error.set(value != null ? value : "");
    }
 
-   @SuppressWarnings("exports")
    public StringProperty errorProperty() {
       return error;
    }
@@ -127,7 +121,6 @@ public class Link {
       isWebpage.set(value);
    }
 
-   @SuppressWarnings("exports")
    public BooleanProperty isWebpageProperty() {
       return isWebpage;
    }
@@ -135,11 +128,7 @@ public class Link {
    // ===============================================================================
    // Relasi antar link
 
-   public Map<Link, String> getConnection() {
-      return connections;
-   }
-
-   public void setConnection(Link other, String anchorText) {
+   public void addConnection(Link other, String anchorText) {
       if (other == null || other == this) {
          return;
       }
@@ -149,7 +138,7 @@ public class Link {
       other.connections.putIfAbsent(this, anchorText != null ? anchorText : "");
    }
 
-   public void clearConnection() {
-      this.connections.clear();
+   public Map<Link, String> getConnection() {
+      return connections;
    }
 }
