@@ -26,7 +26,7 @@ public class HttpHandler {
             Map.entry(500, "500 Internal Server Error"), Map.entry(501, "501 Not Implemented"), Map.entry(502, "502 Bad Gateway"), Map.entry(503, "503 Service Unavailable"), Map.entry(504, "504 Gateway Timeout"), Map.entry(505, "505 HTTP Version Not Supported"), Map.entry(506, "506 Variant Also Negotiates"), Map.entry(507, "507 Insufficient Storage"), Map.entry(508, "508 Loop Detected"), Map.entry(510, "510 Not Extended"), Map.entry(511, "511 Network Authentication Required"));
 
 
-    private Document fetch(Link link, Boolean isParseDoc) {
+    public static Document fetch(Link link, Boolean isParseDoc) {
         try {
             Request request = new Request.Builder().url(link.getUrl()).header("User-Agent", USER_AGENT).get().build();
 

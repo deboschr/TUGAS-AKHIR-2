@@ -12,23 +12,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.unpar.brokenlinkchecker.utils.HttpHandler;
+import com.unpar.brokenlinkchecker.utils.RateLimiter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class Crawler {
-    // ===================== Konstanta =====================
-    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
-    private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder().followRedirects(true).connectTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membangun koneksi ke server
-            .readTimeout(20, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
-            .build();
-
-    // ==================== Internal state ====================
     // Untuk mengidentifikasi webpage
     private String rootHost;
 
@@ -41,21 +32,15 @@ public class Crawler {
     // Untuk menyimpan rate limiter per host biar tiap host punya batas request-nya
     private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
 
-    // Untuk menandai status proses
-    private volatile boolean isStopped = false;
-
-    // ===================== Callback =====================
-
     // Untuk mengirim link yang ditemukan
     private final Consumer<Link> linkConsumer;
+
+    // Untuk menandai status proses
+    private volatile boolean isStopped = false;
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
     }
-
-    // =========================================================
-    // Core
-    // =========================================================
 
     public void start(String seedUrl) {
         // set status
@@ -79,12 +64,12 @@ public class Crawler {
             }
 
             // Fetch dan parse body dari webpage link
-            Document doc = fetchUrl(currLink, true);
+            Document doc = HttpHandler.fetch(currLink, true);
 
             // Kirim link ke controller
             send(currLink);
 
-            if (currLink.getError().isEmpty()) {
+            if (!currLink.getError().isEmpty()) {
                 continue;
             }
 
@@ -130,8 +115,11 @@ public class Crawler {
                     }
                     // Kalau tidak maka lansung kunjungi/cek
                     else {
+                        RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
+                        limiter.delay();
+
                         // Fetch URL tanpa parse, karena kita ga butuh doc
-                        fetchUrl(link, false);
+                        HttpHandler.fetch(link, false);
 
                         // Simpan ke repositories kalau belum ada
                         repositories.putIfAbsent(url, link);
@@ -158,51 +146,6 @@ public class Crawler {
         isStopped = true;
     }
 
-    private Document fetchUrl(Link link, Boolean isParseDoc) {
-        try {
-            String host = UrlHandler.getHost(link.getUrl());
-            RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
-            limiter.delay();
-
-            Request request = new Request.Builder().url(link.getUrl()).header("User-Agent", USER_AGENT).get().build();
-
-            try (Response res = OK_HTTP.newCall(request).execute()) {
-
-                Document doc = null;
-                int statusCode = res.code();
-                String contentType = res.header("Content-Type", "");
-                String finalUrl = res.request().url().toString();
-
-                boolean isHtml = contentType.toLowerCase().contains("text/html");
-                if (isParseDoc && statusCode == 200 && isHtml) {
-                    try {
-                        String html = res.body().string();
-
-                        doc = Jsoup.parse(html, finalUrl);
-                    } catch (Exception parseErr) {
-                        doc = null;
-                    }
-                }
-
-                link.setFinalUrl(finalUrl);
-                link.setContentType(contentType);
-                link.setStatusCode(statusCode);
-
-                return doc;
-            }
-
-        } catch (Throwable e) {
-            String errorName = e.getClass().getSimpleName();
-            if (errorName.isBlank()) {
-                errorName = "UnknownError";
-            }
-
-            link.setError(errorName);
-
-            return null;
-        }
-    }
-
     private Map<String, String> extractUrl(Document doc) {
 
         Map<String, String> urlMap = new HashMap<>();
@@ -221,14 +164,9 @@ public class Crawler {
         return urlMap;
     }
 
-    // =========================================================
-    // Utility
-    // =========================================================
-
     /**
      * Method ini bertugas buat ngirim objek link yang ditemukan selama proses
      * crawling ke MainController.
-     *
      * Proses crawling dijalankan di background thread, sedangkan JavaFX cuma boleh
      * update komponen GUI dari thread utamanya (JavaFX Application Thread). Jadi
      * biar gak error, kita bungkus pemanggilan consumer pakai Platform.runLater(),
@@ -239,43 +177,6 @@ public class Crawler {
     private void send(Link link) {
         if (linkConsumer != null) {
             Platform.runLater(() -> linkConsumer.accept(link));
-        }
-    }
-
-    private static class RateLimiter {
-        // Waktu jarak antar request, karena 500ms maka hanya 2 req per detik
-        private static final long INTERVAL = 500L;
-
-        // Waktu dari request terakhir
-        private volatile long lastRequestTime = 0L;
-
-        /**
-         * Method utama untuk mengatur delay atau jarak waktu antar satu request ke
-         * request yang lain.
-         *
-         * synchronized artinya cuma satu thread dalam satu waktu yang bisa menjalankan
-         * method ini untuk 1 host yang sama. Jadi kalau ada 3 thread yang akses host
-         * yang sama barengan, mereka akan ngantri.
-         */
-        public synchronized void delay() {
-            // Waktu saat ini dalam epoch
-            long now = System.currentTimeMillis();
-
-            // Waktu untuk menggu
-            long waitTime = lastRequestTime + INTERVAL - now;
-
-            // Kalau masih belum lewat 500 ms dari request terakhir, tunggu dulu
-            if (waitTime > 0) {
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException e) {
-                    // Kalau thread dibatalkan, set flag interrupted biar caller tahu
-                    Thread.currentThread().interrupt();
-                }
-            }
-
-            // update waktu terakhir dengan waktu sekarang
-            lastRequestTime = System.currentTimeMillis();
         }
     }
 
