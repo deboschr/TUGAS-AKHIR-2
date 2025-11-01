@@ -2,9 +2,7 @@ package com.unpar.brokenlinkchecker.cores;
 
 import com.unpar.brokenlinkchecker.models.Link;
 
-import java.net.IDN;
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -68,7 +67,7 @@ public class Crawler {
         rateLimiters.clear();
 
         // set init value
-        rootHost = getHostUrl(seedUrl);
+        rootHost = UrlHandler.getHost(seedUrl);
         frontier.offer(new Link(seedUrl));
 
         while (!isStopped && !frontier.isEmpty()) {
@@ -85,12 +84,12 @@ public class Crawler {
             // Kirim link ke controller
             send(currLink);
 
-            if (currLink.getStatusCode() >= 400 || currLink.getError() != "") {
+            if (currLink.getError().isEmpty()) {
                 continue;
             }
 
             // Skip kalau dokumen kosong (bukan HTML) atau kalau beda host
-            String finalUrlHost = getHostUrl(currLink.getFinalUrl());
+            String finalUrlHost = UrlHandler.getHost(currLink.getFinalUrl());
             if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
                 continue;
             }
@@ -118,7 +117,7 @@ public class Crawler {
                     }
 
                     // Ambil hostnya buat dibandingan sama host seed url
-                    String host = getHostUrl(url);
+                    String host = UrlHandler.getHost(url);
 
                     // Buat objek link baru dan bikin koneksi dengan webpage
                     Link link = new Link(url);
@@ -161,7 +160,7 @@ public class Crawler {
 
     private Document fetchUrl(Link link, Boolean isParseDoc) {
         try {
-            String host = getHostUrl(link.getUrl());
+            String host = UrlHandler.getHost(link.getUrl());
             RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
             limiter.delay();
 
@@ -212,7 +211,7 @@ public class Crawler {
 
             String absoluteUrl = a.attr("abs:href");
 
-            String normalizedUrl = normalizeUrl(absoluteUrl);
+            String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl);
 
             if (normalizedUrl != null) {
                 urlMap.putIfAbsent(normalizedUrl, a.text().trim());
@@ -225,76 +224,6 @@ public class Crawler {
     // =========================================================
     // Utility
     // =========================================================
-
-    private String normalizeUrl(String rawUrl) {
-
-        if (rawUrl == null || rawUrl.trim().isEmpty()) {
-            return null;
-        }
-
-        URI url;
-        try {
-            url = URI.create(rawUrl.trim());
-        } catch (IllegalArgumentException e) {
-            return rawUrl;
-        }
-
-        // scheme
-        String scheme = url.getScheme();
-        if (scheme == null || scheme.isEmpty()) {
-            return rawUrl;
-        }
-        if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
-            return null;
-        }
-        scheme = scheme.toLowerCase();
-
-        // host
-        String host = url.getHost();
-        if (host == null || host.isEmpty()) {
-            return null;
-        }
-
-        // port
-        int port = url.getPort();
-        if ((scheme.equals("http") && port == 80) || (scheme.equals("https") && port == 443)) {
-            port = -1;
-        }
-
-        // path
-        String path = url.getPath();
-        if (path == null) {
-            path = "";
-        }
-
-        // query
-        String query = url.getRawQuery();
-
-        // Bangun ulang URL dengan objel URI tanpa menyertakan fragment
-        try {
-            URI cleanedUrl = new URI(scheme, null, host, port, path, query, null);
-            return cleanedUrl.toASCIIString();
-        } catch (URISyntaxException e) {
-            return null;
-        }
-    }
-
-    private String getHostUrl(String url) {
-        try {
-            URI uri = URI.create(url.trim());
-            String host = uri.getHost();
-
-            if (host == null || host.isEmpty()) {
-                return "";
-            }
-
-            // konversi ke format ASCII untuk domain internasional
-            return IDN.toASCII(host.toLowerCase());
-        } catch (IllegalArgumentException e) {
-            // URL tidak valid secara sintaks
-            return "";
-        }
-    }
 
     /**
      * Method ini bertugas buat ngirim objek link yang ditemukan selama proses

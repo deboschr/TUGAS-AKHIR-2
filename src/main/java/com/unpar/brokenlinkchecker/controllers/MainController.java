@@ -6,6 +6,7 @@ import com.unpar.brokenlinkchecker.models.CheckingStatus;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
 import com.unpar.brokenlinkchecker.utils.Exporter;
+import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -24,8 +25,6 @@ import javafx.stage.Stage;
 import java.awt.*;
 import java.io.File;
 import java.net.URI;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 public class MainController {
     // ======================== GUI Component ========================
@@ -75,12 +74,12 @@ public class MainController {
         });
     }
 
-    // ============================= EVENT HANDLERS =============================
+    // ============================= EVENT HANDLERS ===========================
     @FXML
     private void onStartClick() {
         String seedUrl = seedUrlField.getText().trim();
 
-        String cleanedSeedUrl = validateSeedUrl(seedUrl);
+        String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl);
 
         if (cleanedSeedUrl == null) {
             Application.openNotificationWindow("WARNING", "Please enter a valid seed URL before starting.");
@@ -169,7 +168,7 @@ public class MainController {
     }
 
 
-    // ============================= TITLE BAR =============================
+    // ============================= TITLE BAR ================================
     private void setTitleBar() {
         Stage stage = (Stage) titleBar.getScene().getWindow();
 
@@ -188,7 +187,7 @@ public class MainController {
         closeBtn.setOnAction(e -> stage.close());
     }
 
-    // ============================= BUTTON STATE & STYLE =============================
+    // ============================= BUTTON STATE =============================
     private void setButtonState() {
         summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
             switch (status) {
@@ -261,6 +260,56 @@ public class MainController {
                 case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
             }
         });
+    }
+
+    // ============================= FILTER CARD ==============================
+    private void setTableFilter(FilteredList<Link> view) {
+        Runnable apply = () -> view.setPredicate(link -> {
+            boolean urlOk = true;
+            String urlCond = urlFilterOption.getValue();
+            String urlText = urlFilterField.getText();
+
+            if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
+                String u = link.getUrl().toLowerCase();
+                String q = urlText.toLowerCase();
+                urlOk = switch (urlCond) {
+                    case "Equals"     -> u.equals(q);
+                    case "Contains"   -> u.contains(q);
+                    case "Starts With"-> u.startsWith(q);
+                    case "Ends With"  -> u.endsWith(q);
+                    default           -> true;
+                };
+            }
+
+            // ===== Status Code filter =====
+            boolean statusOk = true;
+            String scCond = statusCodeFilterOption.getValue();
+            String scText = statusCodeFilterField.getText();
+
+            if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
+                try {
+                    int in = Integer.parseInt(scText.trim());
+                    int code = link.getStatusCode();
+                    statusOk = switch (scCond) {
+                        case "Equals"       -> code == in;
+                        case "Greater Than" -> code >  in;
+                        case "Less Than"    -> code <  in;
+                        default             -> true;
+                    };
+                } catch (NumberFormatException ignore) {
+                    statusOk = true; // input tak valid → anggap filter off
+                }
+            }
+
+            // hanya tampil jika lolos semua filter aktif
+            return urlOk && statusOk;
+        });
+
+        // live update
+        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
+        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
     }
 
     // ============================= RESULT TABLE =============================
@@ -351,56 +400,7 @@ public class MainController {
         setPagination(view);
     }
 
-    private void setTableFilter(FilteredList<Link> view) {
-        Runnable apply = () -> view.setPredicate(link -> {
-            boolean urlOk = true;
-            String urlCond = urlFilterOption.getValue();
-            String urlText = urlFilterField.getText();
-
-            if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
-                String u = link.getUrl().toLowerCase();
-                String q = urlText.toLowerCase();
-                urlOk = switch (urlCond) {
-                    case "Equals"     -> u.equals(q);
-                    case "Contains"   -> u.contains(q);
-                    case "Starts With"-> u.startsWith(q);
-                    case "Ends With"  -> u.endsWith(q);
-                    default           -> true;
-                };
-            }
-
-            // ===== Status Code filter =====
-            boolean statusOk = true;
-            String scCond = statusCodeFilterOption.getValue();
-            String scText = statusCodeFilterField.getText();
-
-            if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
-                try {
-                    int in = Integer.parseInt(scText.trim());
-                    int code = link.getStatusCode();
-                    statusOk = switch (scCond) {
-                        case "Equals"       -> code == in;
-                        case "Greater Than" -> code >  in;
-                        case "Less Than"    -> code <  in;
-                        default             -> true;
-                    };
-                } catch (NumberFormatException ignore) {
-                    statusOk = true; // input tak valid → anggap filter off
-                }
-            }
-
-            // hanya tampil jika lolos semua filter aktif
-            return urlOk && statusOk;
-        });
-
-        // live update
-        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
-    }
-
-    // ============================= PAGINATION =============================
+    // ============================= PAGINATION ===============================
     private void setPagination(FilteredList<Link> view) {
         updatePagination(view);
 
@@ -477,97 +477,4 @@ public class MainController {
         });
         paginationBar.getChildren().add(nextBtn);
     }
-
-    // ============================= UTILS =============================
-    /**
-     * Validasi dan normalisasi seed URL.
-     *
-     * Aturan:
-     * 1. Wajib punya scheme (http / https)
-     * 2. Wajib punya host
-     * 3. Hapus port jika default (80 untuk http, 443 untuk https)
-     * 4. Bersihkan path dari dot-segment (., ..)
-     * 5. Hapus fragment (#...)
-     *
-     * @param rawUrl input mentah dari TextField
-     * @return URL yang sudah divalidasi dan dinormalisasi, atau null jika tidak
-     * valid
-     */
-    private String validateSeedUrl(String rawUrl) {
-        if (rawUrl == null || rawUrl.isBlank()) return null;
-
-        try {
-            // tambahkan skema default jika user lupa (misal "example.com" →
-            // "http://example.com")
-            if (!rawUrl.matches("(?i)^https?://.*")) {
-                rawUrl = "http://" + rawUrl.trim();
-            }
-
-            URI uri = new URI(rawUrl.trim());
-
-            String scheme = uri.getScheme();
-            String host = uri.getHost();
-            int port = uri.getPort();
-            String path = uri.getRawPath();
-            String query = uri.getRawQuery();
-
-            // ===== validasi dasar =====
-            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-                return null; // skema tidak valid
-            }
-
-            if (host == null || host.isEmpty()) {
-                return null; // host wajib ada
-            }
-
-            // ===== bersihkan port =====
-            if ((scheme.equalsIgnoreCase("http") && port == 80) || (scheme.equalsIgnoreCase("https") && port == 443)) {
-                port = -1; // hapus port default
-            }
-
-            // ===== bersihkan path (dot segment) =====
-            path = normalizePath(path);
-
-            // ===== rakit ulang tanpa fragment =====
-            URI cleaned = new URI(scheme.toLowerCase(), null, host.toLowerCase(), port, path, query, null // fragment dihapus
-            );
-
-            return cleaned.toASCIIString();
-
-        } catch (Exception e) {
-            return null; // URL tidak valid
-        }
-    }
-
-    /**
-     * Bersihkan dot-segment (., ..) dari path sesuai RFC 3986 Section 5.2.4
-     */
-    private String normalizePath(String path) {
-        if (path == null || path.isEmpty()) {
-            return "/";
-        }
-
-        Deque<String> segments = new ArrayDeque<>();
-
-        for (String part : path.split("/")) {
-            if (part.equals("") || part.equals(".")) {
-                continue;
-            } else if (part.equals("..")) {
-                if (!segments.isEmpty()) {
-                    segments.removeLast();
-                }
-            } else {
-                segments.add(part);
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        for (String seg : segments) {
-            sb.append("/").append(seg);
-        }
-
-        return sb.isEmpty() ? "/" : sb.toString();
-    }
-
 }
