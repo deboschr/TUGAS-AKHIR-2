@@ -45,6 +45,8 @@ public class MainController {
 
     // ======================== Data Model ===========================
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
+    private final FilteredList<Link> webpageLinks = new FilteredList<>(allLinks, link -> link.isWebpage());
+    private final FilteredList<Link> brokenLinks = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
     private final Summary summaryCard = new Summary();
 
     // ======================== Drag Window ==========================
@@ -67,8 +69,10 @@ public class MainController {
         Platform.runLater(() -> {
             setTitleBar();
             setButtonState();
-            setSummary();
+            serSummaryCard();
+            setFilterCard();
             setTableView();
+            setPagination();
 
             crawler = new Crawler(link -> allLinks.add(link));
         });
@@ -120,8 +124,6 @@ public class MainController {
             return;
         }
 
-        // Ambil hanya broken links (error ≠ kosong)
-        var brokenLinks = allLinks.filtered(link -> !link.getError().isEmpty());
         if (brokenLinks.isEmpty()) {
             Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
             return;
@@ -133,11 +135,11 @@ public class MainController {
         chooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
                 new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
-                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json")
-        );
+                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
 
         File file = chooser.showSaveDialog(null);
-        if (file == null) return;
+        if (file == null)
+            return;
 
         // Jalankan export di background thread agar UI tidak freeze
         new Thread(() -> {
@@ -151,22 +153,21 @@ public class MainController {
                 } else if (name.endsWith(".json")) {
                     ExportHandler.exportToJson(brokenLinks, file);
                 } else {
-                    Platform.runLater(() ->
-                            Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
+                    Platform.runLater(
+                            () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
                     return;
                 }
 
-                Platform.runLater(() ->
-                        Application.openNotificationWindow("SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
+                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS",
+                        "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() ->
-                        Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
+                Platform.runLater(
+                        () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
             }
         }).start();
     }
-
 
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
@@ -240,21 +241,12 @@ public class MainController {
         // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
         brokenLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        // Sumber data
+        // Set ke tabel
+        brokenLinkTable.setItems(brokenLinks);
+
+        // Sumber data tiap kolom
         errorColumn.setCellValueFactory(cell -> cell.getValue().errorProperty());
         urlColumn.setCellValueFactory(cell -> cell.getValue().urlProperty());
-
-        // Filter layer 1: hanya broken links
-        FilteredList<Link> brokenOnly = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
-
-        // Filter layer 2: filter view
-        FilteredList<Link> view = new FilteredList<>(brokenOnly, l -> true);
-
-        // Set ke tabel
-        brokenLinkTable.setItems(view);
-
-        // Hook filter UI -> predicate 'view'
-        setTableFilter(view);
 
         // Kalau baris di klik maka akan buka jendela baru
         brokenLinkTable.setRowFactory(tv -> {
@@ -268,6 +260,7 @@ public class MainController {
             return row;
         });
 
+        // Warna pada kolom error
         errorColumn.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -282,9 +275,9 @@ public class MainController {
 
                     // warna merah untuk error dari status code
                     if (code >= 400 && code < 600) {
-                        setStyle("-fx-text-fill: #ef4444;");
-                    } else {
                         setStyle("-fx-text-fill: #f9fafb;");
+                    } else {
+                        setStyle("-fx-text-fill: #ef4444;");
                     }
                 }
             }
@@ -319,25 +312,19 @@ public class MainController {
             }
         });
 
-        setPagination(view);
     }
 
     // ============================= SUMMARY CARD =============================
-    private void setSummary() {
-
+    private void serSummaryCard() {
         // Label mengikuti nilai di Summary
         checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
         totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
         webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
         brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
 
-        // Total links: langsung binding ke ukuran allLinks
         summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
-        // Webpage links: hitung berapa banyak link di allLinks yang isWebpage == true
-        summaryCard.webpageLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(Link::isWebpage).count(), allLinks));
-
-        // Broken links: hitung link yang error-nya tidak kosong
-        summaryCard.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(link -> !link.getError().isEmpty()).count(), allLinks));
+        summaryCard.webpageLinksProperty().bind(Bindings.size(webpageLinks));
+        summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
 
         // Warna dinamis berdasarkan status
         summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
@@ -351,8 +338,12 @@ public class MainController {
     }
 
     // ============================= FILTER CARD ==============================
-    private void setTableFilter(FilteredList<Link> view) {
-        Runnable apply = () -> view.setPredicate(link -> {
+    private void setFilterCard() {
+        Runnable apply = () -> brokenLinks.setPredicate(link -> {
+
+            if (link.getError().isEmpty()) {
+                return false;
+            }
 
             // ===== URL filter =====
             boolean urlOk = true;
@@ -363,11 +354,11 @@ public class MainController {
                 String u = link.getUrl().toLowerCase();
                 String q = urlText.toLowerCase();
                 urlOk = switch (urlCond) {
-                    case "Equals"     -> u.equals(q);
-                    case "Contains"   -> u.contains(q);
-                    case "Starts With"-> u.startsWith(q);
-                    case "Ends With"  -> u.endsWith(q);
-                    default           -> true;
+                    case "Equals" -> u.equals(q);
+                    case "Contains" -> u.contains(q);
+                    case "Starts With" -> u.startsWith(q);
+                    case "Ends With" -> u.endsWith(q);
+                    default -> true;
                 };
             }
 
@@ -381,10 +372,10 @@ public class MainController {
                     int in = Integer.parseInt(scText.trim());
                     int code = link.getStatusCode();
                     statusOk = switch (scCond) {
-                        case "Equals"       -> code == in;
-                        case "Greater Than" -> code >  in;
-                        case "Less Than"    -> code <  in;
-                        default             -> true;
+                        case "Equals" -> code == in;
+                        case "Greater Than" -> code > in;
+                        case "Less Than" -> code < in;
+                        default -> true;
                     };
                 } catch (NumberFormatException ignore) {
                     statusOk = true; // input tak valid → anggap filter off
@@ -403,34 +394,36 @@ public class MainController {
     }
 
     // ============================= PAGINATION ===============================
-    private void setPagination(FilteredList<Link> view) {
-        updatePagination(view);
+    private void setPagination() {
+        updatePagination();
 
         // kalau data berubah (misal filter diganti), pagination reset
-        view.addListener((javafx.collections.ListChangeListener<Link>) c -> {
+        brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> {
             currentPage = 1;
-            updatePagination(view);
+            updatePagination();
         });
     }
 
-    private void updatePagination(FilteredList<Link> view) {
-        int totalRows = view.size();
+    private void updatePagination() {
+        int totalRows = brokenLinks.size();
         totalPages = (int) Math.ceil((double) totalRows / ROWS_PER_PAGE);
-        if (totalPages == 0) totalPages = 1;
+        if (totalPages == 0)
+            totalPages = 1;
 
         // pastikan current page masih valid
-        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage > totalPages)
+            currentPage = totalPages;
 
         // ambil subset sesuai halaman
         int fromIndex = (currentPage - 1) * ROWS_PER_PAGE;
         int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, totalRows);
-        currentPageData.setAll(view.subList(fromIndex, toIndex));
+        currentPageData.setAll(brokenLinks.subList(fromIndex, toIndex));
 
         brokenLinkTable.setItems(currentPageData);
-        renderPaginationButtons(view);
+        renderPaginationButtons();
     }
 
-    private void renderPaginationButtons(FilteredList<Link> view) {
+    private void renderPaginationButtons() {
         paginationBar.getChildren().clear();
 
         // Tombol PREV
@@ -440,7 +433,7 @@ public class MainController {
         prevBtn.setOnAction(e -> {
             if (currentPage > 1) {
                 currentPage--;
-                updatePagination(view);
+                updatePagination();
             }
         });
         paginationBar.getChildren().add(prevBtn);
@@ -461,7 +454,7 @@ public class MainController {
             final int pageIndex = i;
             pageBtn.setOnAction(e -> {
                 currentPage = pageIndex;
-                updatePagination(view);
+                updatePagination();
             });
 
             paginationBar.getChildren().add(pageBtn);
@@ -474,7 +467,7 @@ public class MainController {
         nextBtn.setOnAction(e -> {
             if (currentPage < totalPages) {
                 currentPage++;
-                updatePagination(view);
+                updatePagination();
             }
         });
         paginationBar.getChildren().add(nextBtn);
