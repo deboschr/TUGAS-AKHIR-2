@@ -6,23 +6,23 @@
 <?import java.lang.String?>
 
 <BorderPane
-        xmlns:fx="http://javafx.com/fxml"
-        fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
-        stylesheets="@../styles/main.css">
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.unpar.brokenlinkchecker.controllers.MainControllerV2"
+    stylesheets="@../styles/main.css">
 
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
-            <Label text="Broken Link Checker" styleClass="title-text" HBox.hgrow="ALWAYS"/>
+            <Label text="Broken Link Checker" styleClass="title-text" HBox.hgrow="ALWAYS" />
 
             <!-- ini yang mendorong tombol ke kanan -->
-            <Region HBox.hgrow="ALWAYS"/>
+            <Region HBox.hgrow="ALWAYS" />
 
-            <Button text="&#x2014;" fx:id="minimizeBtn" styleClass="title-btn"/>
-            <Button text="&#x2610;" fx:id="maximizeBtn" styleClass="title-btn"/>
+            <Button text="&#x2014;" fx:id="minimizeBtn" styleClass="title-btn" />
+            <Button text="&#x2610;" fx:id="maximizeBtn" styleClass="title-btn" />
             <Button text="&#x2715;" fx:id="closeBtn">
                 <styleClass>
-                    <String fx:value="title-btn"/>
-                    <String fx:value="close-btn"/>
+                    <String fx:value="title-btn" />
+                    <String fx:value="close-btn" />
                 </styleClass>
             </Button>
         </HBox>
@@ -37,102 +37,102 @@
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
             <HBox spacing="10" alignment="CENTER_LEFT" styleClass="input-wrapper">
                 <TextField fx:id="seedUrlField" promptText="Enter Seed URL..." HBox.hgrow="ALWAYS"
-                           styleClass="input-field"/>
+                    styleClass="input-field" />
                 <Button fx:id="startBtn" text="Start" styleClass="btn-control"
-                        onAction="#onStartClick"/>
-                <Button fx:id="stopBtn" text="Stop" styleClass="btn-control" onAction="#onStopClick"/>
+                    onAction="#onStartClick" />
+                <Button fx:id="stopBtn" text="Stop" styleClass="btn-control" onAction="#onStopClick" />
             </HBox>
 
             <!-- ===================== SUMMARY & FILTERS ===================== -->
             <GridPane hgap="16" VBox.vgrow="ALWAYS">
                 <columnConstraints>
-                    <ColumnConstraints percentWidth="50"/>
-                    <ColumnConstraints percentWidth="50"/>
+                    <ColumnConstraints percentWidth="50" />
+                    <ColumnConstraints percentWidth="50" />
                 </columnConstraints>
 
                 <!-- ===== SUMMARY ===== -->
                 <VBox styleClass="card" spacing="12" GridPane.columnIndex="0"
-                      GridPane.hgrow="ALWAYS">
-                    <Label text="Summary" styleClass="section-title"/>
+                    GridPane.hgrow="ALWAYS">
+                    <Label text="Summary" styleClass="section-title" />
 
                     <HBox spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                         <!-- Checking Status -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Checking Status" styleClass="summary-subtitle"/>
-                            <Label fx:id="checkingStatusLabel" text="....." styleClass="status-idle"/>
+                            <Label text="Checking Status" styleClass="summary-subtitle" />
+                            <Label fx:id="checkingStatusLabel" text="....." styleClass="status-idle" />
                         </VBox>
 
                         <!-- Total Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Total Links" styleClass="summary-subtitle"/>
-                            <Label fx:id="totalLinksLabel" text="0" styleClass="summary-value"/>
+                            <Label text="Total Links" styleClass="summary-subtitle" />
+                            <Label fx:id="totalLinksLabel" text="0" styleClass="summary-value" />
                         </VBox>
 
                         <!-- Webpage Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Webpage Links" styleClass="summary-subtitle"/>
-                            <Label fx:id="webpageLinksLabel" text="0" styleClass="summary-value"/>
+                            <Label text="Webpage Links" styleClass="summary-subtitle" />
+                            <Label fx:id="webpageLinksLabel" text="0" styleClass="summary-value" />
                         </VBox>
 
                         <!-- Broken Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Broken Links" styleClass="summary-subtitle"/>
-                            <Label fx:id="brokenLinksLabel" text="0" styleClass="summary-value-red"/>
+                            <Label text="Broken Links" styleClass="summary-subtitle" />
+                            <Label fx:id="brokenLinksLabel" text="0" styleClass="summary-value-red" />
                         </VBox>
                     </HBox>
                 </VBox>
 
                 <!-- ===== FILTERS ===== -->
                 <VBox styleClass="card" spacing="12" GridPane.columnIndex="1"
-                      GridPane.hgrow="ALWAYS">
-                    <Label text="Filters" styleClass="section-title"/>
+                    GridPane.hgrow="ALWAYS">
+                    <Label text="Filters" styleClass="section-title" />
 
                     <GridPane hgap="8" vgap="12">
                         <columnConstraints>
-                            <ColumnConstraints percentWidth="15"/>
-                            <ColumnConstraints percentWidth="85"/>
+                            <ColumnConstraints percentWidth="15" />
+                            <ColumnConstraints percentWidth="85" />
                         </columnConstraints>
 
                         <!-- URL Filter -->
                         <Label text="URL" GridPane.columnIndex="0" GridPane.rowIndex="0"
-                               styleClass="summary-subtitle"/>
+                            styleClass="summary-subtitle" />
                         <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0"
-                              alignment="CENTER_LEFT">
+                            alignment="CENTER_LEFT">
                             <ComboBox fx:id="urlFilterOption" prefWidth="150" promptText="Condition"
-                                      styleClass="filter-combo">
+                                styleClass="filter-combo">
                                 <items>
                                     <FXCollections fx:factory="observableArrayList">
-                                        <String fx:value="Equals"/>
-                                        <String fx:value="Contains"/>
-                                        <String fx:value="Starts With"/>
-                                        <String fx:value="Ends With"/>
+                                        <String fx:value="Equals" />
+                                        <String fx:value="Contains" />
+                                        <String fx:value="Starts With" />
+                                        <String fx:value="Ends With" />
                                     </FXCollections>
                                 </items>
                             </ComboBox>
                             <TextField fx:id="urlFilterField" promptText="Enter URL..."
-                                       HBox.hgrow="ALWAYS"
-                                       styleClass="filter-field"/>
+                                HBox.hgrow="ALWAYS"
+                                styleClass="filter-field" />
                         </HBox>
 
                         <!-- Status Code Filter -->
                         <Label text="Status Code" GridPane.columnIndex="0" GridPane.rowIndex="1"
-                               styleClass="summary-subtitle"/>
+                            styleClass="summary-subtitle" />
                         <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1"
-                              alignment="CENTER_LEFT">
+                            alignment="CENTER_LEFT">
                             <ComboBox fx:id="statusCodeFilterOption" prefWidth="150"
-                                      promptText="Condition"
-                                      styleClass="filter-combo">
+                                promptText="Condition"
+                                styleClass="filter-combo">
                                 <items>
                                     <FXCollections fx:factory="observableArrayList">
-                                        <String fx:value="Equals"/>
-                                        <String fx:value="Greater Than"/>
-                                        <String fx:value="Less Than"/>
+                                        <String fx:value="Equals" />
+                                        <String fx:value="Greater Than" />
+                                        <String fx:value="Less Than" />
                                     </FXCollections>
                                 </items>
                             </ComboBox>
                             <TextField fx:id="statusCodeFilterField"
-                                       promptText="Enter Status Code..."
-                                       HBox.hgrow="ALWAYS" styleClass="filter-field"/>
+                                promptText="Enter Status Code..."
+                                HBox.hgrow="ALWAYS" styleClass="filter-field" />
                         </HBox>
                     </GridPane>
                 </VBox>
@@ -143,17 +143,17 @@
             <!-- ===================== RESULT SECTION ===================== -->
             <VBox spacing="12" VBox.vgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT">
-                    <Label text="Result" styleClass="section-title"/>
-                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="Result" styleClass="section-title" />
+                    <Region HBox.hgrow="ALWAYS" />
                     <Button fx:id="exportButton" text="Export" styleClass="btn-control"
-                            onAction="#onExportClick"/>
+                        onAction="#onExportClick" />
                 </HBox>
 
                 <!-- ====== Table Result ====== -->
                 <TableView fx:id="brokenLinkTable" styleClass="table-view" VBox.vgrow="NEVER">
                     <columns>
-                        <TableColumn fx:id="errorColumn" text="Error" prefWidth="200"/>
-                        <TableColumn fx:id="urlColumn" text="URL" prefWidth="800"/>
+                        <TableColumn fx:id="errorColumn" text="Error" prefWidth="200" />
+                        <TableColumn fx:id="urlColumn" text="URL" prefWidth="800" />
                     </columns>
                 </TableView>
 
