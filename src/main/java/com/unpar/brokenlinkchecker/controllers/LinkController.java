@@ -61,13 +61,16 @@ public class LinkController {
         contentTypeField.setText(link.getContentType());
         errorField.setText(link.getError());
 
+        // set isi list webpage links
+        webpageLinks.setAll(link.getConnection().entrySet());
+
         makeFieldClickable(urlField);
         makeFieldClickable(finalUrlField);
 
-        setTableView(link);
+        setTableView();
     }
 
-    private void setTableView(Link link) {
+    private void setTableView() {
 
         // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
         webpageLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -77,8 +80,7 @@ public class LinkController {
         anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
         webpageUrlColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
 
-        // set isi tabel
-        webpageLinks.setAll(link.getConnection().entrySet());
+
         webpageLinkTable.setItems(webpageLinks);
 
 

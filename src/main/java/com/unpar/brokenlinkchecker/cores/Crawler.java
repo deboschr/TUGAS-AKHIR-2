@@ -198,6 +198,11 @@ public class Crawler {
         }
     }
 
+    /**
+     *
+     * @param doc
+     * @return
+     */
     private Map<String, String> extractLink(Document doc) {
 
         Map<String, String> urlMap = new HashMap<>();
