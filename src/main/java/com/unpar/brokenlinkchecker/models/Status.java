@@ -1,6 +1,6 @@
 package com.unpar.brokenlinkchecker.models;
 
-public enum CheckingStatus {
+public enum Status {
     IDLE,
     CHECKING,
     STOPPED,

@@ -1,6 +1,6 @@
 package com.unpar.brokenlinkchecker.models;
 
-import com.unpar.brokenlinkchecker.utils.HttpHandler;
+import com.unpar.brokenlinkchecker.utils.HttpStatus;
 import javafx.beans.property.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +71,7 @@ public class Link {
    }
 
    public void setStatusCode(int value) {
-      String status = HttpHandler.getErrorStatus(value);
+      String status = HttpStatus.getErrorStatus(value);
       if (status != null) {
          error.set(status);
       }

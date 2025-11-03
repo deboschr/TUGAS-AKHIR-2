@@ -12,10 +12,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.unpar.brokenlinkchecker.utils.HttpHandler;
 import com.unpar.brokenlinkchecker.utils.RateLimiter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -37,6 +40,12 @@ public class Crawler {
 
     // Untuk menandai status proses
     private volatile boolean isStopped = false;
+
+    private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder() // Builder untuk bikin http client
+            .followRedirects(true) // Ikuti redirect dari server
+            .connectTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membangun koneksi ke server
+            .readTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
+            .build();
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
@@ -64,7 +73,7 @@ public class Crawler {
             }
 
             // Fetch dan parse body dari webpage link
-            Document doc = HttpHandler.fetch(currLink, true);
+            Document doc = fetchLink(currLink, true);
 
             // Kirim link ke controller
             send(currLink);
@@ -119,7 +128,7 @@ public class Crawler {
                         limiter.delay();
 
                         // Fetch URL tanpa parse, karena kita ga butuh doc
-                        HttpHandler.fetch(link, false);
+                        fetchLink(link, false);
 
                         // Simpan ke repositories kalau belum ada
                         repositories.putIfAbsent(url, link);
@@ -145,6 +154,48 @@ public class Crawler {
 
     public void stop() {
         isStopped = true;
+    }
+
+    private Document fetchLink(Link link, boolean isParseDoc) {
+        try {
+            Request request = new Request.Builder().url(link.getUrl()).header("User-Agent", "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)").get().build();
+
+            try (Response res = OK_HTTP.newCall(request).execute()) {
+
+                Document doc = null;
+                int statusCode = res.code();
+                String contentType = res.header("Content-Type", "");
+                String finalUrl = res.request().url().toString();
+
+                assert contentType != null;
+                boolean isHtml = contentType.toLowerCase().contains("text/html");
+                if (isParseDoc && statusCode == 200 && isHtml) {
+                    try {
+                        String html = res.body().string();
+
+                        doc = Jsoup.parse(html, finalUrl);
+                    } catch (Exception parseErr) {
+                        doc = null;
+                    }
+                }
+
+                link.setFinalUrl(finalUrl);
+                link.setContentType(contentType);
+                link.setStatusCode(statusCode);
+
+                return doc;
+            }
+
+        } catch (Throwable e) {
+            String errorName = e.getClass().getSimpleName();
+            if (errorName.isBlank()) {
+                errorName = "UnknownError";
+            }
+
+            link.setError(errorName);
+
+            return null;
+        }
     }
 
     private Map<String, String> extractLink(Document doc) {

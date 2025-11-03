@@ -7,7 +7,7 @@
 
 <BorderPane
     xmlns:fx="http://javafx.com/fxml"
-    fx:controller="com.unpar.brokenlinkchecker.controllers.MainControllerV2"
+    fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
     stylesheets="@../styles/main.css">
 
     <top>
@@ -59,25 +59,25 @@
                         <!-- Checking Status -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                             <Label text="Checking Status" styleClass="summary-subtitle" />
-                            <Label fx:id="checkingStatusLabel" text="....." styleClass="status-idle" />
+                            <Label fx:id="statusLabel" text="....." styleClass="status-idle" />
                         </VBox>
 
                         <!-- Total Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Total Links" styleClass="summary-subtitle" />
-                            <Label fx:id="totalLinksLabel" text="0" styleClass="summary-value" />
+                            <Label text="All Links" styleClass="summary-subtitle" />
+                            <Label fx:id="allLinksCountLabel" text="0" styleClass="summary-value" />
                         </VBox>
 
                         <!-- Webpage Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                             <Label text="Webpage Links" styleClass="summary-subtitle" />
-                            <Label fx:id="webpageLinksLabel" text="0" styleClass="summary-value" />
+                            <Label fx:id="webpageLinksCountLabel" text="0" styleClass="summary-value" />
                         </VBox>
 
                         <!-- Broken Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                             <Label text="Broken Links" styleClass="summary-subtitle" />
-                            <Label fx:id="brokenLinksLabel" text="0" styleClass="summary-value-red" />
+                            <Label fx:id="brokenLinksCountLabel" text="0" styleClass="summary-value-red" />
                         </VBox>
                     </HBox>
                 </VBox>

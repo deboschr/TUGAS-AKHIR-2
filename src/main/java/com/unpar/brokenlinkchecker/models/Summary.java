@@ -6,23 +6,23 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 public class Summary {
-   private final ObjectProperty<CheckingStatus> checkingStatus = new SimpleObjectProperty<>(CheckingStatus.IDLE);
+   private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.IDLE);
    private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
    private final IntegerProperty webpageLinks = new SimpleIntegerProperty(0);
    private final IntegerProperty brokenLinks = new SimpleIntegerProperty(0);
 
    // ===============================================================================
-   // CheckingStatus
-   public CheckingStatus getCheckingStatus() {
-      return checkingStatus.get();
+   // Status
+   public Status getStatus() {
+      return status.get();
    }
 
-   public void setCheckingStatus(CheckingStatus value) {
-      this.checkingStatus.set(value);
+   public void setStatus(Status value) {
+      this.status.set(value);
    }
 
-   public ObjectProperty<CheckingStatus> checkingStatusProperty() {
-      return checkingStatus;
+   public ObjectProperty<Status> statusProperty() {
+      return status;
    }
 
    // ===============================================================================

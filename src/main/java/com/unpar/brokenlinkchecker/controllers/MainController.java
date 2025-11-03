@@ -2,7 +2,7 @@ package com.unpar.brokenlinkchecker.controllers;
 
 import com.unpar.brokenlinkchecker.Application;
 import com.unpar.brokenlinkchecker.cores.Crawler;
-import com.unpar.brokenlinkchecker.models.CheckingStatus;
+import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
 import com.unpar.brokenlinkchecker.utils.ExportHandler;
@@ -33,7 +33,7 @@ public class MainController {
     @FXML
     private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportButton;
     @FXML
-    private Label checkingStatusLabel, totalLinksLabel, webpageLinksLabel, brokenLinksLabel;
+    private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
     private TextField seedUrlField, urlFilterField, statusCodeFilterField;
     @FXML
@@ -47,7 +47,7 @@ public class MainController {
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
     private final FilteredList<Link> webpageLinks = new FilteredList<>(allLinks, link -> link.isWebpage());
     private final FilteredList<Link> brokenLinks = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
-    private final Summary summaryCard = new Summary();
+    private final Summary summary = new Summary();
 
     // ======================== Drag Window ==========================
     private double xOffset;
@@ -93,7 +93,7 @@ public class MainController {
         // Kosongkan data lama
         allLinks.clear();
         // Update status jadi checking
-        summaryCard.setCheckingStatus(CheckingStatus.CHECKING);
+        summary.setStatus(Status.CHECKING);
 
         // jalanin di thread background
         new Thread(() -> {
@@ -102,7 +102,7 @@ public class MainController {
 
             // Kalau proses crawling udah beres secara alami, update status jadi completed
             if (!crawler.isStopped()) {
-                Platform.runLater(() -> summaryCard.setCheckingStatus(CheckingStatus.COMPLETED));
+                Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
             }
         }).start();
     }
@@ -111,15 +111,15 @@ public class MainController {
     private void onStopClick() {
         if (crawler != null) {
             crawler.stop();
-            summaryCard.setCheckingStatus(CheckingStatus.STOPPED);
+            summary.setStatus(Status.STOPPED);
         }
     }
 
     @FXML
     private void onExportClick() {
         // Pastikan proses sudah selesai
-        CheckingStatus status = summaryCard.getCheckingStatus();
-        if (status != CheckingStatus.STOPPED && status != CheckingStatus.COMPLETED) {
+        Status status = summary.getStatus();
+        if (status != Status.STOPPED && status != Status.COMPLETED) {
             Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
             return;
         }
@@ -190,7 +190,7 @@ public class MainController {
 
     // ============================= BUTTON STATE =============================
     private void setButtonState() {
-        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
+        summary.statusProperty().addListener((obs, old, status) -> {
             switch (status) {
                 case IDLE -> {
                     startBtn.setDisable(false);
@@ -317,22 +317,22 @@ public class MainController {
     // ============================= SUMMARY CARD =============================
     private void serSummaryCard() {
         // Label mengikuti nilai di Summary
-        checkingStatusLabel.textProperty().bind(summaryCard.checkingStatusProperty().asString());
-        totalLinksLabel.textProperty().bind(summaryCard.totalLinksProperty().asString());
-        webpageLinksLabel.textProperty().bind(summaryCard.webpageLinksProperty().asString());
-        brokenLinksLabel.textProperty().bind(summaryCard.brokenLinksProperty().asString());
+        statusLabel.textProperty().bind(summary.statusProperty().asString());
+        allLinksCountLabel.textProperty().bind(summary.totalLinksProperty().asString());
+        webpageLinksCountLabel.textProperty().bind(summary.webpageLinksProperty().asString());
+        brokenLinksCountLabel.textProperty().bind(summary.brokenLinksProperty().asString());
 
-        summaryCard.totalLinksProperty().bind(Bindings.size(allLinks));
-        summaryCard.webpageLinksProperty().bind(Bindings.size(webpageLinks));
-        summaryCard.brokenLinksProperty().bind(Bindings.size(brokenLinks));
+        summary.totalLinksProperty().bind(Bindings.size(allLinks));
+        summary.webpageLinksProperty().bind(Bindings.size(webpageLinks));
+        summary.brokenLinksProperty().bind(Bindings.size(brokenLinks));
 
         // Warna dinamis berdasarkan status
-        summaryCard.checkingStatusProperty().addListener((obs, old, status) -> {
+        summary.statusProperty().addListener((obs, old, status) -> {
             switch (status) {
-                case IDLE -> checkingStatusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
-                case CHECKING -> checkingStatusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
-                case STOPPED -> checkingStatusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
-                case COMPLETED -> checkingStatusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
+                case IDLE -> statusLabel.setStyle("-fx-text-fill: #f9fafb;"); // putih
+                case CHECKING -> statusLabel.setStyle("-fx-text-fill: #60a5fa;"); // biru
+                case STOPPED -> statusLabel.setStyle("-fx-text-fill: #ef4444;"); // merah
+                case COMPLETED -> statusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
             }
         });
     }
