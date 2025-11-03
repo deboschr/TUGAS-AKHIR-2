@@ -130,10 +130,11 @@ public class Crawler {
 
                 }));
 
-                // Tunggu semua task di halaman ini selesai sebelum lanjut ke frontier
-                // berikutnya
+                /**
+                 * Tunggu semua task di halaman ini selesai sebelum lanjut ke frontier berikutnya
+                 */
                 executor.shutdown();
-                executor.awaitTermination(30, TimeUnit.SECONDS);
+                executor.awaitTermination(15, TimeUnit.SECONDS);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

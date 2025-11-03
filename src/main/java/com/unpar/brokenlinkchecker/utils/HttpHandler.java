@@ -14,7 +14,7 @@ public class HttpHandler {
     private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
     private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder().followRedirects(true) // Ikuti redirect dari server
             .connectTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membangun koneksi ke server
-            .readTimeout(20, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
+            .readTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
             .build();
 
     private static final Map<Integer, String> STATUS_MAP = Map.ofEntries(
