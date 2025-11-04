@@ -166,18 +166,7 @@ public class MainController {
         }
     }
 
-    /**
-     * Event handler untuk tombol "Export".
-     * 
-     * Method ini menangani proses ekspor isi tabel
-     * 
-     * Langkah-langkah:
-     * - Memastikan proses crawling sudah berhenti
-     * - Memastikan ada data broken link untuk diekspor
-     * - Menampilkan dialog penyimpanan file
-     * - Menjalankan proses ekspor di background thread agar UI tidak freeze
-     * 
-     */
+
     @FXML
     private void onExportClick() {
         // Pastikan proses sudah selesai
@@ -195,55 +184,7 @@ public class MainController {
             return;
         }
 
-        // Buat dialog pemilihan lokasi penyimpanan file
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Simpan hasil export");
-
-        // Tentukan format file yang didukung
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
-                new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
-                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
-
-        // Tampilkan dialog simpan dan ambil file tujuan
-        File file = chooser.showSaveDialog(null);
-
-        // Kalay file null berarti pengguna batal memilih file
-        if (file == null) {
-            return;
-        }
-
-        // Jalankan export di background thread agar UI tidak freeze
-        new Thread(() -> {
-            try {
-                // Ambil nama file
-                String name = file.getName().toLowerCase();
-
-                // Pilih format ekspor berdasarkan ekstensi file
-                if (name.endsWith(".xlsx")) {
-                    ExportHandler.exportToExcel(brokenLinks, file);
-                } else if (name.endsWith(".csv")) {
-                    ExportHandler.exportToCsv(brokenLinks, file);
-                } else if (name.endsWith(".json")) {
-                    ExportHandler.exportToJson(brokenLinks, file);
-                } else {
-                    // Jika ekstensi tidak dikenali → tampilkan peringatan
-                    Platform.runLater(
-                            () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
-                    return;
-                }
-
-                // Jika ekspor berhasil → tampilkan notifikasi sukses
-                Platform.runLater(() -> Application.openNotificationWindow(
-                        "SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                // Jika terjadi error selama ekspor tampilkan pesan error di notifikasi
-                Platform.runLater(
-                        () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
-            }
-        }).start();
+        Application.openNotificationWindow("WARNING", "Fitur belum diimplementasikan.");
     }
 
     // ============================= TITLE BAR ================================
