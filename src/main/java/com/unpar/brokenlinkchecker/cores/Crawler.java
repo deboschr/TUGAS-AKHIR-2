@@ -92,15 +92,18 @@ public class Crawler {
             currLink.setIsWebpage(true);
 
             // Ekstrak seluruh url yang ada di webpage
-            Map<String, String> linksOnWebpage = extractLink(doc);
+            Map<Link, String> linksOnWebpage = extractLink(doc);
 
             // Jalankan pemrosesan tiap link di virtual thread terpisah
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
-                linksOnWebpage.forEach((url, anchorText) -> executor.submit(() -> {
+                linksOnWebpage.forEach((link, anchorText) -> executor.submit(() -> {
+
+                    // Bikin koneksi dengan webpage
+                    link.addConnection(currLink, anchorText);
 
                     // Cek dulu apakah URL ini sudah ada di repositories
-                    Link existingLink = repositories.get(url);
+                    Link existingLink = repositories.get(link.getUrl());
                     if (existingLink != null) {
                         // Pake synchronized untuk mencegah race condition pada objek existingLink
                         synchronized (existingLink) {
@@ -110,14 +113,10 @@ public class Crawler {
                         return;
                     }
 
-                    // Ambil hostnya buat dibandingan sama host seed url
-                    String host = UrlHandler.getHost(url);
+                    // Ambil hostnya buat dibandingan sama host seed link
+                    String host = UrlHandler.getHost(link.getUrl());
 
-                    // Buat objek link baru dan bikin koneksi dengan webpage
-                    Link link = new Link(url);
-                    link.addConnection(currLink, anchorText);
-
-                    // Kalau hostnya sama dengan seed url, maka masukan ke daftar yang akan di parse
+                    // Kalau hostnya sama dengan seed link, maka masukan ke daftar yang akan di parse
                     if (host.equalsIgnoreCase(rootHost)) {
                         // Masukan ke antrian paling belakang
                         frontier.offer(link);
@@ -131,7 +130,7 @@ public class Crawler {
                         fetchLink(link, false);
 
                         // Simpan ke repositories kalau belum ada
-                        repositories.putIfAbsent(url, link);
+                        repositories.putIfAbsent(link.getUrl(), link);
 
                         // Kirim link ke controller
                         send(link);
@@ -198,27 +197,21 @@ public class Crawler {
         }
     }
 
-    /**
-     *
-     * @param doc
-     * @return
-     */
-    private Map<String, String> extractLink(Document doc) {
-
-        Map<String, String> urlMap = new HashMap<>();
+    private Map<Link, String> extractLink(Document doc) {
+        Map<Link, String> result = new HashMap<>();
 
         for (Element a : doc.select("a[href]")) {
-
             String absoluteUrl = a.attr("abs:href");
-
             String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl);
 
             if (normalizedUrl != null) {
-                urlMap.putIfAbsent(normalizedUrl, a.text().trim());
+                Link link = new Link(normalizedUrl);
+                String anchorText = a.text().trim();
+                result.putIfAbsent(link, anchorText);
             }
         }
 
-        return urlMap;
+        return result;
     }
 
     /**
