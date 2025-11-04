@@ -26,6 +26,16 @@ import java.awt.*;
 import java.io.File;
 import java.net.URI;
 
+/**
+ * Controller utama aplikasi Broken Link Checker.
+ * Kelas ini mengatur seluruh interaksi antara elemen GUI (JavaFX) dengan logika
+ * program di backend, termasuk:
+ * - Mengelola status crawling dan hasil pemeriksaan link
+ * - Mengatur event handler tombol (Start, Stop, Export)
+ * - Menampilkan data hasil crawling pada tabel
+ * - Menangani filter, pagination, dan update tampilan summary
+ * - Mengatur perilaku jendela utama (minimize, maximize, drag, close)
+ */
 public class MainController {
     // ======================== GUI Component ========================
     @FXML
@@ -45,7 +55,7 @@ public class MainController {
 
     // ======================== Data Model ===========================
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
-    private final FilteredList<Link> webpageLinks = new FilteredList<>(allLinks, link -> link.isWebpage());
+    private final FilteredList<Link> webpageLinks = new FilteredList<>(allLinks, link -> link.isWebpage() == true);
     private final FilteredList<Link> brokenLinks = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
     private final Summary summary = new Summary();
 
@@ -59,7 +69,8 @@ public class MainController {
 
     private int currentPage = 1;
     private int totalPages = 1;
-    private ObservableList<Link> currentPageData = FXCollections.observableArrayList();
+
+    private final ObservableList<Link> currentPageData = FXCollections.observableArrayList();
 
     // ===============================================================
     private Crawler crawler;
@@ -79,73 +90,136 @@ public class MainController {
     }
 
     // ============================= EVENT HANDLERS ===========================
+
+    /**
+     * Event handler untuk tombol "Start".
+     * 
+     * Method ini dijalankan saat pengguna menekan tombol "Start".
+     * Prosesnya:
+     * - Mengambil URL awal dari input field dan membersihkan formatnya
+     * - Memvalidasi URL yang dimasukkan
+     * - Mengosongkan data hasil crawling sebelumnya
+     * - Menetapkan status aplikasi menjadi CHECKING
+     * - Menjalankan proses crawling di background thread
+     * 
+     * Proses crawling dilakukan di thread terpisah agar UI tetap responsif
+     * dan tidak freeze selama pemeriksaan tautan berlangsung.
+     */
     @FXML
     private void onStartClick() {
+        // Ambil teks dari field input seed URL dan hilangkan spasi di awal/akhir
         String seedUrl = seedUrlField.getText().trim();
 
+        // Normalisasi URL
         String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl);
 
+        // Jika hasil normalisasi null berarti URL tidak valid
         if (cleanedSeedUrl == null) {
+            // Tampilkan pesan peringatan ke pengguna
             Application.openNotificationWindow("WARNING", "Please enter a valid seed URL before starting.");
-            return;
+            return; // Hentikan proses start
         }
 
-        // Kosongkan data lama
+        // Kosongkan semua data link lama di tabel dan list internal
         allLinks.clear();
-        // Update status jadi checking
+
+        // Ubah status summary jadi CHECKING untuk menandakan proses sedang berjalan
         summary.setStatus(Status.CHECKING);
 
-        // jalanin di thread background
+        /*
+         * Jalankan proses crawling di background thread.
+         * 
+         * Crawler bekerja cukup lama dan melakukan banyak operasi jaringan,
+         * jadi harus dijalankan di thread terpisah agar tidak memblokir JavaFX
+         * Application Thread.
+         */
         new Thread(() -> {
-            // Jalankan crawler di backgroud thread
+            // Mulai proses crawling dengan seed URL yang sudah dibersihkan
             crawler.start(cleanedSeedUrl);
 
-            // Kalau proses crawling udah beres secara alami, update status jadi completed
+            /*
+             * Jika proses crawling selesai secara normal (bukan dihentikan manual),
+             * ubah status aplikasi menjadi COMPLETED.
+             * Platform.runLater() dipakai agar update status dijalankan
+             * di JavaFX Application Thread (karena summary di-bind ke GUI).
+             */
             if (!crawler.isStopped()) {
                 Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
             }
         }).start();
     }
 
+    /**
+     * Event handler untuk tombol "Stop".
+     * 
+     * Digunakan untuk menghentikan proses crawling yang sedang berjalan.
+     */
     @FXML
     private void onStopClick() {
+        // Pastikan crawler sudah pernah dibuat (tidak null)
         if (crawler != null) {
+            // Hentikan proses crawling
             crawler.stop();
+
+            // Update status summary menjadi STOPPED
             summary.setStatus(Status.STOPPED);
         }
     }
 
+    /**
+     * Event handler untuk tombol "Export".
+     * 
+     * Method ini menangani proses ekspor isi tabel
+     * 
+     * Langkah-langkah:
+     * - Memastikan proses crawling sudah berhenti
+     * - Memastikan ada data broken link untuk diekspor
+     * - Menampilkan dialog penyimpanan file
+     * - Menjalankan proses ekspor di background thread agar UI tidak freeze
+     * 
+     */
     @FXML
     private void onExportClick() {
         // Pastikan proses sudah selesai
         Status status = summary.getStatus();
+
+        // Pastikan ekspor hanya bisa dilakukan setelah proses selesai
         if (status != Status.STOPPED && status != Status.COMPLETED) {
             Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
             return;
         }
 
+        // Pastikan ekspor hanya bisa dilakukan jika data di tabel ada
         if (brokenLinks.isEmpty()) {
             Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
             return;
         }
 
-        // Dialog penyimpanan file
+        // Buat dialog pemilihan lokasi penyimpanan file
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Simpan hasil export");
+
+        // Tentukan format file yang didukung
         chooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
                 new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
 
+        // Tampilkan dialog simpan dan ambil file tujuan
         File file = chooser.showSaveDialog(null);
-        if (file == null)
+
+        // Kalay file null berarti pengguna batal memilih file
+        if (file == null) {
             return;
+        }
 
         // Jalankan export di background thread agar UI tidak freeze
         new Thread(() -> {
             try {
+                // Ambil nama file
                 String name = file.getName().toLowerCase();
 
+                // Pilih format ekspor berdasarkan ekstensi file
                 if (name.endsWith(".xlsx")) {
                     ExportHandler.exportToExcel(brokenLinks, file);
                 } else if (name.endsWith(".csv")) {
@@ -153,16 +227,19 @@ public class MainController {
                 } else if (name.endsWith(".json")) {
                     ExportHandler.exportToJson(brokenLinks, file);
                 } else {
+                    // Jika ekstensi tidak dikenali → tampilkan peringatan
                     Platform.runLater(
                             () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
                     return;
                 }
 
-                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS",
-                        "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
+                // Jika ekspor berhasil → tampilkan notifikasi sukses
+                Platform.runLater(() -> Application.openNotificationWindow(
+                        "SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
 
             } catch (Exception e) {
                 e.printStackTrace();
+                // Jika terjadi error selama ekspor tampilkan pesan error di notifikasi
                 Platform.runLater(
                         () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
             }
@@ -171,25 +248,51 @@ public class MainController {
 
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
+        // Ambil reference ke stage (window) dari titleBar
         Stage stage = (Stage) titleBar.getScene().getWindow();
 
+        /*
+         * Waktu user neken mouse di area title bar,
+         * kita simpan posisi awal kursornya relatif terhadap window.
+         * Data ini nanti dipakai buat ngatur seberapa jauh window-nya harus digeser.
+         */
         titleBar.setOnMousePressed((MouseEvent e) -> {
-            xOffset = e.getSceneX();
-            yOffset = e.getSceneY();
+            xOffset = e.getSceneX(); // jarak X dari pojok kiri window
+            yOffset = e.getSceneY(); // jarak Y dari pojok atas window
         });
 
+        /*
+         * Kalau user lagi drag (tekan sambil gerak),
+         * kita ubah posisi window berdasarkan posisi kursor di layar.
+         */
         titleBar.setOnMouseDragged((MouseEvent e) -> {
-            stage.setX(e.getScreenX() - xOffset);
-            stage.setY(e.getScreenY() - yOffset);
+            stage.setX(e.getScreenX() - xOffset); // geser window secara horizontal
+            stage.setY(e.getScreenY() - yOffset); // geser window secara vertikal
         });
 
+        // Perkecil window saat tombol minimize diklik
         minimizeBtn.setOnAction(e -> stage.setIconified(true));
+        // Perbesar window saat tombol maximaize diklik
         maximizeBtn.setOnAction(e -> stage.setMaximized(!stage.isMaximized()));
+        // Tutup window saat tombol close diklik
         closeBtn.setOnAction(e -> stage.close());
     }
 
     // ============================= BUTTON STATE =============================
+    /**
+     * Method untuk mengatur perilaku tombol (Start, Stop, Export) berdasarkan
+     * status aplikasi.
+     */
     private void setButtonState() {
+        /*
+         * Tambahkan listener ke properti status di objek Summary.
+         * Listener ini akan terpanggil setiap kali nilai status berubah.
+         * 
+         * Parameter:
+         * - obs : objek Observable
+         * - old : status lama sebelum berubah
+         * - status : status baru setelah perubahan
+         */
         summary.statusProperty().addListener((obs, old, status) -> {
             switch (status) {
                 case IDLE -> {
@@ -236,6 +339,10 @@ public class MainController {
     }
 
     // ============================= RESULT TABLE =============================
+    /**
+     * Method untuk mengatur tampilan dan perilaku tabel yang menampilkan daftar
+     * broken link.
+     */
     private void setTableView() {
 
         // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
@@ -338,66 +445,92 @@ public class MainController {
     }
 
     // ============================= FILTER CARD ==============================
+    /**
+     * Method untuk mengatur logika filter pada tabel
+     */
     private void setFilterCard() {
-        Runnable apply = () -> brokenLinks.setPredicate(link -> {
+        // Runnable dipakai agar kita bisa memanggil filter.run() berkali-kali
+        Runnable filter = () -> brokenLinks.setPredicate(link -> {
 
+            /*
+             * Jika link tidak memiliki error, otomatis tidak ditampilkan.
+             * Karena hanya broken links (yang punya error) yang relevan untuk difilter.
+             */
             if (link.getError().isEmpty()) {
                 return false;
             }
 
-            // ===== URL filter =====
+            // ================== URL filter ==================
+            // Penanda untuk evaluasi filter URL
             boolean urlOk = true;
+            // Ambil kondisi filter
             String urlCond = urlFilterOption.getValue();
+            // Ambil teks pencarian yang dimasukkan user
             String urlText = urlFilterField.getText();
 
+            /*
+             * Filter URL hanya dijalankan jika kondisi (option) dan teks input tidak
+             * kosong. Kalau user belum mengisi, filter dianggap nonaktif (urlOk = true).
+             */
             if (urlCond != null && !urlCond.isBlank() && urlText != null && !urlText.isBlank()) {
+                // URL dari link
                 String u = link.getUrl().toLowerCase();
+                // Teks pencarian
                 String q = urlText.toLowerCase();
+
                 urlOk = switch (urlCond) {
-                    case "Equals" -> u.equals(q);
-                    case "Contains" -> u.contains(q);
-                    case "Starts With" -> u.startsWith(q);
-                    case "Ends With" -> u.endsWith(q);
+                    case "Equals" -> u.equals(q); // URL harus sama persis
+                    case "Contains" -> u.contains(q); // URL mengandung teks pencarian
+                    case "Starts With" -> u.startsWith(q); // URL diawali teks pencarian
+                    case "Ends With" -> u.endsWith(q); // URL diakhiri teks pencarian
                     default -> true;
                 };
             }
 
-            // ===== Status Code filter =====
-            boolean statusOk = true;
+            // ================== Status Code filter ==================
+            // Penanda untuk evaluasi filter Status Code
+            boolean scOk = true;
+            // Ambil kondisi filter status code
             String scCond = statusCodeFilterOption.getValue();
+            // Ambil nilai status code yang dimasukkan user
             String scText = statusCodeFilterField.getText();
 
             if (scCond != null && !scCond.isBlank() && scText != null && !scText.isBlank()) {
                 try {
                     int in = Integer.parseInt(scText.trim());
                     int code = link.getStatusCode();
-                    statusOk = switch (scCond) {
+                    scOk = switch (scCond) {
                         case "Equals" -> code == in;
                         case "Greater Than" -> code > in;
                         case "Less Than" -> code < in;
                         default -> true;
                     };
                 } catch (NumberFormatException ignore) {
-                    statusOk = true; // input tak valid → anggap filter off
+                    scOk = true; // input tak valid
                 }
             }
 
             // hanya tampil jika lolos semua filter aktif
-            return urlOk && statusOk;
+            return urlOk && scOk;
         });
 
-        // live update
-        urlFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        urlFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterField.textProperty().addListener((o, a, b) -> apply.run());
-        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> apply.run());
+        /*
+         * Tiap kali pengguna mengubah teks atau option di field filter,
+         * Runnable filter.run() akan dipanggil, sehingga hasil filter diperbarui
+         * langsung.
+         */
+        urlFilterField.textProperty().addListener((o, a, b) -> filter.run());
+        urlFilterOption.valueProperty().addListener((o, a, b) -> filter.run());
+        statusCodeFilterField.textProperty().addListener((o, a, b) -> filter.run());
+        statusCodeFilterOption.valueProperty().addListener((o, a, b) -> filter.run());
     }
 
     // ============================= PAGINATION ===============================
     private void setPagination() {
+        // Pertama kali, langsung render pagination berdasarkan data awal
         updatePagination();
 
-        // kalau data berubah (misal filter diganti), pagination reset
+        // kalau data berubah (misalnya karna filter), pagination reset
         brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> {
             currentPage = 1;
             updatePagination();
@@ -405,48 +538,79 @@ public class MainController {
     }
 
     private void updatePagination() {
+        // jumlah semua data/baris
         int totalRows = brokenLinks.size();
+
+        // hitung jumlah halaman
         totalPages = (int) Math.ceil((double) totalRows / ROWS_PER_PAGE);
-        if (totalPages == 0)
+
+        // Jika tidak ada data, tetap minimal 1 halaman
+        if (totalPages == 0) {
             totalPages = 1;
+        }
 
-        // pastikan current page masih valid
-        if (currentPage > totalPages)
+        // Pastikan currentPage tidak melebihi total halaman
+        if (currentPage > totalPages) {
             currentPage = totalPages;
+        }
 
-        // ambil subset sesuai halaman
+        // baris pertama pada halaman saat ini
         int fromIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        // baris terakhir pada halaman saat ini (tidak di sertakan)
         int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, totalRows);
+
+        // Ambil subset data dari brokenLinks untuk ditampilkan di halaman saat ini
         currentPageData.setAll(brokenLinks.subList(fromIndex, toIndex));
 
+        // Pasang subset data ini ke tabel
         brokenLinkTable.setItems(currentPageData);
+
+        // Render ulang tombol navigasi (Prev, angka halaman, Next)
         renderPaginationButtons();
     }
 
     private void renderPaginationButtons() {
+        // Bersihkan semua tombol lama
         paginationBar.getChildren().clear();
 
         // Tombol PREV
         Button prevBtn = new Button("<<");
+        // tambahkan CSS class
         prevBtn.getStyleClass().addAll("pagination-btn", "prev");
+        // nonaktif kalau di halaman pertama
         prevBtn.setDisable(currentPage <= 1);
+
+        // Aksi saat tombol diklik, pindah ke halaman sebelumnya
         prevBtn.setOnAction(e -> {
             if (currentPage > 1) {
                 currentPage--;
                 updatePagination();
             }
         });
+        // Tambahkan ke bar navigasi
         paginationBar.getChildren().add(prevBtn);
 
-        // Tombol nomor halaman
+        /*
+         * Tentukan rentang nomor halaman yang mau ditampilkan.
+         * Misal: kalau MAX_VISIBLE_PAGES = 5 dan currentPage = 7,
+         * maka bisa muncul halaman 5–9 agar posisi aktif tetap di tengah.
+         */
         int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
         int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
-        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES)
+        
+        // Kalau jumlah halaman kurang dari batas maksimum, geser startPage supaya pas
+        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES){
             startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+        }
 
+        /*
+         * Buat tombol per halaman
+         * Tiap tombol menampilkan nomor halaman dan bisa diklik untuk berpindah.
+         */
         for (int i = startPage; i <= endPage; i++) {
             Button pageBtn = new Button(String.valueOf(i));
             pageBtn.getStyleClass().add("pagination-btn");
+            
             if (i == currentPage) {
                 pageBtn.getStyleClass().add("active");
             }
@@ -472,4 +636,5 @@ public class MainController {
         });
         paginationBar.getChildren().add(nextBtn);
     }
+
 }

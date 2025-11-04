@@ -1,12 +1,19 @@
-.root {
-    -fx-border-color: #494949;      /* warna garis luar */
-    -fx-border-width: 1;            /* ketebalan garis */
+.root.root {
+	-fx-border-color: #494949; /* warna garis luar */
+	-fx-border-width: 1; /* ketebalan garis */
 }
 
 /* ======================= TITLE BAR ======================= */
 .title-bar {
 	-fx-background-color: #383838;
 	-fx-alignment: center-right;
+}
+
+.title-text {
+	-fx-text-fill: white;
+	-fx-font-size: 14px;
+	-fx-font-weight: bold;
+	-fx-padding: 0 0 0 20;
 }
 
 .title-btn {
@@ -23,8 +30,8 @@
 	-fx-effect: none;
 }
 
-.title-btn:hover {
-	-fx-background-color: #494949;
+.close-btn:hover {
+	-fx-background-color: #dc2626;
 	-fx-text-fill: white;
 }
 
@@ -44,10 +51,10 @@
 }
 
 /* ======================= LABELS & FIELDS ======================= */
-.label {
+.text-label {
 	-fx-text-fill: #f9fafb;
 	-fx-font-size: 13px;
-	-fx-font-weight: 600;
+	-fx-font-weight: bold;
 }
 
 .text-field {
@@ -136,7 +143,7 @@
 }
 
 .table-view .scroll-bar .thumb {
-	-fx-background-color: #6B7280;
+	-fx-background-color: #6b7280;
 	-fx-background-radius: 5px;
 }
 

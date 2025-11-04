@@ -10,78 +10,152 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 /**
- * Kelas utama untuk menjalankan aplikasi Broken Link Checker.
- * Bertanggung jawab untuk menginisialisasi window utama
- * dan menyediakan utilitas pembuka window lain (link & notifikasi).
+ * Kelas utama buat ngejalanin aplikasi.
+ * 
+ * Tugas kelas ini:
+ * - Ngejalanin aplikasi JavaFX
+ * - Nyimpen referensi ke window utama (mainStage)
+ * - Nyediain method buat buka window lain (link detail dan notifikasi)
+ * 
+ * Intinya kelas ini menjadi pusat kontrol buat semua window di aplikasi
  */
 public class Application extends javafx.application.Application {
 
-    private static Stage primaryStage;
+    // Stage utama aplikasi (buat window utama)
+    private static Stage mainStage;
 
+    /**
+     * Entry point program.
+     */
     public static void main(String[] args) {
+        // Method bawaan javafx buat memulai aplikasi
         launch();
     }
 
+    /**
+     * Method ini dipanggil otomatis oleh javafx saat aplikasi baru mulai
+     */
     @Override
     public void start(Stage stage) {
-        primaryStage = stage;
+        // Simpan stage utama supaya bisa dipakai di window lain
+        mainStage = stage;
+
+        // Buka window utama
         openMainWindow();
     }
 
-    // ======================== MAIN WINDOW ========================
+    // ==============================================================
+    // ======================== MAIN WINDOW =========================
+    // ==============================================================
+
+    /**
+     * Method buat ngebuka window utama aplikasi
+     */
     public static void openMainWindow() {
         try {
-            FXMLLoader loader = new FXMLLoader(Application.class.getResource("/com/unpar/brokenlinkchecker/views/main.fxml"));
+            // Load layout utama dari file FXML
+            FXMLLoader loader = new FXMLLoader(
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/views/main.fxml"));
+
+            // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
 
-            primaryStage.setScene(scene);
-            primaryStage.initStyle(StageStyle.UNDECORATED);
-            primaryStage.setMinWidth(1024);
-            primaryStage.setMinHeight(600);
-            primaryStage.centerOnScreen();
-            primaryStage.show();
+            // Pasang scene ke stage utama
+            mainStage.setScene(scene);
+            // Hilangin border dan title bar bawaan OS
+            mainStage.initStyle(StageStyle.UNDECORATED);
+            // Biar window di tengah layar
+            mainStage.centerOnScreen();
+            // Set ukuran minimum window
+            mainStage.setMinWidth(1024);
+            mainStage.setMinHeight(600);
+            // Tampilin window
+            mainStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ======================== LINK WINDOW ========================
+    // ==============================================================
+    // ======================== LINK WINDOW =========================
+    // ==============================================================
+
+    /**
+     * Method buat ngebuka window link detail
+     * 
+     * @param link Objek Link yang bakal ditampilin di window ini
+     */
     public static void openLinkWindow(Link link) {
         try {
-            FXMLLoader loader = new FXMLLoader(Application.class.getResource("/com/unpar/brokenlinkchecker/views/link.fxml"));
+            // Load layout fxml untuk window link detail
+            FXMLLoader loader = new FXMLLoader(
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/views/link.fxml"));
+
+            // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
 
-            Stage detailStage = new Stage(StageStyle.UNDECORATED);
-            detailStage.setScene(scene);
-            detailStage.initOwner(primaryStage);
-            detailStage.initModality(Modality.WINDOW_MODAL);
-            detailStage.centerOnScreen();
-
+            // Ambil controller dari FXML
             LinkController controller = loader.getController();
+            // Isi datanya pakai objek Link yang dikirim
             controller.setLink(link);
 
-            detailStage.show();
+            // Buat stage baru
+            Stage stage = new Stage();
+            // Pasang scene ke stage
+            stage.setScene(scene);
+            // Hilangin border dan title bar bawaan OS
+            stage.initStyle(StageStyle.UNDECORATED);
+            // Set parent/owner ke stage utama biar window ini nempel ke window utama
+            stage.initOwner(mainStage);
+            // Pake modal biar window lain ga bisa di-klik
+            stage.initModality(Modality.WINDOW_MODAL);
+            // Biar window di tengah layar
+            stage.centerOnScreen();
+            // Tampilin window
+            stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ======================== NOTIFICATION WINDOW =======================
+    // ==============================================================
+    // ==================== NOTIFICATION WINDOW =====================
+    // ==============================================================
+
+    /**
+     * Method buat ngebuka window notifikasi
+     * 
+     * @param type    Jenis notifikasi
+     * @param message Pesan yang mau ditampilin
+     */
     public static void openNotificationWindow(String type, String message) {
         try {
-            FXMLLoader loader = new FXMLLoader(Application.class.getResource("/com/unpar/brokenlinkchecker/views/notification.fxml"));
+            // Load layout notifikasi dari FXML
+            FXMLLoader loader = new FXMLLoader(
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/views/notification.fxml"));
+
+            // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
 
-            Stage notifStage = new Stage(StageStyle.UNDECORATED);
-            notifStage.setScene(scene);
-            notifStage.initOwner(primaryStage);
-            notifStage.initModality(Modality.APPLICATION_MODAL);
-            notifStage.centerOnScreen();
-
+            // Ambil controller notifikasi
             NotificationController controller = loader.getController();
+            // Isi data notifikasi (jenis dan pesan)
             controller.setNotification(type, message);
 
-            notifStage.show();
+            // Buat stage baru
+            Stage stage = new Stage();
+            // Pasang scene ke stage
+            stage.setScene(scene);
+            // Hilangin border dan title bar bawaan OS
+            stage.initStyle(StageStyle.UNDECORATED);
+            // Set parent/owner ke stage utama biar window ini nempel ke window utama
+            stage.initOwner(mainStage);
+            // Pake modal biar window lain ga bisa di-klik
+            stage.initModality(Modality.WINDOW_MODAL);
+            // Biar window di tengah layar
+            stage.centerOnScreen();
+            // Tampilin window
+            stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
