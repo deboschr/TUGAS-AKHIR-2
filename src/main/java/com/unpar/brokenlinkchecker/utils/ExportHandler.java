@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class ExportHandler {
     // ================================================================
-    // ============ EXCEL EXPORT (Apache POI) ==========================
+    // ============ EXCEL EXPORT (Apache POI) =========================
     // ================================================================
     public static void exportToExcel(List<Link> brokenLinks, File file) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
