@@ -1,3 +1,8 @@
+.root {
+    -fx-border-color: #494949;      /* warna garis luar */
+    -fx-border-width: 1;            /* ketebalan garis */
+}
+
 /* ======================= TITLE BAR ======================= */
 .title-bar {
 	-fx-background-color: #383838;
@@ -86,6 +91,10 @@
 	-fx-alignment: CENTER_LEFT;
 	-fx-padding: 0 10;
 	-fx-font-size: 13px;
+}
+
+.table-view .column-header-background {
+	-fx-background-color: #2b2b2b;
 }
 
 /* Body */
