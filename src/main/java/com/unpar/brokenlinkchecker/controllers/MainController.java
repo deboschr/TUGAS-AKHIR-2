@@ -93,7 +93,7 @@ public class MainController {
 
     /**
      * Event handler untuk tombol "Start".
-     * 
+     *
      * Method ini dijalankan saat pengguna menekan tombol "Start".
      * Prosesnya:
      * - Mengambil URL awal dari input field dan membersihkan formatnya
@@ -101,7 +101,7 @@ public class MainController {
      * - Mengosongkan data hasil crawling sebelumnya
      * - Menetapkan status aplikasi menjadi CHECKING
      * - Menjalankan proses crawling di background thread
-     * 
+     *
      * Proses crawling dilakukan di thread terpisah agar UI tetap responsif
      * dan tidak freeze selama pemeriksaan tautan berlangsung.
      */
@@ -145,7 +145,7 @@ public class MainController {
 
     /**
      * Event handler untuk tombol "Stop".
-     * 
+     *
      * Digunakan untuk menghentikan proses crawling yang sedang berjalan.
      */
     @FXML
@@ -214,6 +214,7 @@ public class MainController {
     }
 
     // ============================= BUTTON STATE =============================
+
     /**
      * Method untuk mengatur perilaku tombol (Start, Stop, Export) berdasarkan
      * status aplikasi.
@@ -222,7 +223,7 @@ public class MainController {
         /*
          * Tambahkan listener ke properti status di objek Summary.
          * Listener ini akan terpanggil setiap kali nilai status berubah.
-         * 
+         *
          * Parameter:
          * - obs : objek Observable
          * - old : status lama sebelum berubah
@@ -274,6 +275,7 @@ public class MainController {
     }
 
     // ============================= RESULT TABLE =============================
+
     /**
      * Method untuk mengatur tampilan dan perilaku tabel yang menampilkan daftar
      * broken link.
@@ -380,6 +382,7 @@ public class MainController {
     }
 
     // ============================= FILTER CARD ==============================
+
     /**
      * Method untuk mengatur logika filter pada tabel
      */
@@ -532,9 +535,9 @@ public class MainController {
          */
         int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
         int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
-        
+
         // Kalau jumlah halaman kurang dari batas maksimum, geser startPage supaya pas
-        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES){
+        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES) {
             startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
         }
 
@@ -545,7 +548,7 @@ public class MainController {
         for (int i = startPage; i <= endPage; i++) {
             Button pageBtn = new Button(String.valueOf(i));
             pageBtn.getStyleClass().add("pagination-btn");
-            
+
             if (i == currentPage) {
                 pageBtn.getStyleClass().add("active");
             }
