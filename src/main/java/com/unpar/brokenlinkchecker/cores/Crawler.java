@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -94,9 +95,13 @@ public class Crawler {
             // Ekstrak seluruh url yang ada di webpage
             Map<Link, String> linksOnWebpage = extractLink(doc);
 
-            // Jalankan pemrosesan tiap link di virtual thread terpisah
+            // Buat executor service berbasis virtual thread (manajer thread pool)
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-
+                /*
+                 * Buat executor berbasis virtual thread.
+                 * Untuk setiap tautan di halaman ini, jalankan task terpisah.
+                 * Task-nya berupa lambda yang akan memeriksa dan memproses link tersebut.
+                 */
                 linksOnWebpage.forEach((link, anchorText) -> executor.submit(() -> {
 
                     // Bikin koneksi dengan webpage
@@ -138,16 +143,22 @@ public class Crawler {
 
                 }));
 
-                /**
-                 * Tunggu semua task di halaman ini selesai sebelum lanjut ke frontier berikutnya
+                /*
+                 * Setelah semua task link dari satu halaman disubmit ke executor,
+                 * kita tutup executor biar ga menerima task baru lagi.
                  */
                 executor.shutdown();
-                executor.awaitTermination(15, TimeUnit.SECONDS);
+
+                /*
+                 * Tunggu sampai semua virtual thread yang tadi disubmit selesai bekerja
+                 * baru boleh lanjut ke frontier berikutnya.
+                 * Tunggu maksimal 30 detik semua thread selesai.
+                 */
+                executor.awaitTermination(30, TimeUnit.SECONDS);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-
         }
     }
 

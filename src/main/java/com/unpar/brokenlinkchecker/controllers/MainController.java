@@ -126,13 +126,7 @@ public class MainController {
         // Ubah status summary jadi CHECKING untuk menandakan proses sedang berjalan
         summary.setStatus(Status.CHECKING);
 
-        /*
-         * Jalankan proses crawling di background thread.
-         * 
-         * Crawler bekerja cukup lama dan melakukan banyak operasi jaringan,
-         * jadi harus dijalankan di thread terpisah agar tidak memblokir JavaFX
-         * Application Thread.
-         */
+        // Jalankan proses crawling di background thread.
         new Thread(() -> {
             // Mulai proses crawling dengan seed URL yang sudah dibersihkan
             crawler.start(cleanedSeedUrl);
