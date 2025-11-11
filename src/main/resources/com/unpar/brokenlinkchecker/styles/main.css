@@ -1,12 +1,26 @@
+.root {
+	-primary: #f4ebdb;
+	-secondary: #355e63;
+	-tertiary: #0a3a32;
+	-yellow: #feb83c;
+	-orange: #f59e0b;
+	-red: #e55548;
+	-blue: #368ea1;
+	-green: #32956c;
+	-grey-light: #7b8782;
+	-grey-dark: #485550;
+	-white: #f1f0eb;
+}
+
 /* ######################### TITLE BAR ######################### */
 .title-bar {
-	-fx-background-color: #383838;
+	-fx-background-color: -tertiary;
 	-fx-alignment: center-left;
 	-fx-spacing: 10;
 }
 
 .title-text {
-	-fx-text-fill: white;
+	-fx-text-fill: -white;
 	-fx-font-size: 14px;
 	-fx-font-weight: bold;
 	-fx-padding: 0 0 0 20;
@@ -14,7 +28,7 @@
 
 .title-btn {
 	-fx-background-color: transparent;
-	-fx-text-fill: #d1d5db;
+	-fx-text-fill: -white;
 	-fx-font-size: 16px;
 	-fx-min-width: 48px;
 	-fx-min-height: 36px;
@@ -27,25 +41,25 @@
 }
 
 .title-btn:hover {
-	-fx-background-color: #494949;
-	-fx-text-fill: white;
+	-fx-background-color: -green;
+	-fx-text-fill: -white;
 }
 .close-btn:hover {
-	-fx-background-color: #dc2626;
-	-fx-text-fill: white;
+	-fx-background-color: -red;
+	-fx-text-fill: -white;
 }
 
 /* ######################### CONTENT ######################### */
 .content-root {
 	-fx-padding: 24;
 	-fx-spacing: 24;
-	-fx-background-color: #1e1e1e;
+	-fx-background-color: -primary;
 }
 
 /* ======================== TEXT FIELD ======================== */
 .input-wrapper {
-	-fx-background-color: #2c2c2c;
-	-fx-border-color: #494949;
+	-fx-background-color: -secondary;
+	-fx-border-color: -tertiary;
 	-fx-border-width: 1;
 	-fx-background-radius: 8;
 	-fx-border-radius: 8;
@@ -53,12 +67,12 @@
 }
 
 .input-field {
-	-fx-background-color: #1e1e1e;
-	-fx-text-fill: #f9fafb;
-	-fx-prompt-text-fill: #a7a7a7;
+	-fx-background-color: -primary;
+	-fx-text-fill: -white;
+	-fx-prompt-text-fill: -grey-light;
 	-fx-background-radius: 6;
 	-fx-border-radius: 6;
-	-fx-border-color: #494949;
+	-fx-border-color: -tertiary;
 	-fx-border-width: 1;
 	-fx-padding: 8 12;
 	-fx-font-size: 14px;
@@ -66,9 +80,9 @@
 
 /* ======================== BUTTON ======================== */
 .btn-control {
-	-fx-background-color: #1e1e1e;
-	-fx-border-color: #494949;
-	-fx-text-fill: #e5e7eb;
+	-fx-background-color: -grey-dark;
+	-fx-border-color: -tertiary;
+	-fx-text-fill: -white;
 	-fx-background-radius: 6;
 	-fx-border-radius: 6;
 	-fx-padding: 8 20;
@@ -101,7 +115,7 @@
 .card {
 	-fx-background-color: #2c2c2c;
 	-fx-background-radius: 12;
-	-fx-border-color: #494949;
+	-fx-border-color: -tertiary;
 	-fx-border-radius: 12;
 	-fx-padding: 16;
 }
@@ -116,7 +130,7 @@
 .summary-box {
 	-fx-background-color: #383838;
 	-fx-background-radius: 8;
-	-fx-border-color: #494949;
+	-fx-border-color: -tertiary;
 	-fx-border-radius: 8;
 	-fx-alignment: CENTER;
 }
@@ -166,7 +180,7 @@
 
 .filter-field {
 	-fx-background-color: #1e1e1e;
-	-fx-border-color: #494949;
+	-fx-border-color: -tertiary;
 	-fx-border-radius: 6;
 	-fx-background-radius: 6;
 	-fx-text-fill: #f9fafb;
@@ -178,7 +192,7 @@
 
 .filter-combo {
 	-fx-background-color: #1e1e1e;
-	-fx-border-color: #494949;
+	-fx-border-color: -tertiary;
 	-fx-border-radius: 6;
 	-fx-background-radius: 6;
 	-fx-font-size: 13px;

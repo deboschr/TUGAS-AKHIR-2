@@ -142,12 +142,12 @@
 
             <!-- ===================== RESULT SECTION ===================== -->
             <VBox spacing="12" VBox.vgrow="ALWAYS">
-                <HBox alignment="CENTER_LEFT">
+                <!-- <HBox alignment="CENTER_LEFT">
                     <Label text="Result" styleClass="section-title" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Button fx:id="exportButton" text="Export" styleClass="btn-control"
                         onAction="#onExportClick" />
-                </HBox>
+                </HBox> -->
 
                 <!-- ====== Table Result ====== -->
                 <TableView fx:id="brokenLinkTable" styleClass="table-view" VBox.vgrow="NEVER">
