@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -27,7 +28,7 @@ public class Crawler {
     private String rootHost;
 
     // Untuk menyimoan antrian URL webpage yang akan di crawling (FIFO/BFS)
-    private final Queue<Link> frontier = new ArrayDeque<>();
+    private final Queue<Link> frontier = new ConcurrentLinkedQueue<>();
 
     // Untuk menyimpan daftar unik setiap URL yang ditemukan
     private final Map<String, Link> repositories = new ConcurrentHashMap<>();
