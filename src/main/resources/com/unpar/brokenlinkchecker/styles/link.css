@@ -1,16 +1,33 @@
+.root {
+	-primary: #f4ebdb;
+	-secondary: #2f5d50;
+	-tertiary: #0a3a32;
+	-yellow: #feb83c;
+	-orange: #f59e0b;
+	-red: #e55548;
+	-blue: #368ea1;
+	-green: #32956c;
+	-grey-light: #b6c5bf;
+	-grey-dark: #353e3a;
+	-white: #f1f0eb;
+	-black: #222222;
+	-radius: 8px;
+}
+
 .root.root {
-	-fx-border-color: #494949; /* warna garis luar */
-	-fx-border-width: 1; /* ketebalan garis */
+	-fx-border-color: -tertiary; /* warna garis luar */
+	-fx-border-width: 2; /* ketebalan garis */
 }
 
 /* ======================= TITLE BAR ======================= */
 .title-bar {
-	-fx-background-color: #383838;
+	-fx-background-color: -tertiary;
 	-fx-alignment: center-right;
+	-fx-background-insets: -1;
 }
 
 .title-text {
-	-fx-text-fill: white;
+	-fx-text-fill: -white;
 	-fx-font-size: 14px;
 	-fx-font-weight: bold;
 	-fx-padding: 0 0 0 20;
@@ -18,7 +35,7 @@
 
 .title-btn {
 	-fx-background-color: transparent;
-	-fx-text-fill: #d1d5db;
+	-fx-text-fill: -white;
 	-fx-font-size: 16px;
 	-fx-min-width: 48px;
 	-fx-min-height: 36px;
@@ -31,20 +48,20 @@
 }
 
 .close-btn:hover {
-	-fx-background-color: #dc2626;
-	-fx-text-fill: white;
+	-fx-background-color: -red;
+	-fx-text-fill: -white;
 }
 
 /* ======================= CONTENT ======================= */
 .content-root {
 	-fx-padding: 20;
-	-fx-background-color: #2c2c2c;
+	-fx-background-color: -primary;
 }
 
 /* ======================= CARD ======================= */
 .card {
-	-fx-background-color: #1e1e1e;
-	-fx-border-color: #494949;
+	-fx-background-color: -secondary;
+	-fx-border-color: -tertiary;
 	-fx-border-radius: 10;
 	-fx-background-radius: 10;
 	-fx-padding: 16;
@@ -52,26 +69,31 @@
 
 /* ======================= LABELS & FIELDS ======================= */
 .text-label {
-	-fx-text-fill: #f9fafb;
+	-fx-text-fill: -white;
 	-fx-font-size: 13px;
 	-fx-font-weight: bold;
 }
 
 .text-field {
-	-fx-background-color: #2b2b2b;
-	-fx-text-fill: #f9fafb;
-	-fx-border-color: #494949;
-	-fx-border-radius: 6;
-	-fx-background-radius: 6;
-	-fx-font-size: 13px;
-	-fx-padding: 6 10;
+	-fx-background-color: -primary;
+	-fx-background-radius: 8;
+	-fx-background-insets: 0;
+	-fx-border-radius: 8;
+	-fx-border-insets: -1;
+	-fx-border-color: -tertiary;
+	-fx-border-width: 1;
+	-fx-padding: 5 12;
+	-fx-pref-height: 40;
+	-fx-text-fill: -black;
+	-fx-prompt-text-fill: -grey-dark;
+	-fx-font-size: 15px;
 }
-
+/* 
 .single-line {
 	-fx-pref-height: 28px;
 	-fx-min-height: 28px;
 	-fx-max-height: 28px;
-}
+} */
 
 .text-field:disabled,
 .text-field:readonly {
@@ -80,61 +102,62 @@
 
 /* ======================= TABLE ======================= */
 .table-view {
-	-fx-background-color: #1e1e1e;
-	-fx-border-color: #303030;
-	-fx-table-cell-border-color: #303030;
+	-fx-background-color: -secondary;
+	-fx-border-color: -tertiary;
+	-fx-table-cell-border-color: -tertiary;
 }
 
 /* Header */
 .table-view .column-header {
-	-fx-background-color: #2b2b2b;
-	-fx-border-color: #303030;
+	-fx-background-color: -grey-dark;
+	-fx-border-color: -tertiary;
 	-fx-pref-height: 40px;
 }
 
 .table-view .column-header .label {
+	-fx-font-size: 15px;
 	-fx-font-weight: bold;
-	-fx-text-fill: #f9fafb;
+	-fx-text-fill: -white;
 	-fx-alignment: CENTER_LEFT;
 	-fx-padding: 0 10;
-	-fx-font-size: 13px;
 }
 
 .table-view .column-header-background {
-	-fx-background-color: #2b2b2b;
+	-fx-background-color: -grey-dark;
 }
 
 /* Body */
 .table-view .table-row-cell {
-	-fx-background-color: #1e1e1e;
+	-fx-background-color: -primary;
 }
 
 .table-view .table-row-cell:hover {
-	-fx-background-color: #2a2a2a;
+	-fx-background-color: -grey-light;
 }
 
 .table-view .table-cell {
-	-fx-text-fill: #f9fafb;
-	-fx-border-color: #303030;
+	-fx-text-fill: -grey-dark;
+	-fx-border-color: -tertiary;
 	-fx-padding: 6 8;
+	-fx-font-size: 15px;
 }
 
 /* Hyperlink */
 
 .hyperlink {
-	-fx-text-fill: #60a5fa;
+	-fx-text-fill: #19539a;
 }
 
 .hyperlink:hover {
-	-fx-text-fill: #93c5fd;
+	-fx-text-fill: #17447b;
 	-fx-underline: true;
 }
 
 /* ===================== Scrollbar TableView ===================== */
 .table-view .filler,
 .table-view .corner {
-	-fx-background-color: #2b2b2b;
-	-fx-border-color: #2b2b2b;
+	-fx-background-color: -grey-dark;
+	-fx-border-color: -grey-dark;
 }
 
 .table-view .scroll-bar:vertical,

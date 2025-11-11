@@ -38,7 +38,7 @@ public class MainController {
     @FXML
     private HBox titleBar, paginationBar;
     @FXML
-    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportButton;
+    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportBtn;
     @FXML
     private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
@@ -78,11 +78,13 @@ public class MainController {
             setTitleBar();
             setButtonState();
             serSummaryCard();
-            setFilterCard();
             setTableView();
+            setFilterCard();
             setPagination();
 
             crawler = new Crawler(link -> allLinks.add(link));
+
+            summary.setStatus(Status.IDLE);
         });
     }
 
@@ -157,7 +159,6 @@ public class MainController {
         }
     }
 
-
     @FXML
     private void onExportClick() {
         // Pastikan proses sudah selesai
@@ -231,41 +232,42 @@ public class MainController {
                 case IDLE -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportButton.setDisable(true);
+                    exportBtn.setDisable(true);
 
-                    startBtn.getStyleClass().remove("btn-start-active");
-                    stopBtn.getStyleClass().remove("btn-stop-active");
+                    startBtn.getStyleClass().remove("active");
+                    stopBtn.getStyleClass().remove("active");
+                    exportBtn.getStyleClass().remove("active");
                 }
                 case CHECKING -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportButton.setDisable(true);
+                    exportBtn.setDisable(true);
 
-                    stopBtn.getStyleClass().remove("btn-stop-active");
+                    stopBtn.getStyleClass().remove("active");
 
-                    if (!startBtn.getStyleClass().contains("btn-start-active")) {
-                        startBtn.getStyleClass().add("btn-start-active");
+                    if (!startBtn.getStyleClass().contains("active")) {
+                        startBtn.getStyleClass().add("active");
                     }
                 }
                 case STOPPED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportButton.setDisable(false);
+                    exportBtn.setDisable(false);
 
-                    startBtn.getStyleClass().remove("btn-start-active");
+                    startBtn.getStyleClass().remove("active");
 
-                    if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
-                        stopBtn.getStyleClass().add("btn-stop-active");
+                    if (!stopBtn.getStyleClass().contains("active")) {
+                        stopBtn.getStyleClass().add("active");
                     }
                 }
                 case COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportButton.setDisable(false);
+                    exportBtn.setDisable(false);
 
                     // hapus semua warna aktif
-                    startBtn.getStyleClass().remove("btn-start-active");
-                    stopBtn.getStyleClass().remove("btn-stop-active");
+                    startBtn.getStyleClass().remove("active");
+                    stopBtn.getStyleClass().remove("active");
                 }
             }
         });
@@ -316,9 +318,9 @@ public class MainController {
 
                     // warna merah untuk error dari status code
                     if (code >= 400 && code < 600) {
-                        setStyle("-fx-text-fill: #f9fafb;");
+                        setStyle("-fx-text-fill: -grey-dark; -fx-font-weight: bold;");
                     } else {
-                        setStyle("-fx-text-fill: #ef4444;");
+                        setStyle("-fx-text-fill: -red; -fx-font-weight: bold;");
                     }
                 }
             }
@@ -376,6 +378,9 @@ public class MainController {
                 case COMPLETED -> statusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
             }
         });
+
+        summary.setStatus(Status.STOPPED);
+        summary.setStatus(Status.IDLE);
     }
 
     // ============================= FILTER CARD ==============================

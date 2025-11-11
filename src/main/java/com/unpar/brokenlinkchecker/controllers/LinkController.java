@@ -179,6 +179,6 @@ public class LinkController {
         });
 
         // Ubah warna teks jadi biru dan kursor jadi tangan (pointer)
-        field.setStyle("-fx-text-fill: #60a5fa; -fx-cursor: hand;");
+        field.setStyle("-fx-text-fill: #19539a; -fx-cursor: hand;");
     }
 }

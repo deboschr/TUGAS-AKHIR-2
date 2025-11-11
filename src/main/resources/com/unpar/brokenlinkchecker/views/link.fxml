@@ -8,7 +8,8 @@
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.unpar.brokenlinkchecker.controllers.LinkController"
     stylesheets="@../styles/link.css"
-    prefWidth="720" prefHeight="480">
+    prefWidth="900" prefHeight="600">
+
 
     <!-- ===================== TITLE BAR ===================== -->
     <top>
