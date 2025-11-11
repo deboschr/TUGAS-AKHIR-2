@@ -5,7 +5,6 @@ import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
-import com.unpar.brokenlinkchecker.utils.ExportHandler;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -19,11 +18,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.awt.*;
-import java.io.File;
 import java.net.URI;
 
 /**

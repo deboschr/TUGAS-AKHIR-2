@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.unpar.brokenlinkchecker.models.Link;
 
-public class ExportHandler {
+public class Exporter {
 
     public static void exportToExcel(List<Link> brokenLinks, File file) throws IOException {
 
