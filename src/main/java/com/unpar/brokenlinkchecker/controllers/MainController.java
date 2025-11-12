@@ -93,7 +93,7 @@ public class MainController {
 
     /**
      * Event handler untuk tombol "Start".
-     * 
+     *
      * Method ini dijalankan saat pengguna menekan tombol "Start".
      * Prosesnya:
      * - Mengambil URL awal dari input field dan membersihkan formatnya
@@ -101,7 +101,7 @@ public class MainController {
      * - Mengosongkan data hasil crawling sebelumnya
      * - Menetapkan status aplikasi menjadi CHECKING
      * - Menjalankan proses crawling di background thread
-     * 
+     *
      * Proses crawling dilakukan di thread terpisah agar UI tetap responsif
      * dan tidak freeze selama pemeriksaan tautan berlangsung.
      */
@@ -128,7 +128,7 @@ public class MainController {
 
         /*
          * Jalankan proses crawling di background thread.
-         * 
+         *
          * Crawler bekerja cukup lama dan melakukan banyak operasi jaringan,
          * jadi harus dijalankan di thread terpisah agar tidak memblokir JavaFX
          * Application Thread.
@@ -151,7 +151,7 @@ public class MainController {
 
     /**
      * Event handler untuk tombol "Stop".
-     * 
+     *
      * Digunakan untuk menghentikan proses crawling yang sedang berjalan.
      */
     @FXML
@@ -166,84 +166,10 @@ public class MainController {
         }
     }
 
-    /**
-     * Event handler untuk tombol "Export".
-     * 
-     * Method ini menangani proses ekspor isi tabel
-     * 
-     * Langkah-langkah:
-     * - Memastikan proses crawling sudah berhenti
-     * - Memastikan ada data broken link untuk diekspor
-     * - Menampilkan dialog penyimpanan file
-     * - Menjalankan proses ekspor di background thread agar UI tidak freeze
-     * 
-     */
+
     @FXML
     private void onExportClick() {
-        // Pastikan proses sudah selesai
-        Status status = summary.getStatus();
-
-        // Pastikan ekspor hanya bisa dilakukan setelah proses selesai
-        if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
-            return;
-        }
-
-        // Pastikan ekspor hanya bisa dilakukan jika data di tabel ada
-        if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
-            return;
-        }
-
-        // Buat dialog pemilihan lokasi penyimpanan file
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Simpan hasil export");
-
-        // Tentukan format file yang didukung
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
-                new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
-                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
-
-        // Tampilkan dialog simpan dan ambil file tujuan
-        File file = chooser.showSaveDialog(null);
-
-        // Kalay file null berarti pengguna batal memilih file
-        if (file == null) {
-            return;
-        }
-
-        // Jalankan export di background thread agar UI tidak freeze
-        new Thread(() -> {
-            try {
-                // Ambil nama file
-                String name = file.getName().toLowerCase();
-
-                // Pilih format ekspor berdasarkan ekstensi file
-                if (name.endsWith(".xlsx")) {
-                    ExportHandler.exportToExcel(brokenLinks, file);
-                } else if (name.endsWith(".csv")) {
-                    ExportHandler.exportToCsv(brokenLinks, file);
-                } else if (name.endsWith(".json")) {
-                    ExportHandler.exportToJson(brokenLinks, file);
-                } else {
-                    // Jika ekstensi tidak dikenali → tampilkan peringatan
-                    Platform.runLater(
-                            () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
-                    return;
-                }
-
-                // Jika ekspor berhasil → tampilkan notifikasi sukses
-                Platform.runLater(() -> Application.openNotificationWindow(
-                        "SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                // Jika terjadi error selama ekspor tampilkan pesan error di notifikasi
-                Platform.runLater(
-                        () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
-            }
-        }).start();
+        Application.openNotificationWindow("INFO", "Fitur belum diimplementasikan.");
     }
 
     // ============================= TITLE BAR ================================
@@ -279,6 +205,7 @@ public class MainController {
     }
 
     // ============================= BUTTON STATE =============================
+
     /**
      * Method untuk mengatur perilaku tombol (Start, Stop, Export) berdasarkan
      * status aplikasi.
@@ -287,7 +214,7 @@ public class MainController {
         /*
          * Tambahkan listener ke properti status di objek Summary.
          * Listener ini akan terpanggil setiap kali nilai status berubah.
-         * 
+         *
          * Parameter:
          * - obs : objek Observable
          * - old : status lama sebelum berubah
@@ -339,6 +266,7 @@ public class MainController {
     }
 
     // ============================= RESULT TABLE =============================
+
     /**
      * Method untuk mengatur tampilan dan perilaku tabel yang menampilkan daftar
      * broken link.
@@ -445,6 +373,7 @@ public class MainController {
     }
 
     // ============================= FILTER CARD ==============================
+
     /**
      * Method untuk mengatur logika filter pada tabel
      */
@@ -597,9 +526,9 @@ public class MainController {
          */
         int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
         int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
-        
+
         // Kalau jumlah halaman kurang dari batas maksimum, geser startPage supaya pas
-        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES){
+        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES) {
             startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
         }
 
@@ -610,7 +539,7 @@ public class MainController {
         for (int i = startPage; i <= endPage; i++) {
             Button pageBtn = new Button(String.valueOf(i));
             pageBtn.getStyleClass().add("pagination-btn");
-            
+
             if (i == currentPage) {
                 pageBtn.getStyleClass().add("active");
             }
