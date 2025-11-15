@@ -4,8 +4,7 @@ module com.unpar.brokenlinkchecker {
     requires javafx.fxml;
     requires javafx.base;
     requires org.jsoup;
-    requires okhttp3;
-    requires okio;
+    requires java.net.http;
     requires org.apache.poi.ooxml;
     requires com.google.gson;
 

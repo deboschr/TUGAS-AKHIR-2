@@ -70,7 +70,7 @@
 /* ======================= LABELS & FIELDS ======================= */
 .text-label {
 	-fx-text-fill: -white;
-	-fx-font-size: 13px;
+	-fx-font-size: 15px;
 	-fx-font-weight: bold;
 }
 
@@ -88,12 +88,6 @@
 	-fx-prompt-text-fill: -grey-dark;
 	-fx-font-size: 15px;
 }
-/* 
-.single-line {
-	-fx-pref-height: 28px;
-	-fx-min-height: 28px;
-	-fx-max-height: 28px;
-} */
 
 .text-field:disabled,
 .text-field:readonly {

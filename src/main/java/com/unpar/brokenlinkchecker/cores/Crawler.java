@@ -2,13 +2,16 @@ package com.unpar.brokenlinkchecker.cores;
 
 import com.unpar.brokenlinkchecker.models.Link;
 
-
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -16,9 +19,6 @@ import java.util.function.Consumer;
 import com.unpar.brokenlinkchecker.utils.RateLimiter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,11 +42,12 @@ public class Crawler {
     // Untuk menandai status proses
     private volatile boolean isStopped = false;
 
-    private static final OkHttpClient OK_HTTP = new OkHttpClient.Builder() // Builder untuk bikin http client
-            .followRedirects(true) // Ikuti redirect dari server
-            .connectTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membangun koneksi ke server
-            .readTimeout(10, TimeUnit.SECONDS) // Batas waktu untuk membaca respons dari server
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.ALWAYS) // Ikuti redirect dari server website
+            .connectTimeout(Duration.ofSeconds(10)) // Batas waktu untuk membangun koneksi ke server
             .build();
+
+    private static final int MAX_LINKS = 1000;
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
@@ -69,7 +70,16 @@ public class Crawler {
             // Ambil link paling depan (FIFO)
             Link currLink = frontier.poll();
 
-            if (repositories.putIfAbsent(currLink.getUrl(), currLink) != null) {
+            if (repositories.size() >= MAX_LINKS) {
+                break;
+            } else if (repositories.putIfAbsent(currLink.getUrl(), currLink) != null) {
+                /*
+                 * Skip ke iterasi berikutnya kalau di repository sudah ada
+                 * 
+                 * putIfAbsent akan memasukan key & value jika key yang dimaksud belum ada
+                 * dan akan mengembalikan null, namun kalau sudah ada key yang sama maka akan
+                 * mengembalikan velue yang lama tapi value baru tidak akan dimasukan.
+                 */
                 continue;
             }
 
@@ -79,11 +89,20 @@ public class Crawler {
             // Kirim link ke controller
             send(currLink);
 
+            /*
+             * Skip ke iterasi berikutnya kalau errornya ga kosong (terjadi error).
+             * Karena kalau error berarti bukan webpage link tapi sebuah broken link.
+             */
             if (!currLink.getError().isEmpty()) {
                 continue;
             }
 
-            // Skip kalau dokumen kosong (bukan HTML) atau kalau beda host
+            /*
+             * Skip kalau dokumen kosong (bukan HTML) atau kalau host dari finalUrl berbeda
+             * dengan host dari seedUrl.
+             * Pake finalUrl karena ada kemungkinan URL awal di redirect ke website lain
+             * yang punya host yang berbeda.
+             */
             String finalUrlHost = UrlHandler.getHost(currLink.getFinalUrl());
             if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
                 continue;
@@ -92,56 +111,82 @@ public class Crawler {
             // Tetapkan sebagai webpage
             currLink.setIsWebpage(true);
 
-            // Ekstrak seluruh url yang ada di webpage
+            // Ekstrak seluruh link yang ada di webpage
             Map<Link, String> linksOnWebpage = extractLink(doc);
 
-            // Buat executor service berbasis virtual thread (manajer thread pool)
+            // Buat executor service berbasis virtual thread
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                /*
-                 * Buat executor berbasis virtual thread.
-                 * Untuk setiap tautan di halaman ini, jalankan task terpisah.
-                 * Task-nya berupa lambda yang akan memeriksa dan memproses link tersebut.
-                 */
-                linksOnWebpage.forEach((link, anchorText) -> executor.submit(() -> {
 
-                    // Bikin koneksi dengan webpage
-                    link.addConnection(currLink, anchorText);
+                for (var entry : linksOnWebpage.entrySet()) {
+
+                    // Hentikan iterasi bila limit tercapai
+                    if (repositories.size() >= MAX_LINKS) {
+                        frontier.clear(); // hentikan BFS
+                        break; // hentikan loop ini
+                    }
+
+                    Link link = entry.getKey();
+                    String anchorText = entry.getValue();
 
                     // Cek dulu apakah URL ini sudah ada di repositories
                     Link existingLink = repositories.get(link.getUrl());
                     if (existingLink != null) {
-                        // Pake synchronized untuk mencegah race condition pada objek existingLink
+                        // Pake synchronized buat mencegah race condition pada objek existingLink
                         synchronized (existingLink) {
                             existingLink.addConnection(currLink, anchorText);
                         }
                         // Skip ke iterasi berikutnya
-                        return;
+                        continue;
                     }
 
-                    // Ambil hostnya buat dibandingan sama host seed link
-                    String host = UrlHandler.getHost(link.getUrl());
+                    /*
+                     * Bikin koneksi dengan webpage kalau ini link baru yang belum pernah ada di
+                     * repository
+                     */
+                    link.addConnection(currLink, anchorText);
 
-                    // Kalau hostnya sama dengan seed link, maka masukan ke daftar yang akan di parse
-                    if (host.equalsIgnoreCase(rootHost)) {
-                        // Masukan ke antrian paling belakang
-                        frontier.offer(link);
-                    }
-                    // Kalau tidak maka lansung kunjungi/cek
-                    else {
+                    /*
+                     * Untuk setiap link akan dieksekusi di thread yang berbeda.
+                     * 
+                     * Alasan pake virtual thread karena virtual thread adalah I/O bound, artinya
+                     * tidak pakai CPU. Contohnya fetch link itu akan menunggu response.
+                     */
+                    executor.submit(() -> {
+
+                        String host = UrlHandler.getHost(link.getUrl());
+
+                        // Kalau hostnya sama dengan seed url, maka masukin ke daftar yang akan diparse
+                        if (host.equalsIgnoreCase(rootHost)) {
+                            if (repositories.size() < MAX_LINKS) {
+                                // Masukan ke antrian paling belakang
+                                frontier.offer(link);
+                            }
+                            return;
+                        }
+
+                        // Simpan ke repositories kalau belum ada
+                        repositories.putIfAbsent(link.getUrl(), link);
+
+                        /*
+                         * Terapkan rate limiting perhost biar ga dianggap serangan atau dapat error 429
+                         * (Too Many Requests).
+                         * 
+                         * computeIfAbsent bakal bikin objek kelas RateLimiter baru sebagai value kalau
+                         * key nya (di sini host dari url) belum ada dan akan mengembalikan value yang
+                         * baru. Tapi kalau key nya udah ada maka dia ga akan bikin velue baru dan Map
+                         * ga akan berubah dan akan mengembalikan value yang udah ada.
+                         */
                         RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
                         limiter.delay();
 
                         // Fetch URL tanpa parse, karena kita ga butuh doc
                         fetchLink(link, false);
 
-                        // Simpan ke repositories kalau belum ada
-                        repositories.putIfAbsent(link.getUrl(), link);
-
                         // Kirim link ke controller
                         send(link);
-                    }
 
-                }));
+                    });
+                }
 
                 /*
                  * Setelah semua task link dari satu halaman disubmit ke executor,
@@ -151,10 +196,14 @@ public class Crawler {
 
                 /*
                  * Tunggu sampai semua virtual thread yang tadi disubmit selesai bekerja
-                 * baru boleh lanjut ke frontier berikutnya.
-                 * Tunggu maksimal 30 detik semua thread selesai.
+                 * baru boleh lanjut ke frontier berikutnya. di sini kita pakai Long.MAX_VALUE
+                 * biar timeout menunggunya lama banget dan itu artinya kita mau memastikan
+                 * semua task selesai baru boleh lanjut.
+                 * 
+                 * ini bakal mengembalikan true kalau semua taks selesai sebelum timeout dan
+                 * false kalau belum semua task selesai saat timeout.
                  */
-                executor.awaitTermination(30, TimeUnit.SECONDS);
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -168,33 +217,42 @@ public class Crawler {
 
     private Document fetchLink(Link link, boolean isParseDoc) {
         try {
-            Request request = new Request.Builder().url(link.getUrl()).header("User-Agent", "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)").get().build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(link.getUrl()))
+                    .header("User-Agent",
+                            "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                    .GET()
+                    .build();
 
-            try (Response res = OK_HTTP.newCall(request).execute()) {
+            // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
+            HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 
-                Document doc = null;
-                int statusCode = res.code();
-                String contentType = res.header("Content-Type", "");
-                String finalUrl = res.request().url().toString();
+            int statusCode = res.statusCode();
+            String body = res.body();
+            String finalUrl = res.uri().toString();
 
-                assert contentType != null;
-                boolean isHtml = contentType.toLowerCase().contains("text/html");
-                if (isParseDoc && statusCode == 200 && isHtml) {
-                    try {
-                        String html = res.body().string();
+            // Content-Type bisa null kalau server tidak kirim header-nya
+            String contentType = res.headers()
+                    .firstValue("Content-Type")
+                    .orElse("");
 
-                        doc = Jsoup.parse(html, finalUrl);
-                    } catch (Exception parseErr) {
-                        doc = null;
-                    }
+            Document doc = null;
+
+            // Cek apakah kita perlu parsing HTML
+            boolean isHtml = contentType.toLowerCase().contains("text/html");
+            if (isParseDoc && statusCode == 200 && isHtml) {
+                try {
+                    doc = Jsoup.parse(body, finalUrl);
+                } catch (Exception ignore) {
+                    doc = null;
                 }
-
-                link.setFinalUrl(finalUrl);
-                link.setContentType(contentType);
-                link.setStatusCode(statusCode);
-
-                return doc;
             }
+
+            link.setFinalUrl(finalUrl);
+            link.setContentType(contentType);
+            link.setStatusCode(statusCode);
+
+            return doc;
 
         } catch (Throwable e) {
             String errorName = e.getClass().getSimpleName();
@@ -208,20 +266,51 @@ public class Crawler {
         }
     }
 
+    /**
+     * Method ini bertugas buat ngambil semua <a href="..."> yang ada di dalam
+     * dokumen HTML, terus kita convert ke URL absolut, normalisasi, dan simpan
+     * sebagai objek Link.
+     * 
+     * @param doc dokumen HTML
+     * @return Map<Link, String>:
+     *         - key = objek Link
+     *         - value = anchor text dari link tersebut di HTML ini
+     */
     private Map<Link, String> extractLink(Document doc) {
+
+        // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam <a>...</a>
         Map<Link, String> result = new HashMap<>();
 
+        // Loop semua elemen <a> yang punya atribut href
         for (Element a : doc.select("a[href]")) {
-            String absoluteUrl = a.attr("abs:href");
+
+            // Ambil URL absolut dari atribut href (Jsoup akan gabungin dengan baseUri)
+            String absoluteUrl = a.absUrl("href");
+
+            // Skip kalau kosong, berarti ini bukan URL valid
+            if (absoluteUrl.isEmpty()) {
+                continue;
+            }
+
+            // Normalize URL biar konsisten
             String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl);
 
-            if (normalizedUrl != null) {
-                Link link = new Link(normalizedUrl);
-                String anchorText = a.text().trim();
-                result.putIfAbsent(link, anchorText);
+            // Skip kalau gagal normalisasi
+            if (normalizedUrl == null) {
+                continue;
             }
+
+            // Bikin objek Link baru berdasarkan URL yang udah bersih
+            Link link = new Link(normalizedUrl);
+
+            // Ambil teks yang ada di link
+            String anchorText = a.text().trim();
+
+            // Masukin ke map hanya kalau URL itu belum pernah tercatat sebelumnya
+            result.putIfAbsent(link, anchorText);
         }
 
+        // Balikin semua link yang berhasil diekstrak
         return result;
     }
 
