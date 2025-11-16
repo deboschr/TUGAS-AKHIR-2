@@ -25,13 +25,20 @@ import java.net.URI;
 
 /**
  * Controller utama aplikasi Broken Link Checker.
+ * Kelas ini mengatur seluruh interaksi antara elemen GUI (JavaFX) dengan logika
+ * program di backend, termasuk:
+ * - Mengelola status crawling dan hasil pemeriksaan link
+ * - Mengatur event handler tombol (Start, Stop, Export)
+ * - Menampilkan data hasil crawling pada tabel
+ * - Menangani filter, pagination, dan update tampilan summary
+ * - Mengatur perilaku jendela utama (minimize, maximize, drag, close)
  */
 public class MainController {
     // ======================== GUI Component ========================
     @FXML
     private HBox titleBar, paginationBar;
     @FXML
-    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn;
+    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportButton;
     @FXML
     private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
@@ -71,13 +78,11 @@ public class MainController {
             setTitleBar();
             setButtonState();
             serSummaryCard();
-            setTableView();
             setFilterCard();
+            setTableView();
             setPagination();
 
             crawler = new Crawler(link -> allLinks.add(link));
-
-            summary.setStatus(Status.IDLE);
         });
     }
 
@@ -118,7 +123,13 @@ public class MainController {
         // Ubah status summary jadi CHECKING untuk menandakan proses sedang berjalan
         summary.setStatus(Status.CHECKING);
 
-        // Jalankan proses crawling di background thread.
+        /*
+         * Jalankan proses crawling di background thread.
+         *
+         * Crawler bekerja cukup lama dan melakukan banyak operasi jaringan,
+         * jadi harus dijalankan di thread terpisah agar tidak memblokir JavaFX
+         * Application Thread.
+         */
         new Thread(() -> {
             // Mulai proses crawling dengan seed URL yang sudah dibersihkan
             crawler.start(cleanedSeedUrl);
@@ -150,6 +161,12 @@ public class MainController {
             // Update status summary menjadi STOPPED
             summary.setStatus(Status.STOPPED);
         }
+    }
+
+
+    @FXML
+    private void onExportClick() {
+        Application.openNotificationWindow("INFO", "Fitur belum diimplementasikan.");
     }
 
     // ============================= TITLE BAR ================================
@@ -205,37 +222,41 @@ public class MainController {
                 case IDLE -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
+                    exportButton.setDisable(true);
 
-                    startBtn.getStyleClass().remove("active");
-                    stopBtn.getStyleClass().remove("active");
+                    startBtn.getStyleClass().remove("btn-start-active");
+                    stopBtn.getStyleClass().remove("btn-stop-active");
                 }
                 case CHECKING -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
+                    exportButton.setDisable(true);
 
-                    stopBtn.getStyleClass().remove("active");
+                    stopBtn.getStyleClass().remove("btn-stop-active");
 
-                    if (!startBtn.getStyleClass().contains("active")) {
-                        startBtn.getStyleClass().add("active");
+                    if (!startBtn.getStyleClass().contains("btn-start-active")) {
+                        startBtn.getStyleClass().add("btn-start-active");
                     }
                 }
                 case STOPPED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
+                    exportButton.setDisable(false);
 
-                    startBtn.getStyleClass().remove("active");
+                    startBtn.getStyleClass().remove("btn-start-active");
 
-                    if (!stopBtn.getStyleClass().contains("active")) {
-                        stopBtn.getStyleClass().add("active");
+                    if (!stopBtn.getStyleClass().contains("btn-stop-active")) {
+                        stopBtn.getStyleClass().add("btn-stop-active");
                     }
                 }
                 case COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
+                    exportButton.setDisable(false);
 
                     // hapus semua warna aktif
-                    startBtn.getStyleClass().remove("active");
-                    stopBtn.getStyleClass().remove("active");
+                    startBtn.getStyleClass().remove("btn-start-active");
+                    stopBtn.getStyleClass().remove("btn-stop-active");
                 }
             }
         });
@@ -286,9 +307,9 @@ public class MainController {
 
                     // warna merah untuk error dari status code
                     if (code >= 400 && code < 600) {
-                        setStyle("-fx-text-fill: -grey-dark; -fx-font-weight: bold;");
+                        setStyle("-fx-text-fill: #f9fafb;");
                     } else {
-                        setStyle("-fx-text-fill: -red; -fx-font-weight: bold;");
+                        setStyle("-fx-text-fill: #ef4444;");
                     }
                 }
             }
@@ -346,9 +367,6 @@ public class MainController {
                 case COMPLETED -> statusLabel.setStyle("-fx-text-fill: #10b981;"); // hijau
             }
         });
-
-        summary.setStatus(Status.STOPPED);
-        summary.setStatus(Status.IDLE);
     }
 
     // ============================= FILTER CARD ==============================
