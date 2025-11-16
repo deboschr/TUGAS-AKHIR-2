@@ -524,7 +524,7 @@ public class MainController {
         /*
          * Tentukan rentang nomor halaman yang mau ditampilkan.
          * Misal: kalau MAX_VISIBLE_PAGES = 5 dan currentPage = 7,
-         * maka bisa muncul halaman 5–9 agar posisi aktif tetap di tengah.
+         * maka bisa muncul halaman 5-9 agar posisi aktif tetap di tengah.
          */
         int startPage = Math.max(1, currentPage - MAX_VISIBLE_PAGES / 2);
         int endPage = Math.min(startPage + MAX_VISIBLE_PAGES - 1, totalPages);
