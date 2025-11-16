@@ -141,6 +141,9 @@ public class LinkController {
             /**
              * Method bawaan TableCell buat memperbarui isi tampilan cell.
              * Dipanggil setiap kali data di baris berubah.
+             * 
+             * @param item  nilai baru yang mau ditampilkan di cell
+             * @param empty true kalau cell sedang kosong
              */
             @Override
             protected void updateItem(String item, boolean empty) {

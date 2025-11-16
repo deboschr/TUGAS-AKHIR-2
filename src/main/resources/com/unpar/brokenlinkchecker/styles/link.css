@@ -15,8 +15,8 @@
 }
 
 .root.root {
-	-fx-border-color: -tertiary; /* warna garis luar */
-	-fx-border-width: 2; /* ketebalan garis */
+	-fx-border-color: -tertiary;
+	-fx-border-width: 2;
 }
 
 /* ======================= TITLE BAR ======================= */

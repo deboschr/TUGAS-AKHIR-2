@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Link {
 
-    // URL awal yang dimasukkan user / ditemukan crawler
     private final StringProperty url; // URL utama
     private final StringProperty finalUrl; // URL hasil redirect (kalau ada)
     private final IntegerProperty statusCode; // Kode status HTTP
@@ -20,10 +19,6 @@ public class Link {
      * Menyimpan relasi antar Link:
      * - key = Link lain yang terhubung dengan link ini
      * - value = anchor text (teks di dalam <a>...</a>) yang menghubungkan keduanya
-     *
-     * Dibuat ConcurrentHashMap supaya aman diakses dari banyak thread
-     * (crawler pakai virtual thread dan beberapa thread bisa menambah koneksi
-     * bersamaan).
      */
     private final Map<Link, String> connections;
 
@@ -39,7 +34,7 @@ public class Link {
         this.error = new SimpleStringProperty("");
         this.isWebpage = new SimpleBooleanProperty(false);
 
-        // Gunakan ConcurrentHashMap supaya aman untuk operasi multithread
+        // Pake ConcurrentHashMap biar aman untuk operasi multithread
         this.connections = new ConcurrentHashMap<>();
     }
 
@@ -147,8 +142,8 @@ public class Link {
     /**
      * Menambahkan relasi (koneksi) antar dua Link.
      * Koneksi dibuat dua arah:
-     * - this → other
-     * - other → this
+     * - this ke other
+     * - other ke this
      *
      * @param other      link lain yang terhubung
      * @param anchorText teks anchor yang menghubungkan (boleh null, akan diset "")
@@ -163,12 +158,6 @@ public class Link {
         other.connections.putIfAbsent(this, anchorText != null ? anchorText : "");
     }
 
-    /**
-     * Mengembalikan map koneksi dari link ini ke link lain.
-     * Map-nya adalah ConcurrentHashMap, jadi:
-     * - aman untuk iterasi dari thread lain
-     * - masih bisa diubah secara internal oleh crawler
-     */
     public Map<Link, String> getConnection() {
         return connections;
     }

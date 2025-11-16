@@ -10,7 +10,6 @@ import javafx.stage.Stage;
 
 /**
  * Controller buat window notifikasi.
- * 
  */
 public class NotificationController {
 

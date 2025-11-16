@@ -115,14 +115,6 @@
 	-fx-background-color: -red;
 }
 
-.control-btn-export.active {
-	-fx-background-color: -yellow;
-}
-
-.control-btn-export:hover {
-	-fx-background-color: -yellow;
-}
-
 .control-btn:disabled {
 	-fx-opacity: 0.65;
 	-fx-cursor: default;
@@ -318,7 +310,6 @@
 
 /* ===================== PAGINATION CONTAINER ===================== */
 .pagination-bar {
-	/* -fx-background-color: transparent; */
 	-fx-padding: 0;
 	-fx-alignment: center;
 }
@@ -335,16 +326,12 @@
 	-fx-border-width: 2;
 	-fx-background-insets: 0;
 	-fx-border-insets: -1;
-
-	/* ukuran tetap */
 	-fx-pref-width: 40px;
 	-fx-pref-height: 40px;
 	-fx-min-width: 40px;
 	-fx-min-height: 40px;
 	-fx-max-width: 40px;
 	-fx-max-height: 40px;
-
-	/* teks di tengah */
 	-fx-alignment: center;
 }
 
@@ -367,11 +354,6 @@
 	-fx-border-radius: 0 10 10 0;
 	-fx-font-size: 17px;
 }
-
-/* .pagination-btn.prev:hover,
-.pagination-btn.next:hover {
-	-fx-background-color: #4d4d4d;
-} */
 
 .pagination-btn:disabled {
 	-fx-opacity: 0.65;

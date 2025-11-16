@@ -38,11 +38,12 @@ public class UrlHandler {
             String path = uri.getRawPath();
             String query = uri.getRawQuery();
 
-            // Scheme tidak wajib ada dan wajib HTTP/HTTPS
+            // Scheme wajib ada
             if (scheme == null || scheme.isEmpty()) {
-                return rawUrl;
+                return null;
             }
 
+            // Scheme wajib HTTP/HTTPS
             if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
                 return null;
             }
@@ -60,25 +61,30 @@ public class UrlHandler {
             // Bersihkan path dari dot-segment
             path = normalizePath(path);
 
-            // ===== rakit ulang tanpa fragment dan userinfo =====
+            // Rakit ulang tanpa fragment dan userinfo
             URI cleaned = new URI(
-                    scheme.toLowerCase(),
-                    null,
-                    host.toLowerCase(),
-                    port,
-                    path,
-                    query,
-                    null);
+                    scheme.toLowerCase(), // SCHEME
+                    null, // USERINFO
+                    host.toLowerCase(), // HOST
+                    port, // PORT
+                    path, // PATH
+                    query, // QUERY
+                    null // FRAGMENT
+            );
 
             return cleaned.toASCIIString();
 
         } catch (Exception e) {
+            /*
+             * Kalau gagal bikin objek URI, kita kembaliin URL awal biar nanti error pas
+             * pengecekan, karena akan dianggap invalid URL
+             */
             return rawUrl;
         }
     }
 
     /**
-     * Mathod untuk menormalisasi path
+     * Mathod buat menormalisasi path
      * 
      * Yang di handle di method ini adalah:
      * - "." : artinya di direktory saat ini
