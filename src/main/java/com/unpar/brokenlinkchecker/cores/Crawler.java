@@ -56,8 +56,9 @@ public class Crawler {
             // Ikuti redirect dari server website
             .followRedirects(HttpClient.Redirect.ALWAYS)
             // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofSeconds(15))
-            .build();
+            .connectTimeout(Duration.ofSeconds(15)).build();
+
+    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
 
     // Batas maksimum jumlah URL yang boleh dicek
     private static final int MAX_LINKS = 1000;
@@ -248,7 +249,7 @@ public class Crawler {
      * @param link       objek Link yang akan di-update informasinya
      * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
-     *         bukan HTML / error.
+     * bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
 
@@ -265,8 +266,7 @@ public class Crawler {
                         // URL tujuan
                         .uri(URI.create(link.getUrl()))
                         // Header biar server tahu yg minta request aplikasi kita
-                        .header("User-Agent",
-                                "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                        .header("User-Agent", USER_AGENT)
                         // Timeout total request (connect + read)
                         .timeout(Duration.ofSeconds(20))
                         // Pakai GET karena butuh body HTML lengkap
@@ -287,8 +287,7 @@ public class Crawler {
                             // URL target
                             .uri(URI.create(link.getUrl()))
                             // Header biar server tahu yg minta request aplikasi kita
-                            .header("User-Agent",
-                                    "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                            .header("User-Agent", USER_AGENT)
                             // Timeout total request (connect + read)
                             .timeout(Duration.ofSeconds(20))
                             // Method HEAD dg hanya minta header, tanpa body
@@ -302,15 +301,8 @@ public class Crawler {
                 /*
                  * Kalau HEAD gagal (server tidak support, SSL problem, dll) maka kita fallback
                  * ke GET, tapi tetap discard body biar cepat
-                 */
-                catch (Exception headError) {
-                    HttpRequest getReq = HttpRequest.newBuilder()
-                            .uri(URI.create(link.getUrl()))
-                            .header("User-Agent",
-                                    "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
-                            .timeout(Duration.ofSeconds(20))
-                            .GET()
-                            .build();
+                 */ catch (Exception headError) {
+                    HttpRequest getReq = HttpRequest.newBuilder().uri(URI.create(link.getUrl())).header("User-Agent", USER_AGENT).timeout(Duration.ofSeconds(20)).GET().build();
 
                     // GET dipakai, tapi body langsung dibuang (nggak dibaca)
                     res = HTTP_CLIENT.send(getReq, HttpResponse.BodyHandlers.discarding());
@@ -374,8 +366,8 @@ public class Crawler {
      *
      * @param doc dokumen HTML
      * @return Map dengan key dan value:
-     *         - key = objek Link (URL unik yang sudah dinormalisasi)
-     *         - value = anchor text dari link tersebut di HTML ini
+     * - key = objek Link (URL unik yang sudah dinormalisasi)
+     * - value = anchor text dari link tersebut di HTML ini
      */
     private Map<Link, String> extractLink(Document doc) {
         // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam tag a
