@@ -30,8 +30,6 @@
 
 
     <center>
-        <!-- <ScrollPane fx:id="scrollRoot" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER"
-        vbarPolicy="AS_NEEDED" style="-fx-background: transparent;"></ScrollPane> -->
         <VBox spacing="24" styleClass="content-root">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
@@ -56,9 +54,9 @@
                     <Label text="Summary" styleClass="section-title" />
 
                     <HBox spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                        <!-- Checking Status -->
+                        <!-- Status -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                            <Label text="Checking Status" styleClass="summary-subtitle" />
+                            <Label text="Status" styleClass="summary-subtitle" />
                             <Label fx:id="statusLabel" text="....." styleClass="status-idle" />
                         </VBox>
 
@@ -71,13 +69,15 @@
                         <!-- Webpage Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                             <Label text="Webpage Links" styleClass="summary-subtitle" />
-                            <Label fx:id="webpageLinksCountLabel" text="0" styleClass="summary-value" />
+                            <Label fx:id="webpageLinksCountLabel" text="0"
+                                styleClass="summary-value" />
                         </VBox>
 
                         <!-- Broken Links -->
                         <VBox styleClass="summary-box" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                             <Label text="Broken Links" styleClass="summary-subtitle" />
-                            <Label fx:id="brokenLinksCountLabel" text="0" styleClass="summary-value-red" />
+                            <Label fx:id="brokenLinksCountLabel" text="0"
+                                styleClass="summary-value-red" />
                         </VBox>
                     </HBox>
                 </VBox>
@@ -144,9 +144,10 @@
             <VBox spacing="12" VBox.vgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Result" styleClass="section-title" />
+
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button fx:id="exportButton" text="Export" styleClass="btn-control"
-                        onAction="#onExportClick" />
+
+                    <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar"></HBox>
                 </HBox>
 
                 <!-- ====== Table Result ====== -->
@@ -156,12 +157,6 @@
                         <TableColumn fx:id="urlColumn" text="URL" prefWidth="800" />
                     </columns>
                 </TableView>
-
-                <!-- ====== Pagination ====== -->
-                <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar">
-
-                </HBox>
-
             </VBox>
 
         </VBox>

@@ -47,8 +47,3 @@
     -fx-font-size: 14px;
     -fx-wrap-text: true;
 }
-
-/* ======================= HOVER EFFECT ======================= */
-.root:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 12, 0, 0, 3);
-}

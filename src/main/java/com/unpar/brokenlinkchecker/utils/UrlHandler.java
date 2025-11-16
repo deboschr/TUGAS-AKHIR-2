@@ -38,11 +38,12 @@ public class UrlHandler {
             String query = uri.getRawQuery();
 
 
-            // Scheme tidak wajib ada dan wajib HTTP/HTTPS
+            // Scheme wajib ada
             if (scheme == null || scheme.isEmpty()) {
-                return rawUrl;
+                return null;
             }
 
+            // Scheme wajib wajib HTTP/HTTPS
             if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
                 return null;
             }
