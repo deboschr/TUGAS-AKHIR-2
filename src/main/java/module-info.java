@@ -4,20 +4,15 @@ module com.unpar.brokenlinkchecker {
     requires javafx.fxml;
     requires javafx.base;
     requires org.jsoup;
-    requires okhttp3;
-    requires okio;
-    requires org.apache.poi.ooxml;
-    requires com.google.gson;
+    requires java.net.http;
 
     exports com.unpar.brokenlinkchecker;
     exports com.unpar.brokenlinkchecker.models;
     exports com.unpar.brokenlinkchecker.cores;
     exports com.unpar.brokenlinkchecker.controllers;
+    exports com.unpar.brokenlinkchecker.utils;
 
     opens com.unpar.brokenlinkchecker to javafx.fxml;
     opens com.unpar.brokenlinkchecker.cores to javafx.fxml;
     opens com.unpar.brokenlinkchecker.controllers to javafx.fxml;
-    opens com.unpar.brokenlinkchecker.models to com.google.gson;
-    exports com.unpar.brokenlinkchecker.utils;
-    opens com.unpar.brokenlinkchecker.utils to com.google.gson;
 }
