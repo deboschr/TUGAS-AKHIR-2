@@ -1,6 +1,12 @@
 package com.unpar.brokenlinkchecker.cores;
 
 import com.unpar.brokenlinkchecker.models.Link;
+import com.unpar.brokenlinkchecker.utils.RateLimiter;
+import com.unpar.brokenlinkchecker.utils.UrlHandler;
+import javafx.application.Platform;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,329 +18,366 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.unpar.brokenlinkchecker.utils.RateLimiter;
-import com.unpar.brokenlinkchecker.utils.UrlHandler;
-import javafx.application.Platform;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
 public class Crawler {
-    // Untuk mengidentifikasi webpage
-    private String rootHost;
+   // Untuk mengidentifikasi webpage (host yang sama dengan seed URL)
+   private String rootHost;
 
-    // Untuk menyimoan antrian URL webpage yang akan di crawling (FIFO/BFS)
-    private final Queue<Link> frontier = new ArrayDeque<>();
+   // Antrian webpage same-host yang akan di-crawl (FIFO / BFS)
+   // Hanya diakses dari thread utama (start), jadi aman pakai ArrayDeque.
+   // private final Queue<Link> frontier = new ArrayDeque<>();
+   private final Queue<Link> frontier = new ConcurrentLinkedQueue<>();
 
-    // Untuk menyimpan daftar unik setiap URL yang ditemukan
-    private final Map<String, Link> repositories = new ConcurrentHashMap<>();
+   // Menyimpan semua URL unik yang sudah / akan dicek
+   // Key : URL
+   // Value : objek Link yang merepresentasikan URL tersebut
+   private final Map<String, Link> repositories = new ConcurrentHashMap<>();
 
-    // Untuk menyimpan rate limiter per host biar tiap host punya batas request-nya
-    private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
+   // Rate limiter per host (buat link yang beda host sama seed)
+   private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
 
-    // Untuk mengirim link yang ditemukan
-    private final Consumer<Link> linkConsumer;
+   // Callback ke controller buat kirim Link yang sudah dicek
+   private final Consumer<Link> linkConsumer;
 
-    // Untuk menandai status proses
-    private volatile boolean isStopped = false;
+   // Flag kalau proses dihentikan oleh user
+   private volatile boolean isStopped = false;
 
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.ALWAYS) // Ikuti redirect dari server website
-            .connectTimeout(Duration.ofSeconds(10)) // Batas waktu untuk membangun koneksi ke server
-            .build();
+   // HttpClient bawaan Java (JDK 11+), dipakai buat semua request HTTP
+   private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+         .followRedirects(HttpClient.Redirect.ALWAYS) // Ikuti redirect dari server
+         .connectTimeout(Duration.ofSeconds(10)) // Timeout saat bangun koneksi
+         .build();
 
-    private static final int MAX_LINKS = 1000;
+   // Batas maksimum jumlah URL yang boleh dicek
+   private static final int MAX_LINKS = 1000;
 
-    public Crawler(Consumer<Link> linkConsumer) {
-        this.linkConsumer = linkConsumer;
-    }
+   // Counter jumlah URL yang benar-benar sudah “dicek” (di-fetch)
+   // Hanya diubah oleh thread utama (start), jadi ga perlu volatile/atomic.
+   private int checkedCount = 0;
 
-    public void start(String seedUrl) {
-        // set status
-        isStopped = false;
+   public Crawler(Consumer<Link> linkConsumer) {
+      this.linkConsumer = linkConsumer;
+   }
 
-        // reset penyimpanan
-        repositories.clear();
-        frontier.clear();
-        rateLimiters.clear();
+   /**
+    * Mulai proses crawling dari seedUrl dengan algoritma BFS.
+    * - Hanya webpage same-host yang dimasukkan ke frontier dan di-crawl lebih
+    * lanjut.
+    * - Semua URL (internal maupun external) yang dicek akan dicatat di
+    * repositories
+    * sampai batas maksimum MAX_LINKS.
+    *
+    * @param seedUrl URL awal yang menjadi titik mulai crawling.
+    */
+   public void start(String seedUrl) {
+      // Reset status stop (kalau sebelumnya pernah dihentikan user)
+      isStopped = false;
 
-        // set init value
-        rootHost = UrlHandler.getHost(seedUrl);
-        frontier.offer(new Link(seedUrl));
+      // Reset semua struktur data
+      repositories.clear();
+      frontier.clear();
+      rateLimiters.clear();
+      checkedCount = 0;
 
-        while (!isStopped && !frontier.isEmpty()) {
-            // Ambil link paling depan (FIFO)
-            Link currLink = frontier.poll();
+      // Ambil host dari seed URL buat identifikasi “same-host”
+      rootHost = UrlHandler.getHost(seedUrl);
 
-            if (repositories.size() >= MAX_LINKS) {
-                break;
-            } else if (repositories.putIfAbsent(currLink.getUrl(), currLink) != null) {
-                /*
-                 * Skip ke iterasi berikutnya kalau di repository sudah ada
-                 * 
-                 * putIfAbsent akan memasukan key & value jika key yang dimaksud belum ada
-                 * dan akan mengembalikan null, namun kalau sudah ada key yang sama maka akan
-                 * mengembalikan velue yang lama tapi value baru tidak akan dimasukan.
-                 */
-                continue;
+      // Masukkan seed ke frontier sebagai titik awal BFS
+      frontier.offer(new Link(seedUrl));
+
+      // Loop BFS: selama user belum stop dan masih ada halaman di frontier
+      while (!isStopped && !frontier.isEmpty()) {
+
+         // Kalau sudah mencapai limit global, hentikan BFS
+         if (checkedCount >= MAX_LINKS) {
+            frontier.clear();
+            break;
+         }
+
+         // Ambil link paling depan (FIFO)
+         Link currLink = frontier.poll();
+         if (currLink == null) {
+            continue;
+         }
+
+         // Cek apakah URL ini sudah pernah dicatat di repositories
+         Link existing = repositories.putIfAbsent(currLink.getUrl(), currLink);
+         if (existing != null) {
+            // Kalau sudah ada, berarti URL ini pernah (atau sedang) dicek → skip
+            continue;
+         }
+
+         // URL ini baru pertama kali dicek → increment counter
+         checkedCount++;
+
+         // Fetch dan parse body dari webpage link (kalau HTML)
+         Document doc = fetchLink(currLink, true);
+
+         // Kirim hasil ke controller (apapun hasilnya: sukses / error)
+         send(currLink);
+
+         /*
+          * Kalau ada error (exception, timeout, dll):
+          * - currLink dianggap sebagai broken link
+          * - Tidak diperlakukan sebagai webpage yang bisa di-crawl lagi.
+          */
+         if (!currLink.getError().isEmpty()) {
+            continue;
+         }
+
+         /*
+          * Skip kalau:
+          * - doc == null (bukan HTML, misalnya PDF / image / dll)
+          * - host dari finalUrl beda dengan host seedUrl
+          * (misalnya di-redirect ke domain lain)
+          */
+         String finalUrlHost = UrlHandler.getHost(currLink.getFinalUrl());
+         if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
+            continue;
+         }
+
+         // Kalau sampai sini, berarti currLink adalah webpage same-host yang valid
+         currLink.setIsWebpage(true);
+
+         // Ekstrak seluruh <a href="..."> dari webpage
+         Map<Link, String> linksOnWebpage = extractLink(doc);
+
+         // Executor berbasis virtual thread hanya untuk cek link non-same-host
+         // (external)
+         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+            for (var entry : linksOnWebpage.entrySet()) {
+               // Kalau user stop di tengah jalan, hentikan proses parse link halaman ini
+               if (isStopped) {
+                  break;
+               }
+
+               // Kalau limit sudah tercapai, hentikan BFS dengan mengosongkan frontier
+               if (checkedCount >= MAX_LINKS) {
+                  frontier.clear();
+                  break;
+               }
+
+               Link link = entry.getKey();
+               String anchorText = entry.getValue();
+
+               // Cek apakah URL ini sudah pernah tercatat di repositories
+               Link existingLink = repositories.get(link.getUrl());
+               if (existingLink != null) {
+                  // Kalau sudah ada, cukup tambahkan koneksi (source page + anchor text)
+                  existingLink.addConnection(currLink, anchorText);
+                  continue;
+               }
+
+               // URL ini belum pernah tercatat → tambahkan koneksi pertama
+               link.addConnection(currLink, anchorText);
+
+               // Tentukan host-nya buat bedain same-host vs external
+               String host = UrlHandler.getHost(link.getUrl());
+
+               // Kalau host sama dengan rootHost → anggap sebagai webpage dan masukkan ke
+               // frontier
+               if (host.equalsIgnoreCase(rootHost)) {
+                  /*
+                   * Untuk webpage same-host:
+                   * - Tidak langsung dimasukkan ke repositories di sini.
+                   * - Link baru akan dianggap “dicek” dan dihitung ketika
+                   * nanti diambil dari frontier dan di-fetch di loop BFS utama.
+                   */
+                  frontier.offer(link);
+               } else {
+                  /*
+                   * Untuk link non-same-host (external / beda host):
+                   * - Dicek secara paralel di virtual thread.
+                   * - Karena link ini akan benar-benar dicek (fetchLink),
+                   * maka kita catat ke repositories + hitung di checkedCount di sini.
+                   */
+
+                  // Pastikan limit belum terlewati sebelum mencatat link baru
+                  if (checkedCount >= MAX_LINKS) {
+                     frontier.clear();
+                     break;
+                  }
+
+                  // Masukkan ke repositories sebagai link baru
+                  repositories.put(link.getUrl(), link);
+                  checkedCount++;
+
+                  // Submit task ke virtual thread buat cek status link external
+                  executor.submit(() -> {
+                     // Kalau user sudah menekan STOP, hentikan task ini secepat mungkin
+                     if (isStopped) {
+                        return;
+                     }
+
+                     /*
+                      * Terapkan rate limiting per host biar ga dianggap serangan atau
+                      * kena HTTP 429 (Too Many Requests).
+                      */
+                     RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
+                     limiter.delay();
+
+                     // Fetch URL tanpa parse HTML (kita cuma butuh status + header)
+                     fetchLink(link, false);
+
+                     // Kirim hasil ke controller
+                     send(link);
+                  });
+               }
             }
 
-            // Fetch dan parse body dari webpage link
-            Document doc = fetchLink(currLink, true);
+            // Tutup executor: tidak menerima task baru lagi
+            executor.shutdown();
 
-            // Kirim link ke controller
-            send(currLink);
+            // Tunggu sampai semua virtual thread selesai sebelum lanjut ke halaman frontier
+            // berikutnya
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-            /*
-             * Skip ke iterasi berikutnya kalau errornya ga kosong (terjadi error).
-             * Karena kalau error berarti bukan webpage link tapi sebuah broken link.
-             */
-            if (!currLink.getError().isEmpty()) {
-                continue;
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      }
+   }
+
+   /**
+    * Hentikan proses crawling secara manual (oleh user).
+    * Flag ini akan dicek di loop BFS dan di setiap task virtual thread.
+    */
+   public void stop() {
+      isStopped = true;
+   }
+
+   /**
+    * Method buat nge-fetch sebuah URL.
+    * Bisa sekaligus parsing HTML kalau isParseDoc = true.
+    *
+    * @param link       objek Link yang akan di-update informasinya
+    * @param isParseDoc true kalau body perlu di-parse jadi Document (untuk webpage
+    *                   same-host)
+    * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
+    *         bukan HTML / error.
+    */
+   private Document fetchLink(Link link, boolean isParseDoc) {
+      try {
+         HttpRequest request = HttpRequest.newBuilder()
+               .uri(URI.create(link.getUrl()))
+               .header("User-Agent",
+                     "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+               .timeout(Duration.ofSeconds(10)) // Timeout total request (connect + read)
+               .GET()
+               .build();
+
+         // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
+         HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+         int statusCode = res.statusCode();
+         String body = res.body();
+         String finalUrl = res.uri().toString();
+
+         // Content-Type bisa kosong kalau server tidak kirim header-nya
+         String contentType = res.headers()
+               .firstValue("Content-Type")
+               .orElse("");
+
+         Document doc = null;
+
+         // Cek apakah kita perlu parsing HTML
+         boolean isHtml = contentType.toLowerCase().contains("text/html");
+         if (isParseDoc && statusCode == 200 && isHtml) {
+            try {
+               doc = Jsoup.parse(body, finalUrl);
+            } catch (Exception ignore) {
+               doc = null;
             }
+         }
 
-            /*
-             * Skip kalau dokumen kosong (bukan HTML) atau kalau host dari finalUrl berbeda
-             * dengan host dari seedUrl.
-             * Pake finalUrl karena ada kemungkinan URL awal di redirect ke website lain
-             * yang punya host yang berbeda.
-             */
-            String finalUrlHost = UrlHandler.getHost(currLink.getFinalUrl());
-            if (doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
-                continue;
-            }
+         // Update informasi dasar pada objek Link
+         link.setFinalUrl(finalUrl);
+         link.setContentType(contentType);
+         link.setStatusCode(statusCode);
 
-            // Tetapkan sebagai webpage
-            currLink.setIsWebpage(true);
+         return doc;
 
-            // Ekstrak seluruh link yang ada di webpage
-            Map<Link, String> linksOnWebpage = extractLink(doc);
+      } catch (Throwable e) {
+         String errorName = e.getClass().getSimpleName();
+         if (errorName.isBlank()) {
+            errorName = "UnknownError";
+         }
 
-            // Buat executor service berbasis virtual thread
-            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+         // Simpan nama error ke Link supaya bisa ditampilkan di UI
+         link.setError(errorName);
 
-                for (var entry : linksOnWebpage.entrySet()) {
+         return null;
+      }
+   }
 
-                    // Hentikan iterasi bila limit tercapai
-                    if (repositories.size() >= MAX_LINKS) {
-                        frontier.clear(); // hentikan BFS
-                        break; // hentikan loop ini
-                    }
+   /**
+    * Method ini bertugas buat ngambil semua <a href="..."> yang ada di dalam
+    * dokumen HTML, terus kita convert ke URL absolut, normalisasi, dan simpan
+    * sebagai objek Link.
+    *
+    * @param doc dokumen HTML
+    * @return Map<Link, String>:
+    *         - key = objek Link (URL unik yang sudah dinormalisasi)
+    *         - value = anchor text dari link tersebut di HTML ini
+    */
+   private Map<Link, String> extractLink(Document doc) {
+      // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam <a>...</a>
+      Map<Link, String> result = new HashMap<>();
 
-                    Link link = entry.getKey();
-                    String anchorText = entry.getValue();
+      // Loop semua elemen <a> yang punya atribut href
+      for (Element a : doc.select("a[href]")) {
 
-                    // Cek dulu apakah URL ini sudah ada di repositories
-                    Link existingLink = repositories.get(link.getUrl());
-                    if (existingLink != null) {
-                        // Pake synchronized buat mencegah race condition pada objek existingLink
-                        synchronized (existingLink) {
-                            existingLink.addConnection(currLink, anchorText);
-                        }
-                        // Skip ke iterasi berikutnya
-                        continue;
-                    }
+         // Ambil URL absolut dari atribut href (Jsoup akan gabungin dengan baseUri)
+         String absoluteUrl = a.absUrl("href");
 
+         // Skip kalau kosong, berarti ini bukan URL valid
+         if (absoluteUrl.isEmpty()) {
+            continue;
+         }
 
-                    /*
-                     * Bikin koneksi dengan webpage kalau ini link baru yang belum pernah ada di
-                     * repository
-                     */
-                    link.addConnection(currLink, anchorText);
+         // Normalize URL biar konsisten (hapus fragment, lower-case host, dsb.)
+         String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl);
 
-                    /*
-                     * Untuk setiap link akan dieksekusi di thread yang berbeda.
-                     * 
-                     * Alasan pake virtual thread karena virtual thread adalah I/O bound, artinya
-                     * tidak pakai CPU. Contohnya fetch link itu akan menunggu response.
-                     */
-                    executor.submit(() -> {
+         // Skip kalau gagal normalisasi
+         if (normalizedUrl == null) {
+            continue;
+         }
 
-                        String host = UrlHandler.getHost(link.getUrl());
+         // Bikin objek Link baru berdasarkan URL yang udah bersih
+         Link link = new Link(normalizedUrl);
 
-                        // Kalau hostnya sama dengan seed url, maka masukin ke daftar yang akan diparse
-                        if (host.equalsIgnoreCase(rootHost)) {
-                            if (repositories.size() < MAX_LINKS) {
-                                // Masukan ke antrian paling belakang
-                                frontier.offer(link);
-                            }
-                            return;
-                        }
+         // Ambil teks yang ada di link
+         String anchorText = a.text().trim();
 
-                        // Simpan ke repositories kalau belum ada
-                        repositories.putIfAbsent(link.getUrl(), link);
+         // Masukin ke map hanya kalau URL itu belum pernah tercatat sebelumnya
+         result.putIfAbsent(link, anchorText);
+      }
 
-                        /*
-                         * Terapkan rate limiting perhost biar ga dianggap serangan atau dapat error 429
-                         * (Too Many Requests).
-                         * 
-                         * computeIfAbsent bakal bikin objek kelas RateLimiter baru sebagai value kalau
-                         * key nya (di sini host dari url) belum ada dan akan mengembalikan value yang
-                         * baru. Tapi kalau key nya udah ada maka dia ga akan bikin velue baru dan Map
-                         * ga akan berubah dan akan mengembalikan value yang udah ada.
-                         */
-                        RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
-                        limiter.delay();
+      // Balikin semua link yang berhasil diekstrak
+      return result;
+   }
 
-                        // Fetch URL tanpa parse, karena kita ga butuh doc
-                        fetchLink(link, false);
+   /**
+    * Method ini bertugas buat ngirim objek Link yang ditemukan / dicek selama
+    * proses
+    * crawling ke controller (MainController).
+    * Karena JavaFX cuma boleh update komponen GUI dari JavaFX Application Thread,
+    * maka pemanggilan consumer dibungkus dengan Platform.runLater().
+    *
+    * @param link objek Link yang ditemukan / dicek selama proses crawling
+    */
+   private void send(Link link) {
+      if (linkConsumer != null) {
+         Platform.runLater(() -> linkConsumer.accept(link));
+      }
+   }
 
-                        // Kirim link ke controller
-                        send(link);
-
-                    });
-                }
-
-                /*
-                 * Setelah semua task link dari satu halaman disubmit ke executor,
-                 * kita tutup executor biar ga menerima task baru lagi.
-                 */
-                executor.shutdown();
-
-                /*
-                 * Tunggu sampai semua virtual thread yang tadi disubmit selesai bekerja
-                 * baru boleh lanjut ke frontier berikutnya. di sini kita pakai Long.MAX_VALUE
-                 * biar timeout menunggunya lama banget dan itu artinya kita mau memastikan
-                 * semua task selesai baru boleh lanjut.
-                 * 
-                 * ini bakal mengembalikan true kalau semua taks selesai sebelum timeout dan
-                 * false kalau belum semua task selesai saat timeout.
-                 */
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    public void stop() {
-        isStopped = true;
-    }
-
-    private Document fetchLink(Link link, boolean isParseDoc) {
-
-
-
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(link.getUrl()))
-                    .header("User-Agent",
-                            "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
-                    .GET()
-                    .build();
-
-            // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
-            HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-
-            int statusCode = res.statusCode();
-            String body = res.body();
-            String finalUrl = res.uri().toString();
-
-            // Content-Type bisa null kalau server tidak kirim header-nya
-            String contentType = res.headers()
-                    .firstValue("Content-Type")
-                    .orElse("");
-
-            Document doc = null;
-
-            // Cek apakah kita perlu parsing HTML
-            boolean isHtml = contentType.toLowerCase().contains("text/html");
-            if (isParseDoc && statusCode == 200 && isHtml) {
-                try {
-                    doc = Jsoup.parse(body, finalUrl);
-                } catch (Exception ignore) {
-                    doc = null;
-                }
-            }
-
-            link.setFinalUrl(finalUrl);
-            link.setContentType(contentType);
-            link.setStatusCode(statusCode);
-
-            return doc;
-
-        } catch (Throwable e) {
-            String errorName = e.getClass().getSimpleName();
-            if (errorName.isBlank()) {
-                errorName = "UnknownError";
-            }
-
-            link.setError(errorName);
-
-            return null;
-        }
-    }
-
-    /**
-     * Method ini bertugas buat ngambil semua <a href="..."> yang ada di dalam
-     * dokumen HTML, terus kita convert ke URL absolut, normalisasi, dan simpan
-     * sebagai objek Link.
-     * 
-     * @param doc dokumen HTML
-     * @return Map<Link, String>:
-     *         - key = objek Link
-     *         - value = anchor text dari link tersebut di HTML ini
-     */
-    private Map<Link, String> extractLink(Document doc) {
-
-        // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam <a>...</a>
-        Map<Link, String> result = new HashMap<>();
-
-        // Loop semua elemen <a> yang punya atribut href
-        for (Element a : doc.select("a[href]")) {
-
-            // Ambil URL absolut dari atribut href (Jsoup akan gabungin dengan baseUri)
-            String absoluteUrl = a.absUrl("href");
-
-            // Skip kalau kosong, berarti ini bukan URL valid
-            if (absoluteUrl.isEmpty()) {
-                continue;
-            }
-
-            // Normalize URL biar konsisten
-            String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl);
-
-            // Skip kalau gagal normalisasi
-            if (normalizedUrl == null) {
-                continue;
-            }
-
-            // Bikin objek Link baru berdasarkan URL yang udah bersih
-            Link link = new Link(normalizedUrl);
-
-            // Ambil teks yang ada di link
-            String anchorText = a.text().trim();
-
-            // Masukin ke map hanya kalau URL itu belum pernah tercatat sebelumnya
-            result.putIfAbsent(link, anchorText);
-        }
-
-        // Balikin semua link yang berhasil diekstrak
-        return result;
-    }
-
-    /**
-     * Method ini bertugas buat ngirim objek link yang ditemukan selama proses
-     * crawling ke MainController.
-     * Proses crawling dijalankan di background thread, sedangkan JavaFX cuma boleh
-     * update komponen GUI dari thread utamanya (JavaFX Application Thread). Jadi
-     * biar gak error, kita bungkus pemanggilan consumer pakai Platform.runLater(),
-     * supaya dijalankan di thread UI dengan aman.
-     *
-     * @param link objek link yang ditemukan selama proses crawling
-     */
-    private void send(Link link) {
-        if (linkConsumer != null) {
-            Platform.runLater(() -> linkConsumer.accept(link));
-        }
-    }
-
-    public boolean isStopped() {
-        return isStopped;
-    }
+   public boolean isStopped() {
+      return isStopped;
+   }
 }

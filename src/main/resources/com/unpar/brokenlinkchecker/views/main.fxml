@@ -30,8 +30,6 @@
 
 
     <center>
-        <!-- <ScrollPane fx:id="scrollRoot" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER"
-        vbarPolicy="AS_NEEDED" style="-fx-background: transparent;"></ScrollPane> -->
         <VBox styleClass="content-root">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
@@ -56,7 +54,7 @@
             </HBox>
 
             <!-- ===================== SUMMARY & FILTERS ===================== -->
-            <GridPane Hgap="15">
+            <GridPane hgap="15">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="50" />
                     <ColumnConstraints percentWidth="50" />
@@ -67,7 +65,7 @@
                     GridPane.hgrow="ALWAYS">
                     <Label text="Summary" styleClass="section-title" />
 
-                    <GridPane Hgap="10" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                    <GridPane hgap="10" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                         <columnConstraints>
                             <ColumnConstraints percentWidth="25" />
                             <ColumnConstraints percentWidth="25" />
@@ -175,14 +173,6 @@
 
                     <!-- ====== Pagination ====== -->
                     <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar"></HBox>
-
-
-                    <Button fx:id="exportBtn" text="Export" onAction="#onExportClick">
-                        <styleClass>
-                            <String fx:value="control-btn" />
-                            <String fx:value="control-btn-export" />
-                        </styleClass>
-                    </Button>
                 </HBox>
 
                 <!-- ====== Table Result ====== -->

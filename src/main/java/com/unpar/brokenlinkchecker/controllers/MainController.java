@@ -25,20 +25,13 @@ import java.net.URI;
 
 /**
  * Controller utama aplikasi Broken Link Checker.
- * Kelas ini mengatur seluruh interaksi antara elemen GUI (JavaFX) dengan logika
- * program di backend, termasuk:
- * - Mengelola status crawling dan hasil pemeriksaan link
- * - Mengatur event handler tombol (Start, Stop, Export)
- * - Menampilkan data hasil crawling pada tabel
- * - Menangani filter, pagination, dan update tampilan summary
- * - Mengatur perilaku jendela utama (minimize, maximize, drag, close)
  */
 public class MainController {
     // ======================== GUI Component ========================
     @FXML
     private HBox titleBar, paginationBar;
     @FXML
-    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportBtn;
+    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn;
     @FXML
     private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
@@ -159,26 +152,6 @@ public class MainController {
         }
     }
 
-    @FXML
-    private void onExportClick() {
-        // Pastikan proses sudah selesai
-        Status status = summary.getStatus();
-
-        // Pastikan ekspor hanya bisa dilakukan setelah proses selesai
-        if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
-            return;
-        }
-
-        // Pastikan ekspor hanya bisa dilakukan jika data di tabel ada
-        if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
-            return;
-        }
-
-        Application.openNotificationWindow("WARNING", "Fitur belum diimplementasikan.");
-    }
-
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
         // Ambil reference ke stage (window) dari titleBar
@@ -232,16 +205,13 @@ public class MainController {
                 case IDLE -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportBtn.setDisable(true);
 
                     startBtn.getStyleClass().remove("active");
                     stopBtn.getStyleClass().remove("active");
-                    exportBtn.getStyleClass().remove("active");
                 }
                 case CHECKING -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportBtn.setDisable(true);
 
                     stopBtn.getStyleClass().remove("active");
 
@@ -252,7 +222,6 @@ public class MainController {
                 case STOPPED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportBtn.setDisable(false);
 
                     startBtn.getStyleClass().remove("active");
 
@@ -263,7 +232,6 @@ public class MainController {
                 case COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportBtn.setDisable(false);
 
                     // hapus semua warna aktif
                     startBtn.getStyleClass().remove("active");
