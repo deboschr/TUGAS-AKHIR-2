@@ -2,6 +2,8 @@ package com.unpar.brokenlinkchecker.controllers;
 
 import com.unpar.brokenlinkchecker.Application;
 import com.unpar.brokenlinkchecker.cores.Crawler;
+import com.unpar.brokenlinkchecker.cores.Crawler;
+import com.unpar.brokenlinkchecker.cores.CrawlerV2;
 import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
@@ -38,7 +40,7 @@ public class MainController {
     @FXML
     private HBox titleBar, paginationBar;
     @FXML
-    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn, exportBtn;
+    private Button minimizeBtn, maximizeBtn, closeBtn, startBtn, stopBtn;
     @FXML
     private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
@@ -69,6 +71,7 @@ public class MainController {
 
     private final ObservableList<Link> currentPageData = FXCollections.observableArrayList();
 
+    private final java.util.Queue<Link> pendingLinks = new java.util.concurrent.ConcurrentLinkedQueue<>();
     // ===============================================================
     private Crawler crawler;
 
@@ -82,9 +85,24 @@ public class MainController {
             setFilterCard();
             setPagination();
 
-            crawler = new Crawler(link -> allLinks.add(link));
+            // Bikin instance Crawler dengan mengirim comsumer pendingLinks
+            crawler = new Crawler(link -> pendingLinks.offer(link));
 
-            summary.setStatus(Status.IDLE);
+            // Timer buat memindahkan data dari pendingLinks ke allLinks di JavaFX thread
+            javafx.animation.AnimationTimer timer = new javafx.animation.AnimationTimer() {
+                @Override
+                public void handle(long now) {
+                    int batch = 0;
+                    Link link;
+
+                    // Batasi jumlah per frame biar UI nggak nge-lag
+                    while (batch < 50 && (link = pendingLinks.poll()) != null) {
+                        allLinks.add(link);
+                        batch++;
+                    }
+                }
+            };
+            timer.start();
         });
     }
 
@@ -159,26 +177,6 @@ public class MainController {
         }
     }
 
-    @FXML
-    private void onExportClick() {
-        // Pastikan proses sudah selesai
-        Status status = summary.getStatus();
-
-        // Pastikan ekspor hanya bisa dilakukan setelah proses selesai
-        if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
-            return;
-        }
-
-        // Pastikan ekspor hanya bisa dilakukan jika data di tabel ada
-        if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
-            return;
-        }
-
-        Application.openNotificationWindow("WARNING", "Fitur belum diimplementasikan.");
-    }
-
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
         // Ambil reference ke stage (window) dari titleBar
@@ -232,16 +230,13 @@ public class MainController {
                 case IDLE -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportBtn.setDisable(true);
 
                     startBtn.getStyleClass().remove("active");
                     stopBtn.getStyleClass().remove("active");
-                    exportBtn.getStyleClass().remove("active");
                 }
                 case CHECKING -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportBtn.setDisable(true);
 
                     stopBtn.getStyleClass().remove("active");
 
@@ -252,7 +247,6 @@ public class MainController {
                 case STOPPED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
-                    exportBtn.setDisable(false);
 
                     startBtn.getStyleClass().remove("active");
 
@@ -263,7 +257,6 @@ public class MainController {
                 case COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
-                    exportBtn.setDisable(false);
 
                     // hapus semua warna aktif
                     startBtn.getStyleClass().remove("active");

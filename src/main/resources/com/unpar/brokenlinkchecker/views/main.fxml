@@ -56,7 +56,9 @@
             </HBox>
 
             <!-- ===================== SUMMARY & FILTERS ===================== -->
-            <GridPane Hgap="15">
+            <GridPane>
+                <hgap>15</hgap>
+
                 <columnConstraints>
                     <ColumnConstraints percentWidth="50" />
                     <ColumnConstraints percentWidth="50" />
@@ -67,7 +69,9 @@
                     GridPane.hgrow="ALWAYS">
                     <Label text="Summary" styleClass="section-title" />
 
-                    <GridPane Hgap="10" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                    <GridPane HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                        <hgap>10</hgap>
+
                         <columnConstraints>
                             <ColumnConstraints percentWidth="25" />
                             <ColumnConstraints percentWidth="25" />
@@ -168,7 +172,7 @@
             <VBox styleClass="card" VBox.vgrow="ALWAYS">
 
                 <!-- ====== Card Header ====== -->
-                <HBox alignment="TOP_LEFT" spacing="10">
+                <HBox spacing="10">
                     <Label text="Result" styleClass="section-title" />
 
                     <Region HBox.hgrow="ALWAYS" />
@@ -177,12 +181,12 @@
                     <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar"></HBox>
 
 
-                    <Button fx:id="exportBtn" text="Export" onAction="#onExportClick">
+                    <!-- <Button fx:id="exportBtn" text="Export" onAction="#onExportClick">
                         <styleClass>
                             <String fx:value="control-btn" />
                             <String fx:value="control-btn-export" />
                         </styleClass>
-                    </Button>
+                    </Button> -->
                 </HBox>
 
                 <!-- ====== Table Result ====== -->

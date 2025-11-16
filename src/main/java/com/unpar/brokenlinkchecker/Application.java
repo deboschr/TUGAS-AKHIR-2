@@ -34,6 +34,8 @@ public class Application extends javafx.application.Application {
 
     /**
      * Method ini dipanggil otomatis oleh javafx saat aplikasi baru mulai
+     *
+     * @param stage stage utama dari aplikasi
      */
     @Override
     public void start(Stage stage) {
@@ -67,11 +69,12 @@ public class Application extends javafx.application.Application {
             // Biar window di tengah layar
             mainStage.centerOnScreen();
             // Biar window lansung fullscreen
-            mainStage.setFullScreen(true);
+            mainStage.setMaximized(true);
 
             // Set ukuran minimum window
             mainStage.setMinWidth(1024);
             mainStage.setMinHeight(600);
+
             // Tampilin window
             mainStage.show();
         } catch (Exception e) {
@@ -79,9 +82,6 @@ public class Application extends javafx.application.Application {
         }
     }
 
-    // ==============================================================
-    // ======================== LINK WINDOW =========================
-    // ==============================================================
 
     /**
      * Method buat ngebuka window link detail
@@ -121,9 +121,6 @@ public class Application extends javafx.application.Application {
         }
     }
 
-    // ==============================================================
-    // ==================== NOTIFICATION WINDOW =====================
-    // ==============================================================
 
     /**
      * Method buat ngebuka window notifikasi

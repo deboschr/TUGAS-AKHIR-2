@@ -60,5 +60,5 @@ git clone https://github.com/deboschr/TUGAS-AKHIR-2
 
 ### Masukan URL
 ```bash
-https://unpar.ac.id
+https://informatika.unpar.ac.id
 ```
