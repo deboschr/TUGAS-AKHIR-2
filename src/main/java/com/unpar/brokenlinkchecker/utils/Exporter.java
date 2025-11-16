@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Exporter {
-    // ================================================================
-    // ============ EXCEL EXPORT (Apache POI) =========================
-    // ================================================================
     /**
      * Mengekspor data broken links ke file Excel (.xlsx) menggunakan Apache POI.
      *
@@ -91,9 +88,7 @@ public class Exporter {
         }
     }
 
-    // ================================================================
-    // ============ JSON EXPORT (Gson) ================================
-    // ================================================================
+
     /**
      * Mengekspor data broken link ke file JSON menggunakan pustaka Gson.
      * <p>
@@ -194,9 +189,12 @@ public class Exporter {
         }
     }
 
-    // ================================================================
-    // ============ CSV EXPORT ========================================
-    // ================================================================
+    /**
+     * 
+     * @param brokenLinks
+     * @param file
+     * @throws IOException
+     */
     public static void exportToCsv(List<Link> brokenLinks, File file) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
             writer.println("URL,Final URL,Content Type,Error,Source Webpage,Anchor Text");
@@ -217,6 +215,11 @@ public class Exporter {
         }
     }
 
+    /**
+     * 
+     * @param value
+     * @return
+     */
     private static String escapeCsv(String value) {
         if (value == null){
             return "";

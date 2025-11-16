@@ -78,7 +78,6 @@ public class Application extends javafx.application.Application {
         }
     }
 
-
     /**
      * Method buat ngebuka window link detail
      * 
@@ -116,7 +115,6 @@ public class Application extends javafx.application.Application {
             e.printStackTrace();
         }
     }
-
 
     /**
      * Method buat ngebuka window notifikasi
