@@ -11,13 +11,11 @@ import javafx.stage.StageStyle;
 
 /**
  * Kelas utama buat ngejalanin aplikasi.
- * 
+ *
  * Tugas kelas ini:
  * - Ngejalanin aplikasi JavaFX
  * - Nyimpen referensi ke window utama (mainStage)
  * - Nyediain method buat buka window lain (link detail dan notifikasi)
- * 
- * Intinya kelas ini menjadi pusat kontrol buat semua window di aplikasi
  */
 public class Application extends javafx.application.Application {
 
@@ -33,7 +31,9 @@ public class Application extends javafx.application.Application {
     }
 
     /**
-     * Method ini dipanggil otomatis oleh javafx saat aplikasi baru mulai
+     * Method ini dipanggil otomatis sama javafx saat aplikasi baru mulai
+     *
+     * @param stage stage utama dari aplikasi
      */
     @Override
     public void start(Stage stage) {
@@ -43,10 +43,6 @@ public class Application extends javafx.application.Application {
         // Buka window utama
         openMainWindow();
     }
-
-    // ==============================================================
-    // ======================== MAIN WINDOW =========================
-    // ==============================================================
 
     /**
      * Method buat ngebuka window utama aplikasi
@@ -66,9 +62,13 @@ public class Application extends javafx.application.Application {
             mainStage.initStyle(StageStyle.UNDECORATED);
             // Biar window di tengah layar
             mainStage.centerOnScreen();
+            // Biar window lansung fullscreen
+            mainStage.setMaximized(true);
+
             // Set ukuran minimum window
             mainStage.setMinWidth(1024);
             mainStage.setMinHeight(600);
+
             // Tampilin window
             mainStage.show();
         } catch (Exception e) {
@@ -76,13 +76,9 @@ public class Application extends javafx.application.Application {
         }
     }
 
-    // ==============================================================
-    // ======================== LINK WINDOW =========================
-    // ==============================================================
-
     /**
      * Method buat ngebuka window link detail
-     * 
+     *
      * @param link Objek Link yang bakal ditampilin di window ini
      */
     public static void openLinkWindow(Link link) {
@@ -118,13 +114,9 @@ public class Application extends javafx.application.Application {
         }
     }
 
-    // ==============================================================
-    // ==================== NOTIFICATION WINDOW =====================
-    // ==============================================================
-
     /**
      * Method buat ngebuka window notifikasi
-     * 
+     *
      * @param type    Jenis notifikasi
      * @param message Pesan yang mau ditampilin
      */
