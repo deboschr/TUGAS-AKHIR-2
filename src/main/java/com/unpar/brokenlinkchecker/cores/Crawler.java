@@ -238,6 +238,67 @@ public class Crawler {
         isStopped = true;
     }
 
+    // /**
+    //  * Method buat nge-fetch sebuah URL.
+    //  * Bisa sekaligus parsing HTML kalau isParseDoc = true.
+    //  *
+    //  * @param link       objek Link yang akan di-update informasinya
+    //  * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
+    //  * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
+    //  * bukan HTML / error.
+    //  */
+    // private Document fetchLink(Link link, boolean isParseDoc) {
+    //     try {
+    //         HttpRequest request = HttpRequest
+    //                 .newBuilder() /////////////////////////
+    //                 .uri(URI.create(link.getUrl())) ///////////////////
+    //                 .header("User-Agent",
+    //                         "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+    //                 .timeout(Duration.ofSeconds(20)) // Timeout total request (connect + read)
+    //                 .GET().build();
+    //
+    //         // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
+    //         HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+    //
+    //         int statusCode = res.statusCode();
+    //         String body = res.body();
+    //         String finalUrl = res.uri().toString();
+    //
+    //         // Content-Type bisa kosong kalau server tidak kirim header-nya
+    //         String contentType = res.headers().firstValue("Content-Type").orElse("");
+    //
+    //         Document doc = null;
+    //
+    //         // Cek apakah kita perlu parsing HTML
+    //         boolean isHtml = contentType.toLowerCase().contains("text/html");
+    //         if (isParseDoc && statusCode == 200 && isHtml) {
+    //             try {
+    //                 doc = Jsoup.parse(body, finalUrl);
+    //             } catch (Exception ignore) {
+    //                 doc = null;
+    //             }
+    //         }
+    //
+    //         // Update informasi dasar pada objek Link
+    //         link.setFinalUrl(finalUrl);
+    //         link.setContentType(contentType);
+    //         link.setStatusCode(statusCode);
+    //
+    //         return doc;
+    //
+    //     } catch (Throwable e) {
+    //         String errorName = e.getClass().getSimpleName();
+    //         if (errorName.isBlank()) {
+    //             errorName = "UnknownError";
+    //         }
+    //
+    //         // Simpan nama error ke Link supaya bisa ditampilkan di UI
+    //         link.setError(errorName);
+    //
+    //         return null;
+    //     }
+    // }
+
     /**
      * Method buat nge-fetch sebuah URL.
      * Bisa sekaligus parsing HTML kalau isParseDoc = true.
@@ -245,33 +306,72 @@ public class Crawler {
      * @param link       objek Link yang akan di-update informasinya
      * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
-     *         bukan HTML / error.
+     * bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
+
         try {
-            HttpRequest request = HttpRequest
-                    .newBuilder() /////////////////////////
-                    .uri(URI.create(link.getUrl())) ///////////////////
-                    .header("User-Agent",
-                            "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
-                    .timeout(Duration.ofSeconds(20)) // Timeout total request (connect + read)
-                    .GET().build();
+            // variabel buat nyimpen hasil response dari server
+            HttpResponse<?> res;
 
-            // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
-            HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            // ============================================================
+            // 1. Kalau butuh parse HTML → SELALU GET (dengan BodyHandlers.ofString)
+            // ============================================================
+            if (isParseDoc) {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(link.getUrl()))
+                        .header("User-Agent",
+                                "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                        .timeout(Duration.ofSeconds(20))
+                        .GET()
+                        .build();
 
+                res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            } else {
+                // ============================================================
+                // 2. Tidak perlu parse → coba HEAD dulu
+                // ============================================================
+                try {
+                    HttpRequest headReq = HttpRequest.newBuilder()
+                            .uri(URI.create(link.getUrl()))
+                            .header("User-Agent",
+                                    "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                            .timeout(Duration.ofSeconds(20))
+                            .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                            .build();
+
+                    res = HTTP_CLIENT.send(headReq, HttpResponse.BodyHandlers.discarding());
+                } catch (Exception headError) {
+                    // ============================================================
+                    // 3. Server tidak mendukung HEAD → fallback GET
+                    // ============================================================
+                    HttpRequest getReq = HttpRequest.newBuilder()
+                            .uri(URI.create(link.getUrl()))
+                            .header("User-Agent",
+                                    "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
+                            .timeout(Duration.ofSeconds(20))
+                            .GET()
+                            .build();
+
+                    res = HTTP_CLIENT.send(getReq, HttpResponse.BodyHandlers.discarding());
+                }
+            }
+
+            // ============================================================
+            // 4. Ambil data dasar response
+            // ============================================================
             int statusCode = res.statusCode();
-            String body = res.body();
             String finalUrl = res.uri().toString();
-
-            // Content-Type bisa kosong kalau server tidak kirim header-nya
-            String contentType = res.headers().firstValue("Content-Type").orElse("");
+            String contentType = res.headers().firstValue("Content-Type").orElse("").toLowerCase();
 
             Document doc = null;
 
-            // Cek apakah kita perlu parsing HTML
-            boolean isHtml = contentType.toLowerCase().contains("text/html");
-            if (isParseDoc && statusCode == 200 && isHtml) {
+            // ============================================================
+            // 5. Parse HTML hanya kalau diminta + OK + contentType text/html
+            // ============================================================
+            if (isParseDoc && statusCode == 200 && contentType.contains("text/html")) {
+
+                String body = (String) res.body(); // sudah BodyHandlers.ofString
                 try {
                     doc = Jsoup.parse(body, finalUrl);
                 } catch (Exception ignore) {
@@ -279,7 +379,9 @@ public class Crawler {
                 }
             }
 
-            // Update informasi dasar pada objek Link
+            // ============================================================
+            // 6. Update data Link
+            // ============================================================
             link.setFinalUrl(finalUrl);
             link.setContentType(contentType);
             link.setStatusCode(statusCode);
@@ -292,12 +394,12 @@ public class Crawler {
                 errorName = "UnknownError";
             }
 
-            // Simpan nama error ke Link supaya bisa ditampilkan di UI
             link.setError(errorName);
 
             return null;
         }
     }
+
 
     /**
      * Method ini bertugas buat ngambil semua <a href="..."> yang ada di dalam
@@ -306,8 +408,8 @@ public class Crawler {
      *
      * @param doc dokumen HTML
      * @return Map<Link, String>:
-     *         - key = objek Link (URL unik yang sudah dinormalisasi)
-     *         - value = anchor text dari link tersebut di HTML ini
+     * - key = objek Link (URL unik yang sudah dinormalisasi)
+     * - value = anchor text dari link tersebut di HTML ini
      */
     private Map<Link, String> extractLink(Document doc) {
         // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam <a>...</a>
@@ -361,7 +463,7 @@ public class Crawler {
     /**
      * Method getter biar controller bisa tahu apakah proses dihentikan oleh user
      * atau berhenti secara natural.
-     * 
+     *
      * @return true kalau dihentikan user, false kalau natural
      */
     public boolean isStopped() {
