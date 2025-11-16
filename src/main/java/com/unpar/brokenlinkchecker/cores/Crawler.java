@@ -46,17 +46,12 @@ public class Crawler {
     private volatile boolean isStopped = false;
 
     // HttpClient bawaan Java (JDK 11+), dipakai buat semua request HTTP
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.ALWAYS) // Ikuti redirect dari server
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS) // Ikuti redirect dari server
             .connectTimeout(Duration.ofSeconds(10)) // Timeout saat bangun koneksi
             .build();
 
     // Batas maksimum jumlah URL yang boleh dicek
     private static final int MAX_LINKS = 1000;
-
-    // Counter jumlah URL yang benar-benar sudah “dicek” (di-fetch)
-    // Hanya diubah oleh thread utama (start), jadi ga perlu volatile/atomic.
-    private int checkedCount = 0;
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
@@ -80,7 +75,6 @@ public class Crawler {
         repositories.clear();
         frontier.clear();
         rateLimiters.clear();
-        checkedCount = 0;
 
         // Ambil host dari seed URL buat identifikasi “same-host”
         rootHost = UrlHandler.getHost(seedUrl);
@@ -92,7 +86,7 @@ public class Crawler {
         while (!isStopped && !frontier.isEmpty()) {
 
             // Kalau sudah mencapai limit global, hentikan BFS
-            if (checkedCount >= MAX_LINKS) {
+            if (repositories.size() >= MAX_LINKS) {
                 frontier.clear();
                 break;
             }
@@ -109,9 +103,6 @@ public class Crawler {
                 // Kalau sudah ada, berarti URL ini pernah (atau sedang) dicek → skip
                 continue;
             }
-
-            // URL ini baru pertama kali dicek → increment counter
-            checkedCount++;
 
             // Fetch dan parse body dari webpage link (kalau HTML)
             Document doc = fetchLink(currLink, true);
@@ -142,24 +133,19 @@ public class Crawler {
             // Kalau sampai sini, berarti currLink adalah webpage same-host yang valid
             currLink.setIsWebpage(true);
 
-            // Ekstrak seluruh <a href="..."> dari webpage
+            // Ekstrak seluruh link dari webpage
             Map<Link, String> linksOnWebpage = extractLink(doc);
 
-            // Executor berbasis virtual thread hanya untuk cek link non-same-host
-            // (external)
+            // Executor berbasis virtual thread hanya untuk cek link non-same-hos
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
                 for (var entry : linksOnWebpage.entrySet()) {
-                    // Kalau user stop di tengah jalan, hentikan proses parse link halaman ini
-                    if (isStopped) {
-                        break;
-                    }
-
                     // Kalau limit sudah tercapai, hentikan BFS dengan mengosongkan frontier
-                    if (checkedCount >= MAX_LINKS) {
+                    if (repositories.size() >= MAX_LINKS) {
                         frontier.clear();
                         break;
                     }
+
 
                     Link link = entry.getKey();
                     String anchorText = entry.getValue();
@@ -192,27 +178,20 @@ public class Crawler {
                         /*
                          * Untuk link non-same-host (external / beda host):
                          * - Dicek secara paralel di virtual thread.
-                         * - Karena link ini akan benar-benar dicek (fetchLink),
-                         * maka kita catat ke repositories + hitung di checkedCount di sini.
+                         * - Karena link ini akan benar-benar dicek (fetchLink), maka kita catat ke repositories
                          */
 
                         // Pastikan limit belum terlewati sebelum mencatat link baru
-                        if (checkedCount >= MAX_LINKS) {
+                        if (repositories.size() >= MAX_LINKS) {
                             frontier.clear();
                             break;
                         }
 
                         // Masukkan ke repositories sebagai link baru
-                        repositories.put(link.getUrl(), link);
-                        checkedCount++;
+                        repositories.putIfAbsent(link.getUrl(), link);
 
                         // Submit task ke virtual thread buat cek status link external
                         executor.submit(() -> {
-                            // Kalau user sudah menekan STOP, hentikan task ini secepat mungkin
-                            if (isStopped) {
-                                return;
-                            }
-
                             /*
                              * Terapkan rate limiting per host biar ga dianggap serangan atau
                              * kena HTTP 429 (Too Many Requests).
@@ -258,17 +237,12 @@ public class Crawler {
      * @param isParseDoc true kalau body perlu di-parse jadi Document (untuk webpage
      *                   same-host)
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
-     *         bukan HTML / error.
+     * bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(link.getUrl()))
-                    .header("User-Agent",
-                            "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)")
-                    .timeout(Duration.ofSeconds(10)) // Timeout total request (connect + read)
-                    .GET()
-                    .build();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link.getUrl())).header("User-Agent", "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)").timeout(Duration.ofSeconds(10)) // Timeout total request (connect + read)
+                    .GET().build();
 
             // Kirim request dan ambil responsenya (body-nya langsung dalam bentuk String)
             HttpResponse<String> res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
@@ -278,9 +252,7 @@ public class Crawler {
             String finalUrl = res.uri().toString();
 
             // Content-Type bisa kosong kalau server tidak kirim header-nya
-            String contentType = res.headers()
-                    .firstValue("Content-Type")
-                    .orElse("");
+            String contentType = res.headers().firstValue("Content-Type").orElse("");
 
             Document doc = null;
 
@@ -315,20 +287,20 @@ public class Crawler {
     }
 
     /**
-     * Method ini bertugas buat ngambil semua <a href="..."> yang ada di dalam
+     * Method ini bertugas buat ngambil semua tag a (<a href="...">) yang ada di dalam
      * dokumen HTML, terus kita convert ke URL absolut, normalisasi, dan simpan
      * sebagai objek Link.
      *
      * @param doc dokumen HTML
      * @return Map<Link, String>:
-     *         - key = objek Link (URL unik yang sudah dinormalisasi)
-     *         - value = anchor text dari link tersebut di HTML ini
+     * - key = objek Link (URL unik yang sudah dinormalisasi)
+     * - value = anchor text dari link tersebut di HTML ini
      */
     private Map<Link, String> extractLink(Document doc) {
-        // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam <a>...</a>
+        // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam tag a
         Map<Link, String> result = new HashMap<>();
 
-        // Loop semua elemen <a> yang punya atribut href
+        // Loop semua elemen tag a yang punya atribut href
         for (Element a : doc.select("a[href]")) {
 
             // Ambil URL absolut dari atribut href (Jsoup akan gabungin dengan baseUri)
