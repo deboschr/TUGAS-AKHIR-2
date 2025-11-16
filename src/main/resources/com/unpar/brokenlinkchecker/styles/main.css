@@ -115,6 +115,14 @@
 	-fx-background-color: -red;
 }
 
+.control-btn-export.active {
+	-fx-background-color: -yellow;
+}
+
+.control-btn-export:hover {
+	-fx-background-color: -yellow;
+}
+
 .control-btn:disabled {
 	-fx-opacity: 0.65;
 	-fx-cursor: default;

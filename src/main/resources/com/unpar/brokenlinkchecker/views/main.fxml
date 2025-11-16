@@ -179,6 +179,14 @@
 
                     <!-- ====== Pagination ====== -->
                     <HBox fx:id="paginationBar" alignment="CENTER" styleClass="pagination-bar"></HBox>
+
+
+                    <Button fx:id="exportBtn" text="Export" onAction="#onExportClick">
+                        <styleClass>
+                            <String fx:value="control-btn" />
+                            <String fx:value="control-btn-export" />
+                        </styleClass>
+                    </Button>
                 </HBox>
 
                 <!-- ====== Table Result ====== -->
