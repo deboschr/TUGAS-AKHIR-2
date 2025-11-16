@@ -5,6 +5,7 @@ import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
+import com.unpar.brokenlinkchecker.utils.Exporter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -18,9 +19,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.awt.*;
+import java.io.File;
 import java.net.URI;
 
 /**
@@ -102,16 +105,7 @@ public class MainController {
     /**
      * Event handler untuk tombol "Start".
      *
-     * Method ini dijalankan saat pengguna menekan tombol "Start".
-     * Prosesnya:
-     * - Mengambil URL awal dari input field dan membersihkan formatnya
-     * - Memvalidasi URL yang dimasukkan
-     * - Mengosongkan data hasil crawling sebelumnya
-     * - Menetapkan status aplikasi menjadi CHECKING
-     * - Menjalankan proses crawling di background thread
-     *
-     * Proses crawling dilakukan di thread terpisah agar UI tetap responsif
-     * dan tidak freeze selama pemeriksaan tautan berlangsung.
+     * Digunakan untuk memulai proses crawling.
      */
     @FXML
     private void onStartClick() {
@@ -190,7 +184,55 @@ public class MainController {
             return;
         }
 
-        Application.openNotificationWindow("WARNING", "Fitur belum diimplementasikan.");
+        // Buat dialog pemilihan lokasi penyimpanan file
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Simpan hasil export");
+
+        // Tentukan format file yang didukung
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
+                new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
+                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
+
+        // Tampilkan dialog simpan dan ambil file tujuan
+        File file = chooser.showSaveDialog(null);
+
+        // Kalay file null berarti pengguna batal memilih file
+        if (file == null) {
+            return;
+        }
+
+        // Jalankan export di background thread agar UI tidak freeze
+        new Thread(() -> {
+            try {
+                // Ambil nama file
+                String name = file.getName().toLowerCase();
+
+                // Pilih format ekspor berdasarkan ekstensi file
+                if (name.endsWith(".xlsx")) {
+                    Exporter.exportToExcel(brokenLinks, file);
+                } else if (name.endsWith(".csv")) {
+                    Exporter.exportToCsv(brokenLinks, file);
+                } else if (name.endsWith(".json")) {
+                    Exporter.exportToJson(brokenLinks, file);
+                } else {
+                    // Jika ekstensi tidak dikenali → tampilkan peringatan
+                    Platform.runLater(
+                            () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
+                    return;
+                }
+
+                // Jika ekspor berhasil → tampilkan notifikasi sukses
+                Platform.runLater(() -> Application.openNotificationWindow(
+                        "SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Jika terjadi error selama ekspor tampilkan pesan error di notifikasi
+                Platform.runLater(
+                        () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
+            }
+        }).start();
     }
 
     // ============================= TITLE BAR ================================
