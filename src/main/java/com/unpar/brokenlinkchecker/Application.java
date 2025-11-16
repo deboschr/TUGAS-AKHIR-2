@@ -67,7 +67,7 @@ public class Application extends javafx.application.Application {
             // Biar window di tengah layar
             mainStage.centerOnScreen();
             // Biar window lansung fullscreen
-            mainStage.setFullScreen(true);
+            mainStage.setMaximized(true);
 
             // Set ukuran minimum window
             mainStage.setMinWidth(1024);
