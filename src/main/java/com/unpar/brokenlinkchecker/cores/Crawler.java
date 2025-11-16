@@ -139,6 +139,7 @@ public class Crawler {
                         continue;
                     }
 
+
                     /*
                      * Bikin koneksi dengan webpage kalau ini link baru yang belum pernah ada di
                      * repository
@@ -216,6 +217,9 @@ public class Crawler {
     }
 
     private Document fetchLink(Link link, boolean isParseDoc) {
+
+
+
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(link.getUrl()))
