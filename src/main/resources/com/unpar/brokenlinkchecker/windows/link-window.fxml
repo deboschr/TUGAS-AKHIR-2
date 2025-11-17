@@ -14,13 +14,8 @@
     <!-- ===================== TITLE BAR ===================== -->
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
-            <!-- Judul di kiri -->
             <Label text="Link Details" styleClass="title-text" />
-
-            <!-- Spacer agar tombol ke kanan -->
             <Region HBox.hgrow="ALWAYS" />
-
-            <!-- Tombol Close -->
             <Button text="&#x2715;" fx:id="closeBtn">
                 <styleClass>
                     <String fx:value="title-btn" />

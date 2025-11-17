@@ -13,10 +13,7 @@
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
             <Label text="Broken Link Checker" styleClass="title-text" HBox.hgrow="ALWAYS" />
-
-            <!-- ini yang mendorong tombol ke kanan -->
             <Region HBox.hgrow="ALWAYS" />
-
             <Button text="&#x2014;" fx:id="minimizeBtn" styleClass="title-btn" />
             <Button text="&#x2610;" fx:id="maximizeBtn" styleClass="title-btn" />
             <Button text="&#x2715;" fx:id="closeBtn">
@@ -30,8 +27,6 @@
 
 
     <center>
-        <!-- <ScrollPane fx:id="scrollRoot" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER"
-        vbarPolicy="AS_NEEDED" style="-fx-background: transparent;"></ScrollPane> -->
         <VBox styleClass="content-root">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
