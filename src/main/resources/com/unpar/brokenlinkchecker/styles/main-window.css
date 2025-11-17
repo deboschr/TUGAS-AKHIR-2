@@ -83,13 +83,12 @@
 /* ======================== BUTTON ======================== */
 
 .control-btn {
-	-fx-background-color: -grey-dark;
 	-fx-background-radius: 8;
+	-fx-border-radius: 8;
+	-fx-border-insets: -1;
 
 	-fx-border-color: -tertiary;
 	-fx-border-width: 2;
-	-fx-border-radius: 8;
-	-fx-border-insets: -1;
 
 	-fx-padding: 8 20;
 	-fx-font-size: 16px;
@@ -97,32 +96,50 @@
 	-fx-text-fill: -white;
 	-fx-pref-height: 40;
 	-fx-pref-width: 100;
+
+	-fx-background-color: -grey-dark;
 }
 
-.control-btn-start.active {
-	-fx-background-color: -blue;
+/* ======= START BUTTON ======= */
+.control-btn-start {
+	-fx-background-color: derive(-blue, -40%);
 }
 
 .control-btn-start:hover {
 	-fx-background-color: -blue;
 }
 
-.control-btn-stop.active {
-	-fx-background-color: -red;
+.control-btn-start.active {
+	-fx-background-color: -blue;
+}
+
+/* ======= STOP BUTTON ======= */
+.control-btn-stop {
+	-fx-background-color: derive(-red, -40%);
 }
 
 .control-btn-stop:hover {
 	-fx-background-color: -red;
 }
 
-.control-btn-export.active {
-	-fx-background-color: -yellow;
+.control-btn-stop.active {
+	-fx-background-color: -red;
+}
+
+/* ======= EXPORT BUTTON ======= */
+.control-btn-export {
+	-fx-background-color: derive(-yellow, -40%);
 }
 
 .control-btn-export:hover {
 	-fx-background-color: -yellow;
 }
 
+.control-btn-export.active {
+	-fx-background-color: -yellow;
+}
+
+/* DISABLED */
 .control-btn:disabled {
 	-fx-opacity: 0.65;
 	-fx-cursor: default;
