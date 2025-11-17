@@ -582,7 +582,6 @@ public class MainController {
 
         // Pasang subset data ini ke tabel
         brokenLinkTable.setItems(paginationData);
-        brokenLinkTable.setItems(brokenLinks.subList(fromIndex, toIndex));
 
         // Render ulang tombol navigasi (Prev, angka halaman, Next)
         renderPaginationButtons();
