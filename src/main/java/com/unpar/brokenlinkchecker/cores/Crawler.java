@@ -3,6 +3,7 @@ package com.unpar.brokenlinkchecker.cores;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.utils.RateLimiter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
+import javafx.application.Platform;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,13 +57,22 @@ public class Crawler {
             // Ikuti redirect dari server website
             .followRedirects(HttpClient.Redirect.ALWAYS)
             // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofSeconds(15)).build();
+            .connectTimeout(Duration.ofSeconds(5)).build();
 
     private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
 
     // Batas maksimum jumlah URL yang boleh dicek
     private static final int MAX_LINKS = 1000;
 
+    /**
+     * Constraktor dari kelas Crawler.
+     * Pake Consumer karena consumer adalah function interface java yang menerima
+     * satu buah input (kalau di sini objek kelas Link), lalu memproses input itu
+     * sesuai dengan logika fungsi yang didefinisikan di kelas yang membuat instance
+     * dari kelas Crawler ini, lalu tidak memberikan return apa2.
+     * 
+     * @param linkConsumer fungsi buat mengirim data Link yang ditemukan.
+     */
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
     }
@@ -203,7 +213,7 @@ public class Crawler {
                         // Masukkan ke repositories sebagai link baru
                         repositories.putIfAbsent(link.getUrl(), link);
 
-                        // Submit task ke virtual thread buat cek status link external
+                        // Submit task ke virtual thread buat cek fetch link
                         executor.submit(() -> {
                             /*
                              * Terapkan rate limiting per host biar ga dianggap serangan atau
@@ -249,7 +259,7 @@ public class Crawler {
      * @param link       objek Link yang akan di-update informasinya
      * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
-     * bukan HTML / error.
+     *         bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
 
@@ -268,7 +278,7 @@ public class Crawler {
                         // Header biar server tahu yg minta request adalah aplikasi kita
                         .header("User-Agent", USER_AGENT)
                         // Timeout total request (connect + read)
-                        .timeout(Duration.ofSeconds(20))
+                        .timeout(Duration.ofSeconds(10))
                         // Pakai GET karena butuh body HTML lengkap
                         .GET()
                         // Build objek HttpRequest
@@ -289,7 +299,7 @@ public class Crawler {
                             // Header biar server tahu yg minta request adalah aplikasi kita
                             .header("User-Agent", USER_AGENT)
                             // Timeout total request (connect + read)
-                            .timeout(Duration.ofSeconds(20))
+                            .timeout(Duration.ofSeconds(10))
                             // Method HEAD dg hanya minta header, tanpa body
                             .method("HEAD", HttpRequest.BodyPublishers.noBody())
                             // Build objek HttpRequest
@@ -309,7 +319,7 @@ public class Crawler {
                             // Header biar server tahu yg minta request adalah aplikasi kita
                             .header("User-Agent", USER_AGENT)
                             // Timeout total request (connect + read)
-                            .timeout(Duration.ofSeconds(20))
+                            .timeout(Duration.ofSeconds(10))
                             // Method GET
                             .GET()
                             // Build objek HttpRequest
@@ -377,8 +387,8 @@ public class Crawler {
      *
      * @param doc dokumen HTML
      * @return Map dengan key dan value:
-     * - key = objek Link (URL unik yang sudah dinormalisasi)
-     * - value = anchor text dari link tersebut di HTML ini
+     *         - key = objek Link (URL unik yang sudah dinormalisasi)
+     *         - value = anchor text dari link tersebut di HTML ini
      */
     private Map<Link, String> extractLink(Document doc) {
         // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam tag a
@@ -425,7 +435,7 @@ public class Crawler {
      */
     private void send(Link link) {
         if (linkConsumer != null) {
-            linkConsumer.accept(link);
+            Platform.runLater(() -> linkConsumer.accept(link));
         }
     }
 

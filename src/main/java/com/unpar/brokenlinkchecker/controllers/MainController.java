@@ -49,26 +49,35 @@ public class MainController {
     private TableColumn<Link, String> errorColumn, urlColumn;
 
     // ======================== Data Model ===========================
+    // Untuk menyimpan seluruh tautan hasil crawling
     private final ObservableList<Link> allLinks = FXCollections.observableArrayList();
+    // Untuk menyimpan tautan halaman
     private final FilteredList<Link> webpageLinks = new FilteredList<>(allLinks, link -> link.isWebpage() == true);
+    // Untuk menyimpan tautan rusak
     private final FilteredList<Link> brokenLinks = new FilteredList<>(allLinks, link -> !link.getError().isEmpty());
+    // Untuk menyimpan data summary dari crawling
     private final Summary summary = new Summary();
 
     // ======================== Drag Window ==========================
+    // Untuk menyimpan posisi cursor pada sumbu X
     private double xOffset;
+    // Untuk menyimpan posisi cursor pada sumbu Y
     private double yOffset;
 
     // ======================== Pagination ==========================
+    // Untuk menyimpan daftar link perhalaman pada pagination
+    private final ObservableList<Link> paginationData = FXCollections.observableArrayList();
+    // Jumlah baris tabel perhalaman pagination
     private static final int ROWS_PER_PAGE = 15;
+    // Jumlah halaman yang terlihat pada pagination
     private static final int MAX_VISIBLE_PAGES = 5;
-
+    // Halaman saat ini pada pagination
     private int currentPage = 1;
+    // Total jumlah halaman pagination
     private int totalPages = 1;
 
-    private final ObservableList<Link> currentPageData = FXCollections.observableArrayList();
-
-    private final java.util.Queue<Link> pendingLinks = new java.util.concurrent.ConcurrentLinkedQueue<>();
     // ===============================================================
+    // Untuk menyimpan instance dari kelas Crawler
     private Crawler crawler;
 
     @FXML
@@ -81,23 +90,12 @@ public class MainController {
             setFilterCard();
             setPagination();
 
-            crawler = new Crawler(link -> pendingLinks.offer(link));
-
-            AnimationTimer timer = new AnimationTimer() {
-                @Override
-                public void handle(long now) {
-                    for (int i = 0; i < 50; i++) {
-                        Link link = pendingLinks.poll();
-
-                        if (link == null){
-                            break;
-                        }
-
-                        allLinks.add(link);
-                    }
-                }
-            };
-            timer.start();
+            /*
+             * Buat instance kelas Crawler dan kirim sebuah fungsi (lambda expresion) untuk
+             * memasukan objek link ke list allLinks. Lambda ini nanti bakal jadi function
+             * interface Consumer dengan tipe data paramsnya adalah kelas Link.
+             */
+            crawler = new Crawler(link -> allLinks.add(link));
         });
     }
 
@@ -132,9 +130,9 @@ public class MainController {
         summary.setStatus(Status.CHECKING);
 
         /*
-         * Jalankan proses crawling di virtual thread.
-         * Virtual thread jauh lebih ringan dibanding OS thread,
-         * dan sangat cocok untuk pekerjaan I/O-bound seperti crawling.
+         * Jalankan proses crawling di thread yang berbeda dengan thread yang
+         * menjalankan GUI. Pake virtual thread biar lebih ringan karna thread biasa 1:1
+         * dengan thread laptop.
          */
         Thread.startVirtualThread(() -> {
             try {
@@ -153,9 +151,9 @@ public class MainController {
             } catch (Exception e) {
                 e.printStackTrace();
 
-                // Kalau terjadi error besar di luar fetchLink / HTTP
-                Platform.runLater(() -> Application.openNotificationWindow("ERROR",
-                        "An unexpected error occurred while crawling."));
+                Platform.runLater(
+                        () -> Application.openNotificationWindow("ERROR",
+                                "An unexpected error occurred while crawling."));
             }
         });
     }
@@ -580,10 +578,11 @@ public class MainController {
         int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, totalRows);
 
         // Ambil subset data dari brokenLinks untuk ditampilkan di halaman saat ini
-        currentPageData.setAll(brokenLinks.subList(fromIndex, toIndex));
+        paginationData.setAll(brokenLinks.subList(fromIndex, toIndex));
 
         // Pasang subset data ini ke tabel
-        brokenLinkTable.setItems(currentPageData);
+        brokenLinkTable.setItems(paginationData);
+        brokenLinkTable.setItems(brokenLinks.subList(fromIndex, toIndex));
 
         // Render ulang tombol navigasi (Prev, angka halaman, Next)
         renderPaginationButtons();
