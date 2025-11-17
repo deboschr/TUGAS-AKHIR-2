@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -90,104 +91,83 @@ public class Exporter {
 
 
     /**
-     * Mengekspor data broken link ke file JSON menggunakan pustaka Gson.
-     * <p>
-     * Format JSON yang dihasilkan bersifat terstruktur (nested),
-     * di mana setiap link berisi daftar halaman sumber (connections)
-     * yang memuat tautan tersebut.
-     *
-     * Contoh struktur output:
-     *
-     * <pre>
-     * [
-     *   {
-     *     "url": "https://example.com/image.png",
-     *     "final_url": "https://example.com/image.png",
-     *     "content_type": "image/png",
-     *     "error": "404 Not Found",
-     *     "connections": [
-     *       { "webpage_url": "https://example.com/home", "anchor_text": "logo" },
-     *       { "webpage_url": "https://example.com/about", "anchor_text": "company logo" }
-     *     ]
-     *   }
-     * ]
-     * </pre>
+     * Mengekspor daftar broken link ke file JSON menggunakan Gson.
+     * Setiap objek Link akan dikonversi menjadi struktur Map yang urut
+     * supaya hasil JSON juga urut dan rapi.
      *
      * @param brokenLinks daftar objek Link yang mengandung error
-     * @param file        file tujuan untuk menyimpan hasil ekspor (.json)
-     * @throws IOException jika terjadi kesalahan saat menulis file
+     * @param file        file tujuan penyimpanan
+     * @throws IOException jika ada masalah saat menulis file
      */
     public static void exportToJson(List<Link> brokenLinks, File file) throws IOException {
-        /*
-         * Buat list kosong untuk menampung seluruh data ekspor.
-         * Tipe List<Object> digunakan karena setiap elemen nanti akan berupa Map
-         * yang mewakili satu link rusak beserta daftar connections-nya.
-         */
+
+        // List untuk menampung semua item yang akan ditulis ke JSON
         List<Object> exportData = new ArrayList<>();
 
-        /*
-         * Loop semua link rusak yang akan diekspor.
-         * Setiap Link akan dikonversi menjadi satu Map<String, Object>
-         * dengan struktur key-value yang mudah dikonversi oleh Gson.
-         */
+        // Loop tiap link rusak satu per satu
         for (Link link : brokenLinks) {
 
-            /*
-             * Buat list untuk menyimpan semua connections dari link ini.
-             * Setiap connection berisi dua informasi:
-             * - webpage_url → alamat halaman sumber
-             * - anchor_text → teks tautan di halaman tersebut
-             */
+            // -----------------------------
+            // Buat list untuk semua koneksi
+            // -----------------------------
             List<Map<String, String>> connections = new ArrayList<>();
 
-            // Loop semua pasangan (webpage → anchor_text) dari link saat ini
+            /*
+             * Loop semua pasangan (webpage → anchor_text)
+             * dari link.getConnection()
+             */
             for (Map.Entry<Link, String> entry : link.getConnection().entrySet()) {
 
-                /*
-                 * Gunakan Map.of() (immutable map) untuk membuat satu objek JSON sederhana
-                 * yang mewakili satu connection.
-                 * Contoh hasil sementara:
-                 * { "webpage_url": "https://example.com/home", "anchor_text": "logo" }
-                 */
-                connections.add(Map.of(
-                        "webpage_url", entry.getKey().getUrl(),
-                        "anchor_text", entry.getValue()));
+                // Gunakan LinkedHashMap supaya urutan key tetap
+                Map<String, String> conn = new LinkedHashMap<>();
+
+                // URL halaman sumber
+                conn.put("webpage_url", entry.getKey().getUrl());
+
+                // Anchor text pada halaman tersebut
+                conn.put("anchor_text", entry.getValue());
+
+                // Tambahkan ke daftar connections
+                connections.add(conn);
             }
 
-            /*
-             * Tambahkan data utama link ke list exportData.
-             * Tiap link disimpan dalam bentuk Map dengan key:
-             * - url
-             * - final_url
-             * - content_type
-             * - error
-             * - connections (list berisi Map yang baru dibuat di atas)
-             *
-             * Gson akan otomatis mengubah Map dan List ini menjadi objek JSON bersarang.
-             */
-            exportData.add(Map.of(
-                    "url", link.getUrl(),
-                    "final_url", link.getFinalUrl(),
-                    "content_type", link.getContentType(),
-                    "error", link.getError(),
-                    "connections", connections));
+            // --------------------------------------------
+            // Buat map utama untuk satu broken link
+            // (urutan key sangat diperhatikan)
+            // --------------------------------------------
+            Map<String, Object> item = new LinkedHashMap<>();
+
+            // URL asli yang ditemukan saat crawling
+            item.put("url", link.getUrl());
+
+            // URL final setelah redirect (kalau ada)
+            item.put("final_url", link.getFinalUrl());
+
+            // Content-Type hasil HEAD/GET
+            item.put("content_type", link.getContentType());
+
+            // Error (misalnya "404 Not Found")
+            item.put("error", link.getError());
+
+            // Daftar halaman sumber
+            item.put("connections", connections);
+
+            // Masukkan item ini ke list utama
+            exportData.add(item);
         }
 
-        /*
-         * Buat instance Gson dengan opsi pretty printing.
-         * Pretty printing membuat JSON lebih mudah dibaca manusia
-         * (tiap level indentasi diberi spasi dan baris baru).
-         */
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        // Buat Gson dengan indentasi supaya JSON mudah dibaca
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .disableHtmlEscaping() // biar tidak escape simbol HTML
+                .create();
 
-        /*
-         * Tulis hasil konversi ke file tujuan menggunakan try-with-resources.
-         * FileWriter otomatis menutup file setelah selesai menulis.
-         */
+        // Tulis hasil ke file (try-with-resources biar otomatis close)
         try (FileWriter writer = new FileWriter(file)) {
-            gson.toJson(exportData, writer); // konversi dan tulis JSON ke file
+            gson.toJson(exportData, writer);
         }
     }
+
 
     /**
      * 

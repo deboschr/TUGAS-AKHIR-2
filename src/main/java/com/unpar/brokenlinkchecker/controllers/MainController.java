@@ -7,6 +7,8 @@ import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
 import com.unpar.brokenlinkchecker.utils.Exporter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
+
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -79,20 +81,19 @@ public class MainController {
             setFilterCard();
             setPagination();
 
-            // Bikin instance Crawler dengan mengirim comsumer pendingLinks
             crawler = new Crawler(link -> pendingLinks.offer(link));
 
-            // Timer buat memindahkan data dari pendingLinks ke allLinks di JavaFX thread
-            javafx.animation.AnimationTimer timer = new javafx.animation.AnimationTimer() {
+            AnimationTimer timer = new AnimationTimer() {
                 @Override
                 public void handle(long now) {
-                    int batch = 0;
-                    Link link;
+                    for (int i = 0; i < 50; i++) {
+                        Link link = pendingLinks.poll();
 
-                    // Batasi jumlah per frame biar UI nggak nge-lag
-                    while (batch < 50 && (link = pendingLinks.poll()) != null) {
+                        if (link == null){
+                            break;
+                        }
+
                         allLinks.add(link);
-                        batch++;
                     }
                 }
             };
@@ -105,44 +106,58 @@ public class MainController {
     /**
      * Event handler untuk tombol "Start".
      *
-     * Digunakan untuk memulai proses crawling.
+     * Fungsi ini digunakan untuk memulai proses crawling.
+     * Semua proses crawling dijalankan di virtual thread supaya UI tetap responsif.
      */
     @FXML
     private void onStartClick() {
-        // Ambil teks dari field input seed URL dan hilangkan spasi di awal/akhir
+
+        // Ambil input dari field dan hapus spasi di awal/akhir
         String seedUrl = seedUrlField.getText().trim();
 
-        // Normalisasi URL
+        // Normalisasi URL supaya formatnya konsisten
         String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl);
 
-        // Jika hasil normalisasi null berarti URL tidak valid
+        // Kalau seed URL kosong atau tidak valid → tampilkan pesan
         if (cleanedSeedUrl == null) {
-            // Tampilkan pesan peringatan ke pengguna
-            Application.openNotificationWindow("WARNING", "Please enter a valid seed URL before starting.");
-            return; // Hentikan proses start
+            Application.openNotificationWindow("WARNING",
+                    "Please enter a valid seed URL before starting.");
+            return;
         }
 
-        // Kosongkan semua data link lama di tabel dan list internal
+        // Bersihkan semua data link lama di tabel dan struktur data internal
         allLinks.clear();
 
-        // Ubah status summary jadi CHECKING untuk menandakan proses sedang berjalan
+        // Ubah status jadi CHECKING (ditampilkan di UI lewat binding)
         summary.setStatus(Status.CHECKING);
 
-        // Jalankan proses crawling di background thread.
-        new Thread(() -> {
-            // Mulai proses crawling dengan seed URL yang sudah dibersihkan
-            crawler.start(cleanedSeedUrl);
+        /*
+         * Jalankan proses crawling di virtual thread.
+         * Virtual thread jauh lebih ringan dibanding OS thread,
+         * dan sangat cocok untuk pekerjaan I/O-bound seperti crawling.
+         */
+        Thread.startVirtualThread(() -> {
+            try {
+                // Mulai proses crawling (BFS)
+                crawler.start(cleanedSeedUrl);
 
-            /*
-             * Jika proses crawling selesai secara normal (bukan dihentikan manual),
-             * ubah status aplikasi menjadi COMPLETED.
-             * Platform.runLater() dipakai agar update status dijalankan
-             * di JavaFX Application Thread (karena summary di-bind ke GUI).
-             */
-            if (!crawler.isStopped()) {
-                Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
+                /*
+                 * Kalau crawling selesai secara normal (bukan dihentikan user),
+                 * maka ubah status menjadi COMPLETED.
+                 * Harus lewat Platform.runLater karena menyentuh UI.
+                 */
+                if (!crawler.isStopped()) {
+                    Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                // Kalau terjadi error besar di luar fetchLink / HTTP
+                Platform.runLater(() -> Application.openNotificationWindow("ERROR",
+                        "An unexpected error occurred while crawling."));
             }
-        }).start();
+        });
     }
 
     /**
@@ -163,52 +178,56 @@ public class MainController {
     }
 
     /**
-     * Even handler untuk tombol "Export"
-     * 
-     * Digunakan untuk mengeksport isi tabel ke berkas eksternal.
+     * Event handler untuk tombol "Export".
+     *
+     * Fungsi ini nge-handle proses ekspor data ke file eksternal.
+     * Pesan ke user tetap pakai bahasa Inggris biar konsisten sama GUI.
      */
     @FXML
     private void onExportClick() {
-        // Pastikan proses sudah selesai
+
+        // Ambil status proses crawling saat ini
         Status status = summary.getStatus();
 
-        // Pastikan ekspor hanya bisa dilakukan setelah proses selesai
+        // Ekspor cuma boleh kalau proses sudah selesai
         if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING", "Export hanya bisa dilakukan setelah proses selesai.");
+            Application.openNotificationWindow("WARNING",
+                    "Export is only available after the process is finished.");
             return;
         }
 
-        // Pastikan ekspor hanya bisa dilakukan jika data di tabel ada
+        // Kalau tidak ada broken link → tidak perlu ekspor
         if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING", "Tidak ada data broken link untuk diexport.");
+            Application.openNotificationWindow("WARNING",
+                    "There are no broken links to export.");
             return;
         }
 
-        // Buat dialog pemilihan lokasi penyimpanan file
+        // Buka dialog untuk pilih lokasi file output
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Simpan hasil export");
+        chooser.setTitle("Save Export File");
 
-        // Tentukan format file yang didukung
+        // Tambahkan pilihan ekstensi file yang didukung
         chooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
                 new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
 
-        // Tampilkan dialog simpan dan ambil file tujuan
+        // Tampilkan dialog dan ambil file hasil pilihan user
         File file = chooser.showSaveDialog(null);
 
-        // Kalay file null berarti pengguna batal memilih file
+        // Kalau user membatalkan dialog → langsung stop
         if (file == null) {
             return;
         }
 
-        // Jalankan export di background thread agar UI tidak freeze
-        new Thread(() -> {
+        // Jalankan proses ekspor di virtual thread biar UI tetap responsif
+        Thread.startVirtualThread(() -> {
             try {
-                // Ambil nama file
+                // Baca nama file untuk cek ekstensi
                 String name = file.getName().toLowerCase();
 
-                // Pilih format ekspor berdasarkan ekstensi file
+                // Tentukan jenis ekspor berdasarkan ekstensi file
                 if (name.endsWith(".xlsx")) {
                     Exporter.exportToExcel(brokenLinks, file);
                 } else if (name.endsWith(".csv")) {
@@ -216,23 +235,24 @@ public class MainController {
                 } else if (name.endsWith(".json")) {
                     Exporter.exportToJson(brokenLinks, file);
                 } else {
-                    // Jika ekstensi tidak dikenali → tampilkan peringatan
-                    Platform.runLater(
-                            () -> Application.openNotificationWindow("WARNING", "Format file tidak dikenali."));
+                    // Kalau ekstensi tidak dikenali
+                    Platform.runLater(() -> Application.openNotificationWindow("WARNING",
+                            "Unrecognized file format."));
                     return;
                 }
 
-                // Jika ekspor berhasil → tampilkan notifikasi sukses
-                Platform.runLater(() -> Application.openNotificationWindow(
-                        "SUCCESS", "Data berhasil diexport ke:\n" + file.getAbsolutePath()));
+                // Kalau semua berjalan lancar → tampilkan notifikasi sukses
+                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS",
+                        "Data has been successfully exported to:\n" + file.getAbsolutePath()));
 
             } catch (Exception e) {
+                // Kalau terjadi error waktu ekspor
                 e.printStackTrace();
-                // Jika terjadi error selama ekspor tampilkan pesan error di notifikasi
-                Platform.runLater(
-                        () -> Application.openNotificationWindow("ERROR", "Terjadi kesalahan saat mengekspor data."));
+
+                Platform.runLater(() -> Application.openNotificationWindow("ERROR",
+                        "An error occurred while exporting the data."));
             }
-        }).start();
+        });
     }
 
     // ============================= TITLE BAR ================================
@@ -424,7 +444,10 @@ public class MainController {
 
         summary.totalLinksProperty().bind(Bindings.size(allLinks));
         summary.webpageLinksProperty().bind(Bindings.size(webpageLinks));
-        summary.brokenLinksProperty().bind(Bindings.size(brokenLinks));
+        summary.brokenLinksProperty().bind(
+                Bindings.createIntegerBinding(
+                        () -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(),
+                        allLinks));
 
         // Warna dinamis berdasarkan status
         summary.statusProperty().addListener((obs, old, status) -> {

@@ -111,7 +111,7 @@ public class Crawler {
             // Cek apakah URL ini sudah pernah dicatat di repositories
             Link existing = repositories.putIfAbsent(currLink.getUrl(), currLink);
             if (existing != null) {
-                // Kalau sudah ada, berarti URL ini pernah (atau sedang) dicek maka skip
+                // Kalau sudah ada, berarti URL ini pernah dicek maka skip
                 continue;
             }
 
@@ -265,7 +265,7 @@ public class Crawler {
                 HttpRequest request = HttpRequest.newBuilder()
                         // URL tujuan
                         .uri(URI.create(link.getUrl()))
-                        // Header biar server tahu yg minta request aplikasi kita
+                        // Header biar server tahu yg minta request adalah aplikasi kita
                         .header("User-Agent", USER_AGENT)
                         // Timeout total request (connect + read)
                         .timeout(Duration.ofSeconds(20))
@@ -286,7 +286,7 @@ public class Crawler {
                     HttpRequest headReq = HttpRequest.newBuilder()
                             // URL target
                             .uri(URI.create(link.getUrl()))
-                            // Header biar server tahu yg minta request aplikasi kita
+                            // Header biar server tahu yg minta request adalah aplikasi kita
                             .header("User-Agent", USER_AGENT)
                             // Timeout total request (connect + read)
                             .timeout(Duration.ofSeconds(20))
@@ -302,7 +302,18 @@ public class Crawler {
                  * Kalau HEAD gagal (server tidak support, SSL problem, dll) maka kita fallback
                  * ke GET, tapi tetap discard body biar cepat
                  */ catch (Exception headError) {
-                    HttpRequest getReq = HttpRequest.newBuilder().uri(URI.create(link.getUrl())).header("User-Agent", USER_AGENT).timeout(Duration.ofSeconds(20)).GET().build();
+                    HttpRequest getReq = HttpRequest
+                            .newBuilder()
+                            // URL target
+                            .uri(URI.create(link.getUrl()))
+                            // Header biar server tahu yg minta request adalah aplikasi kita
+                            .header("User-Agent", USER_AGENT)
+                            // Timeout total request (connect + read)
+                            .timeout(Duration.ofSeconds(20))
+                            // Method GET
+                            .GET()
+                            // Build objek HttpRequest
+                            .build();
 
                     // GET dipakai, tapi body langsung dibuang (nggak dibaca)
                     res = HTTP_CLIENT.send(getReq, HttpResponse.BodyHandlers.discarding());
@@ -320,9 +331,9 @@ public class Crawler {
 
             /*
              * Parse body response hanya kalau:
-             * - isParseDoc = true
-             * - status 200 OK
-             * - header Content-Type mengandung text/html
+             * - diminta untuk parsing
+             * - request-nya oke
+             * - response body-nya HTML
              */
             if (isParseDoc && statusCode == 200 && contentType.contains("text/html")) {
 
