@@ -307,42 +307,21 @@ public class MainController {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
                     exportBtn.setDisable(true);
-
-                    startBtn.getStyleClass().remove("active");
-                    stopBtn.getStyleClass().remove("active");
-                    exportBtn.getStyleClass().remove("active");
                 }
                 case CHECKING -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
                     exportBtn.setDisable(true);
-
-                    stopBtn.getStyleClass().remove("active");
-                    exportBtn.getStyleClass().remove("active");
-
-                    if (!startBtn.getStyleClass().contains("active")) {
-                        startBtn.getStyleClass().add("active");
-                    }
                 }
                 case STOPPED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(false);
                     exportBtn.setDisable(false);
-
-                    startBtn.getStyleClass().remove("active");
-
-                    if (!stopBtn.getStyleClass().contains("active")) {
-                        stopBtn.getStyleClass().add("active");
-                    }
                 }
                 case COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
                     exportBtn.setDisable(false);
-
-                    // hapus semua warna aktif
-                    startBtn.getStyleClass().remove("active");
-                    stopBtn.getStyleClass().remove("active");
                 }
             }
         });

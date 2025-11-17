@@ -1,22 +1,27 @@
+#root {
+	-fx-border-width: 3;
+}
+
 /* ======================= TITLE BAR ======================= */
 .title-bar {
-    -fx-alignment: center-left;
+	-fx-alignment: center-left;
+	-fx-background-insets: -1;
 }
 
 .title-text {
-    -fx-text-fill: white;
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-padding: 0 0 0 15;
+	-fx-text-fill: white;
+	-fx-font-size: 14px;
+	-fx-font-weight: bold;
+	-fx-padding: 0 0 0 15;
 }
 
 .title-btn {
 	-fx-background-color: transparent;
-	-fx-text-fill: #d1d5db;
-	-fx-font-size: 16px;
+	-fx-text-fill: #f1f0eb;
+	-fx-font-size: 20px;
 	-fx-min-width: 48px;
 	-fx-min-height: 36px;
-	-fx-padding: 8 0 8 0;
+	-fx-padding: 5 0 5 0;
 	-fx-cursor: hand;
 	-fx-background-radius: 0;
 	-fx-border-radius: 0;
@@ -31,19 +36,19 @@
 
 /* ======================= CONTENT ======================= */
 .content-area {
-    -fx-background-color: #2c2c2c;
-    -fx-padding: 20;
+	-fx-background-color: #f4ebdb;
+	-fx-padding: 20;
 }
 
 .icon-label {
-    -fx-font-size: 42px;
-    -fx-font-weight: bold;
-    -fx-min-width: 50px;
-    -fx-alignment: center;
+	-fx-font-size: 50px;
+	-fx-font-weight: bold;
+	-fx-min-width: 50px;
+	-fx-alignment: center;
 }
 
 .message-text {
-    -fx-text-fill: #f9fafb;
-    -fx-font-size: 14px;
-    -fx-wrap-text: true;
+	-fx-text-fill: #353e3a;
+	-fx-font-size: 18px;
+	-fx-wrap-text: true;
 }

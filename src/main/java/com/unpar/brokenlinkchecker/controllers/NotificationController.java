@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
@@ -12,7 +13,8 @@ import javafx.stage.Stage;
  * Controller buat window notifikasi.
  */
 public class NotificationController {
-
+    @FXML
+    private BorderPane root;
     @FXML
     private HBox titleBar;
     @FXML
@@ -107,5 +109,9 @@ public class NotificationController {
 
         // Atur warna icon biar sama kaya warna title bar
         iconLabel.setStyle("-fx-text-fill: " + color + ";");
+
+        String existing = root.getStyle();
+        root.setStyle(existing + "-fx-border-color: " + color + ";");
+
     }
 }

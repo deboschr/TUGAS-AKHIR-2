@@ -91,7 +91,7 @@
 	-fx-border-width: 2;
 
 	-fx-padding: 8 20;
-	-fx-font-size: 16px;
+	-fx-font-size: 18px;
 	-fx-cursor: hand;
 	-fx-text-fill: -white;
 	-fx-pref-height: 40;
@@ -100,49 +100,36 @@
 	-fx-background-color: -grey-dark;
 }
 
+.control-btn:disabled {
+	-fx-opacity: 0.5;
+	-fx-cursor: default;
+}
+
 /* ======= START BUTTON ======= */
 .control-btn-start {
-	-fx-background-color: derive(-blue, -40%);
+	-fx-background-color: -blue;
 }
 
 .control-btn-start:hover {
-	-fx-background-color: -blue;
-}
-
-.control-btn-start.active {
-	-fx-background-color: -blue;
+	-fx-translate-y: -2px;
 }
 
 /* ======= STOP BUTTON ======= */
 .control-btn-stop {
-	-fx-background-color: derive(-red, -40%);
+	-fx-background-color: -red;
 }
 
 .control-btn-stop:hover {
-	-fx-background-color: -red;
-}
-
-.control-btn-stop.active {
-	-fx-background-color: -red;
+	-fx-translate-y: -2px;
 }
 
 /* ======= EXPORT BUTTON ======= */
 .control-btn-export {
-	-fx-background-color: derive(-yellow, -40%);
+	-fx-background-color: -yellow;
 }
 
 .control-btn-export:hover {
-	-fx-background-color: -yellow;
-}
-
-.control-btn-export.active {
-	-fx-background-color: -yellow;
-}
-
-/* DISABLED */
-.control-btn:disabled {
-	-fx-opacity: 0.65;
-	-fx-cursor: default;
+	-fx-translate-y: -2px;
 }
 
 /* ======================== SUMMARY & FILTERS CARD ======================== */
@@ -174,6 +161,7 @@
 
 .subcard-title {
 	-fx-text-fill: -grey-light;
+	-fx-font-weight: bold;
 	-fx-font-size: 15px;
 }
 
@@ -227,7 +215,7 @@
 	-fx-pref-height: 40;
 	-fx-text-fill: -black;
 	-fx-prompt-text-fill: -grey-dark;
-	-fx-font-size: 15px;
+	-fx-font-size: 17px;
 }
 
 .filter-combo {
