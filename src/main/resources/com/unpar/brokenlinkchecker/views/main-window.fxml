@@ -8,7 +8,7 @@
 <BorderPane
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.unpar.brokenlinkchecker.controllers.MainController"
-    stylesheets="@../styles/main-window.css">
+    stylesheets="@../styles/main-style.css">
 
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">

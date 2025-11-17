@@ -7,7 +7,7 @@
 <BorderPane
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.unpar.brokenlinkchecker.controllers.LinkController"
-    stylesheets="@../styles/link-window.css"
+    stylesheets="@../styles/link-style.css"
     prefWidth="900" prefHeight="600">
 
 

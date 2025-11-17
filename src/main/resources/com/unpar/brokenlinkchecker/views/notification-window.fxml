@@ -6,7 +6,7 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.unpar.brokenlinkchecker.controllers.NotificationController"
     prefWidth="400" prefHeight="180"
-    stylesheets="@../styles/notification-window.css"
+    stylesheets="@../styles/notification-style.css"
     fx:id="root">
 
     <!-- ================== TITLE BAR ================== -->
