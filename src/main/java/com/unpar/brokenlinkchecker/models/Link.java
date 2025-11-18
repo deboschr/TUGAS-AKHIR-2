@@ -18,7 +18,7 @@ public class Link {
     /**
      * Menyimpan relasi antar Link:
      * - key = Link lain yang terhubung dengan link ini
-     * - value = anchor text (teks di dalam <a>...</a>) yang menghubungkan keduanya
+     * - value = anchor text (teks di dalam tag a HTML) yang menghubungkan keduanya
      */
     private final Map<Link, String> connections;
 
