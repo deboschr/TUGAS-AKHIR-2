@@ -10,7 +10,7 @@ public class HttpStatus {
             Map.entry(500, "500 Internal Server Error"), Map.entry(501, "501 Not Implemented"), Map.entry(502, "502 Bad Gateway"), Map.entry(503, "503 Service Unavailable"), Map.entry(504, "504 Gateway Timeout"), Map.entry(505, "505 HTTP Version Not Supported"), Map.entry(506, "506 Variant Also Negotiates"), Map.entry(507, "507 Insufficient Storage"), Map.entry(508, "508 Loop Detected"), Map.entry(510, "510 Not Extended"), Map.entry(511, "511 Network Authentication Required"));
 
 
-    public static String getErrorStatus(int statusCode) {
+    public static String getStatusError(int statusCode) {
         // kalau 1xx, 2xx & 3xx maka artinya bukan error, jadi return null
         if (statusCode >= 100 && statusCode < 400) {
             return null;

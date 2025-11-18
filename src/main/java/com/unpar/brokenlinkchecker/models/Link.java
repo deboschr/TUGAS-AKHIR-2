@@ -80,7 +80,7 @@ public class Link {
 
     public void setStatusCode(int value) {
         // Kalau status kode termasuk error, set juga pesan error-nya
-        String status = HttpStatus.getErrorStatus(value);
+        String status = HttpStatus.getStatusError(value);
         if (status != null) {
             error.set(status);
         }
