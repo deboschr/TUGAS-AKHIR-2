@@ -1,4 +1,4 @@
-package com.unpar.brokenlinkchecker.cores;
+package com.unpar.brokenlinkchecker.utils;
 
 import com.unpar.brokenlinkchecker.models.Link;
 import org.apache.poi.ss.usermodel.*;
@@ -14,18 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Kelas ini tugasnya buat nyimpen hasil broken link ke file Excel (.xlsx).
- * Jadi setelah crawling selesai, user bisa langsung simpan hasilnya
- * biar ga harus crawling ulang tiap butuh datanya.
+ * Kelas ini bertugas untuk menyimpan hasil pemeriksaan tautan rusak ke sebuah
+ * file Excel (.xlsx).
  */
 public class Exporter {
 
     /**
-     * Method utama yang nge-handle proses export ke Excel.
+     * Metode utama untuk menyimpan data broken links ke dalam file Excel.
      *
-     * @param brokenLinks daftar link yang ketemu error waktu crawling
-     * @param file        file tujuan (.xlsx) tempat data mau disimpan
-     * @throws IOException kalau ada masalah waktu nulis file
+     * @param brokenLinks daftar link rusak
+     * @param file        file tujuan (.xlsx)
      */
     public void save(List<Link> brokenLinks, File file) throws IOException {
 
@@ -35,7 +33,7 @@ public class Exporter {
             // Bikin satu sheet dengan nama "Broken Links"
             Sheet sheet = workbook.createSheet("Broken Links");
 
-            // ======================== STYLING ========================
+            // ======================== 1. STYLING ========================
             // Style untuk header tabel (bold + background)
             CellStyle headerStyle = createHeaderStyle(workbook);
 
@@ -49,8 +47,7 @@ public class Exporter {
             CellStyle wrapStyle = workbook.createCellStyle();
             wrapStyle.setWrapText(true);
 
-
-            // ======================== HEADER ========================
+            // ======================== 2. HEADER ========================
             // Daftar judul kolom buat di baris pertama
             String[] headers = {
                     "URL",
@@ -74,8 +71,7 @@ public class Exporter {
                 cell.setCellStyle(headerStyle);
             }
 
-
-            // ======================== ISI DATA ========================
+            // ======================== 3. ISI DATA ========================
             // Mulai tulis data dari baris index 1 karena 0 dipakai header
             int rowIndex = 1;
 
@@ -109,13 +105,11 @@ public class Exporter {
                 }
             }
 
-
             // ======================== 4. AUTO-SIZE ========================
             // Biar kolom otomatis lebar sesuai isinya
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
             }
-
 
             // ======================== 5. TULIS FILE ========================
             // Tulis workbook ke file tujuan
@@ -125,21 +119,16 @@ public class Exporter {
         }
     }
 
-
     /**
-     * Method untuk kasi styling ke header.
-     *
-     * @param wb       workbook yang lagi dipake
-     * @return style yang udah siap dipakai buat header
+     * Bikin style untuk header tabel.
+     * Bold + background abu2 + border tipis.
      */
     private CellStyle createHeaderStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
 
         // Font baru khusus header
         Font font = wb.createFont();
-
-        // header selalu bold
-        font.setBold(true);
+        font.setBold(true); // header selalu bold
 
         style.setFont(font);
 
@@ -154,11 +143,10 @@ public class Exporter {
     }
 
     /**
-     * Method untuk bikin style biar baris data di tabel (bagian isi) belang-belang.
+     * Bikin style untuk baris data (zebra striping).
      *
-     * @param wb       workbook yang lagi dipake
-     * @param awtColor warna background yang mau dipake buat baris
-     * @return style yang udah siap dipake di baris tersebut
+     * @param wb       workbook
+     * @param awtColor warna background baris
      */
     private CellStyle createRowStyle(Workbook wb, Color awtColor) {
         CellStyle style = wb.createCellStyle();
@@ -174,28 +162,21 @@ public class Exporter {
     }
 
     /**
-     * Method untuk menambahkan styling pada cell
-     *
-     * @param row   baris tempat cell mau dibuat
-     * @param col   kolom ke berapa cell-nya
-     * @param value isi cell, kalau null nanti diganti jadi string kosong
-     * @param style style yang mau dipasang ke cell ini
+     * Bikin cell baru, bersihin null, dan pasang style-nya.
      */
     private void createStyledCell(Row row, int col, String value, CellStyle style) {
-        Cell cell = row.createCell(col);                // bikin cell
+        Cell cell = row.createCell(col); // bikin cell
         cell.setCellValue(value != null ? value : ""); // antisipasi null
-        cell.setCellStyle(style);                      // pasang style
+        cell.setCellStyle(style); // pasang style
     }
 
     /**
-     * Nambahin border tipis di semua sisi style.
-     *
-     * @param style style yang mau ditambahin border
+     * Tambahin border tipis ke sebuah style.
      */
     private void createBorder(CellStyle style) {
-        style.setBorderBottom(BorderStyle.THIN); // bawah
-        style.setBorderTop(BorderStyle.THIN);    // atas
-        style.setBorderLeft(BorderStyle.THIN);   // kiri
-        style.setBorderRight(BorderStyle.THIN);  // kanan
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
     }
 }
