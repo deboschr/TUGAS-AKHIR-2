@@ -85,7 +85,7 @@ public class MainController {
         Platform.runLater(() -> {
             setTitleBar();
             setButtonState();
-            serSummaryCard();
+            setSummaryCard();
             setTableView();
             setFilterCard();
             setPagination();
@@ -176,82 +176,80 @@ public class MainController {
     }
 
     /**
-     * Event handler untuk tombol "Export".
+     * Event handler untuk tombol "Export"
      *
-     * Fungsi ini nge-handle proses ekspor data ke file eksternal.
-     * Pesan ke user tetap pakai bahasa Inggris biar konsisten sama GUI.
+     * Digunakan untuk menyimpan data broken link ke file lokal dalam format Excel (.xlsx)
      */
     @FXML
     private void onExportClick() {
 
-        // Ambil status proses crawling saat ini
+        // Export hanya bisa dilakukan setelah proses selesai
         Status status = summary.getStatus();
-
-        // Ekspor cuma boleh kalau proses sudah selesai
         if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING",
-                    "Export is only available after the process is finished.");
+            Application.openNotificationWindow(
+                    "WARNING",
+                    "Export is only available after the process is finished."
+            );
             return;
         }
 
-        // Kalau tidak ada broken link → tidak perlu ekspor
+        // Tidak ada broken link → tidak perlu ekspor
         if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING",
-                    "There are no broken links to export.");
+            Application.openNotificationWindow(
+                    "WARNING",
+                    "There are no broken links to export."
+            );
             return;
         }
 
-        // Buka dialog untuk pilih lokasi file output
+        // ====================== FILE CHOOSER ======================
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Save Export File");
+        chooser.setTitle("Save Excel File");
 
-        // Tambahkan pilihan ekstensi file yang didukung
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"),
-                new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv"),
-                new FileChooser.ExtensionFilter("JSON (*.json)", "*.json"));
+        // Hanya izinkan .xlsx
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx")
+        );
 
-        // Tampilkan dialog dan ambil file hasil pilihan user
         File file = chooser.showSaveDialog(null);
-
-        // Kalau user membatalkan dialog → langsung stop
         if (file == null) {
-            return;
+            return; // User cancel
         }
 
-        // Jalankan proses ekspor di virtual thread biar UI tetap responsif
+        // Pastikan ekstensi selalu .xlsx meskipun user lupa menulis
+        if (!file.getName().toLowerCase().endsWith(".xlsx")) {
+            file = new File(file.getAbsolutePath() + ".xlsx");
+        }
+
+        // ====================== EKSEKUSI EXPORT ======================
+        File finalFile = file;
+
         Thread.startVirtualThread(() -> {
             try {
-                // Baca nama file untuk cek ekstensi
-                String name = file.getName().toLowerCase();
+                Exporter exporter = new Exporter();
+                exporter.save(brokenLinks, finalFile);
 
-                // Tentukan jenis ekspor berdasarkan ekstensi file
-                if (name.endsWith(".xlsx")) {
-                    Exporter.exportToExcel(brokenLinks, file);
-                } else if (name.endsWith(".csv")) {
-                    Exporter.exportToCsv(brokenLinks, file);
-                } else if (name.endsWith(".json")) {
-                    Exporter.exportToJson(brokenLinks, file);
-                } else {
-                    // Kalau ekstensi tidak dikenali
-                    Platform.runLater(() -> Application.openNotificationWindow("WARNING",
-                            "Unrecognized file format."));
-                    return;
-                }
-
-                // Kalau semua berjalan lancar → tampilkan notifikasi sukses
-                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS",
-                        "Data has been successfully exported to:\n" + file.getAbsolutePath()));
+                // Notifikasi sukses
+                Platform.runLater(() ->
+                        Application.openNotificationWindow(
+                                "SUCCESS",
+                                "Data has been successfully exported to:\n" + finalFile.getAbsolutePath()
+                        )
+                );
 
             } catch (Exception e) {
-                // Kalau terjadi error waktu ekspor
                 e.printStackTrace();
 
-                Platform.runLater(() -> Application.openNotificationWindow("ERROR",
-                        "An error occurred while exporting the data."));
+                Platform.runLater(() ->
+                        Application.openNotificationWindow(
+                                "ERROR",
+                                "An error occurred while exporting the data."
+                        )
+                );
             }
         });
     }
+
 
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
@@ -412,7 +410,7 @@ public class MainController {
     }
 
     // ============================= SUMMARY CARD =============================
-    private void serSummaryCard() {
+    private void setSummaryCard() {
         // Label mengikuti nilai di Summary
         statusLabel.textProperty().bind(summary.statusProperty().asString());
         allLinksCountLabel.textProperty().bind(summary.totalLinksProperty().asString());

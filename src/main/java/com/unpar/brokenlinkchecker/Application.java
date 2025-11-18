@@ -53,7 +53,7 @@ public class Application extends javafx.application.Application {
         try {
             // Load layout utama dari file FXML
             FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkchecker/windows/main-window.fxml"));
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/scenes/main-scene.fxml"));
 
             // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
@@ -87,7 +87,7 @@ public class Application extends javafx.application.Application {
         try {
             // Load layout fxml untuk window link detail
             FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkchecker/windows/link-window.fxml"));
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/scenes/link-scene.fxml"));
 
             // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
@@ -126,7 +126,7 @@ public class Application extends javafx.application.Application {
         try {
             // Load layout notifikasi dari FXML
             FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkchecker/windows/notification-window.fxml"));
+                    Application.class.getResource("/com/unpar/brokenlinkchecker/scenes/notification-scene.fxml"));
 
             // Buat scene baru untuk window ini
             Scene scene = new Scene(loader.load());
