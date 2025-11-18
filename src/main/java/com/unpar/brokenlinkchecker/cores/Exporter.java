@@ -1,4 +1,4 @@
-package com.unpar.brokenlinkchecker.utils;
+package com.unpar.brokenlinkchecker.cores;
 
 import com.unpar.brokenlinkchecker.models.Link;
 import org.apache.poi.ss.usermodel.*;

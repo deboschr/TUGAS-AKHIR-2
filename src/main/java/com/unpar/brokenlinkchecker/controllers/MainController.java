@@ -5,10 +5,9 @@ import com.unpar.brokenlinkchecker.cores.Crawler;
 import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
-import com.unpar.brokenlinkchecker.utils.Exporter;
+import com.unpar.brokenlinkchecker.cores.Exporter;
 import com.unpar.brokenlinkchecker.utils.UrlHandler;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
