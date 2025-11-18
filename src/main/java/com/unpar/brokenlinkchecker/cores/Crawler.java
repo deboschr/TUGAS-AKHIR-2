@@ -197,19 +197,6 @@ public class Crawler {
                          */
                         frontier.offer(link);
                     } else {
-                        /*
-                         * Untuk link non-same-host (external / beda host):
-                         * - Dicek secara paralel di virtual thread.
-                         * - Karena link ini akan benar-benar dicek (fetchLink),
-                         * maka kita catat ke repositories
-                         */
-
-                        // Pastikan limit belum terlewati sebelum mencatat link baru
-                        if (repositories.size() >= MAX_LINKS) {
-                            frontier.clear();
-                            break;
-                        }
-
                         // Masukkan ke repositories sebagai link baru
                         repositories.putIfAbsent(link.getUrl(), link);
 
