@@ -122,6 +122,9 @@ public class MainController {
             return;
         }
 
+        // Update url di GUI dengan yang sudah di normalisasi
+        seedUrlField.setText(cleanedSeedUrl);
+
         // Bersihkan semua data link lama di tabel dan struktur data internal
         allLinks.clear();
 
