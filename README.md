@@ -20,6 +20,7 @@ Setiap URL yang ditemukan akan diakses menggunakan **OkHttp** untuk melakukan *f
 | **Jsoup** | 1.17.2 | Parser HTML untuk ekstraksi tautan |
 
 
+
 ## Fitur
 
 - **Form Input URL**  

@@ -3,6 +3,7 @@ package com.unpar.brokenlinkchecker.cores;
 import com.unpar.brokenlinkchecker.models.Link;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -10,48 +11,66 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Kelas ini tugasnya buat nyimpen hasil broken link ke file Excel (.xlsx).
- * Jadi setelah crawling selesai, user bisa langsung simpan hasilnya
- * biar ga harus crawling ulang tiap butuh datanya.
- */
 public class Exporter {
 
-    /**
-     * Method utama yang nge-handle proses export ke Excel.
-     *
-     * @param brokenLinks daftar link yang ketemu error waktu crawling
-     * @param file        file tujuan (.xlsx) tempat data mau disimpan
-     * @throws IOException kalau ada masalah waktu nulis file
-     */
     public void save(List<Link> brokenLinks, File file) throws IOException {
 
-        // Bikin workbook baru. Pake try-with-resources biar otomatis ke-close.
         try (Workbook workbook = new XSSFWorkbook()) {
 
-            // Bikin satu sheet dengan nama "Broken Links"
             Sheet sheet = workbook.createSheet("Broken Links");
 
-            // ======================== STYLING ========================
-            // Style untuk header tabel (bold + background)
-            CellStyle headerStyle = createHeaderStyle(workbook);
+            // ============================================================
+            //         FIX: Make a modifiable list for sorting
+            // ============================================================
+            List<Link> sortedBrokenLinks = new ArrayList<>(brokenLinks);
 
-            // Style buat baris ganjil (warna abu2 muda)
-            CellStyle oddRowStyle = createRowStyle(workbook, new Color(245, 245, 245));
+            sortedBrokenLinks.sort((a, b) ->
+                    Integer.compare(a.getConnection().size(), b.getConnection().size())
+            );
 
-            // Style buat baris genap (warna putih)
-            CellStyle evenRowStyle = createRowStyle(workbook, Color.WHITE);
+            // ============================================================
+            //                       THEME COLORS
+            // ============================================================
+            Color primary = Color.decode("#f4ebdb");
+            Color white   = Color.decode("#f1f0eb");
+            Color headerBg = Color.decode("#2f5d50");
 
-            // Style khusus untuk kolom anchor text, biar text bisa wrap
-            CellStyle wrapStyle = workbook.createCellStyle();
-            wrapStyle.setWrapText(true);
+            // ============================================================
+            //                       STYLES
+            // ============================================================
+            CellStyle headerStyle = createHeaderStyle(workbook, headerBg);
 
+            CellStyle oddRowStyle = createRowStyle(workbook, primary);
+            CellStyle evenRowStyle = createRowStyle(workbook, white);
 
-            // ======================== HEADER ========================
-            // Daftar judul kolom buat di baris pertama
+            // Anchor text wrap + zebra + no overflow
+            CellStyle wrapOddStyle = workbook.createCellStyle();
+            wrapOddStyle.setWrapText(true);
+            wrapOddStyle.setFillForegroundColor(new XSSFColor(primary, null));
+            wrapOddStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            wrapOddStyle.setVerticalAlignment(VerticalAlignment.TOP);
+            wrapOddStyle.setAlignment(HorizontalAlignment.LEFT);
+            createBorder(wrapOddStyle);
+
+            CellStyle wrapEvenStyle = workbook.createCellStyle();
+            wrapEvenStyle.setWrapText(true);
+            wrapEvenStyle.setFillForegroundColor(new XSSFColor(white, null));
+            wrapEvenStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            wrapEvenStyle.setVerticalAlignment(VerticalAlignment.TOP);
+            wrapEvenStyle.setAlignment(HorizontalAlignment.LEFT);
+            createBorder(wrapEvenStyle);
+
+            // STYLE TANPA BORDER UNTUK DUMMY BLOCKER COLUMN (header + semua row)
+            CellStyle emptyStyle = workbook.createCellStyle();
+            emptyStyle.setWrapText(false);
+
+            // ============================================================
+            //                       HEADER
+            // ============================================================
             String[] headers = {
                     "URL",
                     "Final URL",
@@ -61,141 +80,151 @@ public class Exporter {
                     "Anchor Text"
             };
 
-            // Buat baris header di row index 0
             Row headerRow = sheet.createRow(0);
+            headerRow.setHeightInPoints(25);
 
-            // Loop semua nama kolom
             for (int i = 0; i < headers.length; i++) {
-                // Bikin cell di kolom i
                 Cell cell = headerRow.createCell(i);
-                // Isi text header
                 cell.setCellValue(headers[i]);
-                // Kasih style header
                 cell.setCellStyle(headerStyle);
             }
 
+            // DUMMY HEADER FOR BLOCKER COLUMN
+            Cell dummyHeader = headerRow.createCell(6);
+            dummyHeader.setCellValue("");
+            dummyHeader.setCellStyle(emptyStyle);
 
-            // ======================== ISI DATA ========================
-            // Mulai tulis data dari baris index 1 karena 0 dipakai header
+            // ============================================================
+            //                       ISI DATA
+            // ============================================================
             int rowIndex = 1;
 
-            // Loop semua broken link
-            for (Link link : brokenLinks) {
+            for (Link link : sortedBrokenLinks) {
 
-                // Setiap link bisa muncul dari banyak halaman,
-                // jadi kita looping juga setiap koneksi/source-nya
+                int startRow = rowIndex;
+                boolean first = true;
+
                 for (Map.Entry<Link, String> entry : link.getConnection().entrySet()) {
 
-                    // Buat baris baru
                     Row row = sheet.createRow(rowIndex);
 
-                    // Tentukan warna baris (zebra striping)
-                    CellStyle rowStyle = (rowIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
+                    boolean isEven = (rowIndex % 2 == 0);
+                    CellStyle rowStyle = isEven ? evenRowStyle : oddRowStyle;
+                    CellStyle anchorStyle = isEven ? wrapEvenStyle : wrapOddStyle;
 
-                    // Isi data kolom satu per satu
-                    createStyledCell(row, 0, link.getUrl(), rowStyle);
-                    createStyledCell(row, 1, link.getFinalUrl(), rowStyle);
-                    createStyledCell(row, 2, link.getContentType(), rowStyle);
-                    createStyledCell(row, 3, link.getError(), rowStyle);
+                    // ================ BROKEN LINK COLUMNS 0–3 =================
+                    if (first) {
+                        createStyledCell(row, 0, link.getUrl(), rowStyle);
+                        createStyledCell(row, 1, link.getFinalUrl(), rowStyle);
+                        createStyledCell(row, 2, link.getContentType(), rowStyle);
+                        createStyledCell(row, 3, link.getError(), rowStyle);
+                        first = false;
+                    } else {
+                        createStyledCell(row, 0, "", rowStyle);
+                        createStyledCell(row, 1, "", rowStyle);
+                        createStyledCell(row, 2, "", rowStyle);
+                        createStyledCell(row, 3, "", rowStyle);
+                    }
+
+                    // ================ SOURCE WEBPAGE =================
                     createStyledCell(row, 4, entry.getKey().getUrl(), rowStyle);
 
-                    // Kolom terakhir khusus anchor text
+                    // ================ ANCHOR TEXT =================
                     Cell anchorCell = row.createCell(5);
                     anchorCell.setCellValue(entry.getValue());
-                    anchorCell.setCellStyle(wrapStyle);
+                    anchorCell.setCellStyle(anchorStyle);
 
-                    // Pindah ke baris berikutnya
+                    // ================ BLOCKER COLUMN =================
+                    Cell blocker = row.createCell(6);
+                    blocker.setCellValue("");
+                    blocker.setCellStyle(emptyStyle);
+
                     rowIndex++;
+                }
+
+                // ============================================================
+                //                       MERGE BROKEN LINK COLUMNS
+                // ============================================================
+                int endRow = rowIndex - 1;
+
+                if (endRow > startRow) {
+                    for (int col = 0; col <= 3; col++) {
+                        sheet.addMergedRegion(
+                                new CellRangeAddress(startRow, endRow, col, col)
+                        );
+                    }
                 }
             }
 
+            // ============================================================
+            //                       FIXED WIDTH COLUMNS
+            // ============================================================
+            sheet.setColumnWidth(0, 15000);
+            sheet.setColumnWidth(1, 15000);
+            sheet.setColumnWidth(2, 10000);
+            sheet.setColumnWidth(3, 10000);
+            sheet.setColumnWidth(4, 15000);
 
-            // ======================== 4. AUTO-SIZE ========================
-            // Biar kolom otomatis lebar sesuai isinya
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
-            }
+            // Anchor Text → auto width
+            sheet.autoSizeColumn(5);
 
+            // Dummy blocker column
+            sheet.setColumnWidth(6, 2000);
 
-            // ======================== 5. TULIS FILE ========================
-            // Tulis workbook ke file tujuan
+            // ============================================================
+            //                       WRITE FILE
+            // ============================================================
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }
         }
     }
 
+    // ============================================================
+    //                       STYLE HELPERS
+    // ============================================================
 
-    /**
-     * Method untuk kasi styling ke header.
-     *
-     * @param wb       workbook yang lagi dipake
-     * @return style yang udah siap dipakai buat header
-     */
-    private CellStyle createHeaderStyle(Workbook wb) {
+    private CellStyle createHeaderStyle(Workbook wb, Color bgColor) {
         CellStyle style = wb.createCellStyle();
 
-        // Font baru khusus header
         Font font = wb.createFont();
-
-        // header selalu bold
         font.setBold(true);
-
+        font.setColor(new XSSFColor(Color.decode("#f1f0eb"), null).getIndex());
         style.setFont(font);
 
-        // Warna background abu muda
-        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        style.setFillForegroundColor(new XSSFColor(bgColor, null));
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        // Tambah border ke semua sisi
         createBorder(style);
-
         return style;
     }
 
-    /**
-     * Method untuk bikin style biar baris data di tabel (bagian isi) belang-belang.
-     *
-     * @param wb       workbook yang lagi dipake
-     * @param awtColor warna background yang mau dipake buat baris
-     * @return style yang udah siap dipake di baris tersebut
-     */
     private CellStyle createRowStyle(Workbook wb, Color awtColor) {
         CellStyle style = wb.createCellStyle();
 
-        // Set warna background baris
         style.setFillForegroundColor(new XSSFColor(awtColor, null));
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        // Border biar lebih rapi
-        createBorder(style);
+        style.setVerticalAlignment(VerticalAlignment.TOP);
+        style.setAlignment(HorizontalAlignment.LEFT);
 
+        createBorder(style);
         return style;
     }
 
-    /**
-     * Method untuk menambahkan styling pada cell
-     *
-     * @param row   baris tempat cell mau dibuat
-     * @param col   kolom ke berapa cell-nya
-     * @param value isi cell, kalau null nanti diganti jadi string kosong
-     * @param style style yang mau dipasang ke cell ini
-     */
     private void createStyledCell(Row row, int col, String value, CellStyle style) {
-        Cell cell = row.createCell(col);                // bikin cell
-        cell.setCellValue(value != null ? value : ""); // antisipasi null
-        cell.setCellStyle(style);                      // pasang style
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
     }
 
-    /**
-     * Nambahin border tipis di semua sisi style.
-     *
-     * @param style style yang mau ditambahin border
-     */
     private void createBorder(CellStyle style) {
-        style.setBorderBottom(BorderStyle.THIN); // bawah
-        style.setBorderTop(BorderStyle.THIN);    // atas
-        style.setBorderLeft(BorderStyle.THIN);   // kiri
-        style.setBorderRight(BorderStyle.THIN);  // kanan
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
     }
 }

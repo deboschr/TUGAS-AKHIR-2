@@ -3,6 +3,7 @@ package com.unpar.brokenlinkchecker.utils;
 import com.unpar.brokenlinkchecker.models.Link;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -10,45 +11,54 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Kelas ini bertugas untuk menyimpan hasil pemeriksaan tautan rusak ke sebuah
- * file Excel (.xlsx).
- */
 public class Exporter {
 
-    /**
-     * Metode utama untuk menyimpan data broken links ke dalam file Excel.
-     *
-     * @param brokenLinks daftar link rusak
-     * @param file        file tujuan (.xlsx)
-     */
     public void save(List<Link> brokenLinks, File file) throws IOException {
 
-        // Bikin workbook baru. Pake try-with-resources biar otomatis ke-close.
         try (Workbook workbook = new XSSFWorkbook()) {
 
-            // Bikin satu sheet dengan nama "Broken Links"
             Sheet sheet = workbook.createSheet("Broken Links");
 
-            // ======================== 1. STYLING ========================
-            // Style untuk header tabel (bold + background)
+            // ============================================================
+            //                FIX: Make a modifiable sorted list
+            // ============================================================
+            List<Link> sortedBrokenLinks = new ArrayList<>(brokenLinks);
+
+            sortedBrokenLinks.sort((a, b) ->
+                    Integer.compare(a.getConnection().size(), b.getConnection().size())
+            );
+
+            // ============================================================
+            //                       STYLES
+            // ============================================================
             CellStyle headerStyle = createHeaderStyle(workbook);
-
-            // Style buat baris ganjil (warna abu2 muda)
             CellStyle oddRowStyle = createRowStyle(workbook, new Color(245, 245, 245));
-
-            // Style buat baris genap (warna putih)
             CellStyle evenRowStyle = createRowStyle(workbook, Color.WHITE);
 
-            // Style khusus untuk kolom anchor text, biar text bisa wrap
-            CellStyle wrapStyle = workbook.createCellStyle();
-            wrapStyle.setWrapText(true);
+            // Anchor text wrap + left align + zebra
+            CellStyle wrapOddStyle = workbook.createCellStyle();
+            wrapOddStyle.setWrapText(true);
+            wrapOddStyle.setFillForegroundColor(new XSSFColor(new Color(245, 245, 245), null));
+            wrapOddStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            wrapOddStyle.setVerticalAlignment(VerticalAlignment.TOP);
+            wrapOddStyle.setAlignment(HorizontalAlignment.LEFT);
+            createBorder(wrapOddStyle);
 
-            // ======================== 2. HEADER ========================
-            // Daftar judul kolom buat di baris pertama
+            CellStyle wrapEvenStyle = workbook.createCellStyle();
+            wrapEvenStyle.setWrapText(true);
+            wrapEvenStyle.setFillForegroundColor(new XSSFColor(Color.WHITE, null));
+            wrapEvenStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            wrapEvenStyle.setVerticalAlignment(VerticalAlignment.TOP);
+            wrapEvenStyle.setAlignment(HorizontalAlignment.LEFT);
+            createBorder(wrapEvenStyle);
+
+            // ============================================================
+            //                       HEADER
+            // ============================================================
             String[] headers = {
                     "URL",
                     "Final URL",
@@ -58,121 +68,139 @@ public class Exporter {
                     "Anchor Text"
             };
 
-            // Buat baris header di row index 0
             Row headerRow = sheet.createRow(0);
+            headerRow.setHeightInPoints(25);
 
-            // Loop semua nama kolom
             for (int i = 0; i < headers.length; i++) {
-                // Bikin cell di kolom i
                 Cell cell = headerRow.createCell(i);
-                // Isi text header
                 cell.setCellValue(headers[i]);
-                // Kasih style header
                 cell.setCellStyle(headerStyle);
             }
 
-            // ======================== 3. ISI DATA ========================
-            // Mulai tulis data dari baris index 1 karena 0 dipakai header
+            // ============================================================
+            //                       ISI DATA
+            // ============================================================
             int rowIndex = 1;
 
-            // Loop semua broken link
-            for (Link link : brokenLinks) {
+            for (Link link : sortedBrokenLinks) {
 
-                // Setiap link bisa muncul dari banyak halaman,
-                // jadi kita looping juga setiap koneksi/source-nya
+                int startRow = rowIndex;
+                boolean first = true;
+
                 for (Map.Entry<Link, String> entry : link.getConnection().entrySet()) {
 
-                    // Buat baris baru
                     Row row = sheet.createRow(rowIndex);
 
-                    // Tentukan warna baris (zebra striping)
-                    CellStyle rowStyle = (rowIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
+                    boolean isEven = (rowIndex % 2 == 0);
+                    CellStyle rowStyle = isEven ? evenRowStyle : oddRowStyle;
+                    CellStyle anchorStyle = isEven ? wrapEvenStyle : wrapOddStyle;
 
-                    // Isi data kolom satu per satu
-                    createStyledCell(row, 0, link.getUrl(), rowStyle);
-                    createStyledCell(row, 1, link.getFinalUrl(), rowStyle);
-                    createStyledCell(row, 2, link.getContentType(), rowStyle);
-                    createStyledCell(row, 3, link.getError(), rowStyle);
+                    // ================= URL / FinalURL / ContentType / Error =====================
+                    if (first) {
+                        createStyledCell(row, 0, link.getUrl(), rowStyle);
+                        createStyledCell(row, 1, link.getFinalUrl(), rowStyle);
+                        createStyledCell(row, 2, link.getContentType(), rowStyle);
+                        createStyledCell(row, 3, link.getError(), rowStyle);
+                        first = false;
+                    } else {
+                        createStyledCell(row, 0, "", rowStyle);
+                        createStyledCell(row, 1, "", rowStyle);
+                        createStyledCell(row, 2, "", rowStyle);
+                        createStyledCell(row, 3, "", rowStyle);
+                    }
+
+                    // ================= Source Webpage =====================
                     createStyledCell(row, 4, entry.getKey().getUrl(), rowStyle);
 
-                    // Kolom terakhir khusus anchor text
+                    // ================= Anchor Text =====================
                     Cell anchorCell = row.createCell(5);
                     anchorCell.setCellValue(entry.getValue());
-                    anchorCell.setCellStyle(wrapStyle);
+                    anchorCell.setCellStyle(anchorStyle);
 
-                    // Pindah ke baris berikutnya
+                    // BLOCK OVERFLOW → Kolom 6 dummy
+                    Cell blocker = row.createCell(6);
+                    blocker.setCellValue("");
+                    blocker.setCellStyle(anchorStyle);
+
                     rowIndex++;
+                }
+
+                // ============================================================
+                //                       MERGE BROKEN LINK COLUMN
+                // ============================================================
+                int endRow = rowIndex - 1;
+
+                if (endRow > startRow) {
+                    for (int col = 0; col <= 3; col++) {
+                        sheet.addMergedRegion(
+                                new CellRangeAddress(startRow, endRow, col, col)
+                        );
+                    }
                 }
             }
 
-            // ======================== 4. AUTO-SIZE ========================
-            // Biar kolom otomatis lebar sesuai isinya
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
-            }
+            // ============================================================
+            //                       FIXED WIDTH COLUMNS
+            // ============================================================
+            sheet.setColumnWidth(0, 15000); // URL
+            sheet.setColumnWidth(1, 15000); // Final URL
+            sheet.setColumnWidth(2, 8000); // Content Type
+            sheet.setColumnWidth(3, 8000); // Error
+            sheet.setColumnWidth(4, 15000); // Source Webpage
 
-            // ======================== 5. TULIS FILE ========================
-            // Tulis workbook ke file tujuan
+            // Anchor text auto-width
+            sheet.autoSizeColumn(5);
+
+            // Dummy blocker column
+            sheet.setColumnWidth(6, 2000);
+
+            // ============================================================
+            //                       WRITE FILE
+            // ============================================================
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }
         }
     }
 
-    /**
-     * Bikin style untuk header tabel.
-     * Bold + background abu2 + border tipis.
-     */
+    // ============================================================
+    //                       STYLE HELPERS
+    // ============================================================
+
     private CellStyle createHeaderStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
-
-        // Font baru khusus header
         Font font = wb.createFont();
-        font.setBold(true); // header selalu bold
-
+        font.setBold(true);
         style.setFont(font);
 
-        // Warna background abu muda
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        // Tambah border ke semua sisi
         createBorder(style);
-
         return style;
     }
 
-    /**
-     * Bikin style untuk baris data (zebra striping).
-     *
-     * @param wb       workbook
-     * @param awtColor warna background baris
-     */
     private CellStyle createRowStyle(Workbook wb, Color awtColor) {
         CellStyle style = wb.createCellStyle();
-
-        // Set warna background baris
         style.setFillForegroundColor(new XSSFColor(awtColor, null));
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        // Border biar lebih rapi
-        createBorder(style);
+        style.setVerticalAlignment(VerticalAlignment.TOP);
+        style.setAlignment(HorizontalAlignment.LEFT);
 
+        createBorder(style);
         return style;
     }
 
-    /**
-     * Bikin cell baru, bersihin null, dan pasang style-nya.
-     */
     private void createStyledCell(Row row, int col, String value, CellStyle style) {
-        Cell cell = row.createCell(col); // bikin cell
-        cell.setCellValue(value != null ? value : ""); // antisipasi null
-        cell.setCellStyle(style); // pasang style
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
     }
 
-    /**
-     * Tambahin border tipis ke sebuah style.
-     */
     private void createBorder(CellStyle style) {
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);

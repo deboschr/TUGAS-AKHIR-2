@@ -2,7 +2,7 @@ package com.unpar.brokenlinkchecker.controllers;
 
 import com.unpar.brokenlinkchecker.Application;
 import com.unpar.brokenlinkchecker.cores.Crawler;
-import com.unpar.brokenlinkchecker.cores.Exporter;
+import com.unpar.brokenlinkchecker.utils.Exporter;
 import com.unpar.brokenlinkchecker.models.Status;
 import com.unpar.brokenlinkchecker.models.Link;
 import com.unpar.brokenlinkchecker.models.Summary;
