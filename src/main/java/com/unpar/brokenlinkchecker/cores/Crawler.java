@@ -26,7 +26,7 @@ public class Crawler {
     // Untuk mengidentifikasi webpage (host yang sama dengan seed URL)
     private String rootHost;
 
-    // Antrian webpage same-host yang akan di-crawling (FIFO / BFS)
+    // Untuk menyimpan atrean link yang akan di-crawling (FIFO / BFS)
     private final Queue<Link> frontier = new ConcurrentLinkedQueue<>();
 
     /*
@@ -91,7 +91,7 @@ public class Crawler {
         frontier.clear();
         rateLimiters.clear();
 
-        // Ambil host dari seed URL buat identifikasi same-host
+        // Ambil host dari seed URL buat identifikasi webpage
         rootHost = UrlHandler.getHost(seedUrl);
 
         // Masukkan seed ke frontier sebagai titik awal BFS

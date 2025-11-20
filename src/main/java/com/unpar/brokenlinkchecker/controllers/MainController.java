@@ -92,7 +92,7 @@ public class MainController {
             /*
              * Buat instance kelas Crawler dan kirim sebuah fungsi (lambda expresion) untuk
              * memasukan objek link ke list allLinks. Lambda ini nanti bakal jadi function
-             * interface Consumer dengan tipe data paramsnya adalah kelas Link.
+             * interface Consumer dengan tipe data paramsnya adalah objek Link.
              */
             crawler = new Crawler(link -> allLinks.add(link));
         });
@@ -122,13 +122,13 @@ public class MainController {
             return;
         }
 
-        // Update url di GUI dengan yang sudah di normalisasi
+        // Update URL di GUI dengan yang sudah di normalisasi
         seedUrlField.setText(cleanedSeedUrl);
 
         // Bersihkan semua data link lama di tabel dan struktur data internal
         allLinks.clear();
 
-        // Ubah status jadi CHECKING (ditampilkan di UI lewat binding)
+        // Ubah status jadi CHECKING
         summary.setStatus(Status.CHECKING);
 
         /*
