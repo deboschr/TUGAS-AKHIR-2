@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'org.beryx.jlink' version '2.25.0'
+}
+
+group = 'com.unpar'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = '21'
+targetCompatibility = '21'
+
+application {
+    mainModule = 'com.unpar.brokenlinkscanner'
+    mainClass = 'com.unpar.brokenlinkscanner.Application'
+}
+
+javafx {
+    version = '21'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+dependencies {
+    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'org.apache.poi:poi-ooxml:5.4.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jlink {
+    imageZip = project.file("${buildDir}/distributions/brokenlinkscanner-${javafx.platform.classifier}.zip")
+    options = [
+            '--strip-debug',
+            '--compress', '2',
+            '--no-header-files',
+            '--no-man-pages'
+    ]
+    launcher {
+        name = 'brokenlinkscanner'
+    }
+}
+
+jlinkZip {
+    group = 'distribution'
+}
