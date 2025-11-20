@@ -12,8 +12,7 @@ public class RateLimiter {
      * request yang lain.
      *
      * synchronized artinya cuma satu thread dalam satu waktu yang bisa menjalankan
-     * method ini untuk 1 host yang sama. Jadi kalau ada 3 thread yang akses host
-     * yang sama barengan, mereka akan ngantri.
+     * method ini.
      */
     public synchronized void delay() {
         // Waktu saat ini dalam epoch
@@ -25,6 +24,7 @@ public class RateLimiter {
         // Kalau masih belum lewat 500 ms dari request terakhir, tunggu dulu
         if (waitTime > 0) {
             try {
+                // Hentikan thread sementara, selama nilai waitTime
                 Thread.sleep(waitTime);
             } catch (InterruptedException e) {
                 // Kalau thread dibatalkan, set flag interrupted biar caller tahu

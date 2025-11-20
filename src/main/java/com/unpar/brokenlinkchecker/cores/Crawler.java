@@ -78,14 +78,9 @@ public class Crawler {
     }
 
     /**
-     * Mulai proses crawling dari seedUrl dengan algoritma BFS.
-     * - Hanya webpage same-host yang dimasukkan ke frontier dan di-crawl lebih
-     * lanjut.
-     * - Semua URL (internal maupun external) yang dicek akan dicatat di
-     * repositories
-     * sampai batas maksimum MAX_LINKS.
-     *
-     * @param seedUrl URL awal yang menjadi titik mulai crawling.
+     * Method untuk menjalankan proses crawling.
+     * 
+     * @param seedUrl URL yang menjadi titik awal proses crawling
      */
     public void start(String seedUrl) {
         // Reset status stop (kalau sebelumnya pernah dihentikan user)
@@ -104,13 +99,7 @@ public class Crawler {
 
         // Loop BFS: selama user belum stop dan masih ada link (webpage link) di
         // frontier
-        while (!isStopped && !frontier.isEmpty()) {
-
-            // Kalau sudah mencapai limit global, hentikan BFS
-            if (repositories.size() >= MAX_LINKS) {
-                frontier.clear();
-                break;
-            }
+        while (!isStopped && !frontier.isEmpty() && repositories.size() < MAX_LINKS) {
 
             // Ambil link paling depan (FIFO)
             Link currLink = frontier.poll();
@@ -161,7 +150,7 @@ public class Crawler {
 
                 for (var entry : linksOnWebpage.entrySet()) {
 
-                    // Kalau limit sudah tercapai, hentikan BFS dengan mengosongkan frontier
+                    // Kalau limit sudah tercapai, hentikan looping dan kosongkan frontier
                     if (repositories.size() >= MAX_LINKS || isStopped) {
                         frontier.clear();
                         break;
@@ -173,7 +162,7 @@ public class Crawler {
                     // Cek apakah URL ini sudah pernah tercatat di repositories
                     Link existingLink = repositories.get(link.getUrl());
                     if (existingLink != null) {
-                        // Kalau sudah ada, cukup tambahkan koneksi (source page + anchor text)
+                        // Kalau sudah ada, cukup tambahkan koneksi (source webpage + anchor text)
                         existingLink.addConnection(currLink, anchorText);
                         continue;
                     }
@@ -181,7 +170,7 @@ public class Crawler {
                     // URL ini belum pernah tercatat maka tambahkan koneksi pertama
                     link.addConnection(currLink, anchorText);
 
-                    // Tentukan host-nya buat bedain same-host vs external
+                    // Dapatkan host dari artibut URL di link ini
                     String host = UrlHandler.getHost(link.getUrl());
 
                     /**
@@ -189,12 +178,6 @@ public class Crawler {
                      * frontier
                      */
                     if (host.equalsIgnoreCase(rootHost)) {
-                        /*
-                         * Untuk webpage same-host:
-                         * - Tidak langsung dimasukkan ke repositories di sini.
-                         * - Link baru akan dianggap dicek dan dihitung ketika
-                         * nanti diambil dari frontier dan di-fetch di loop BFS utama.
-                         */
                         frontier.offer(link);
                     } else {
                         // Masukkan ke repositories sebagai link baru
@@ -232,17 +215,15 @@ public class Crawler {
     }
 
     /**
-     * Hentikan proses crawling secara manual (oleh user).
-     * Flag ini akan dicek di loop BFS dan di setiap task virtual thread.
+     * Method untuk mengantikan proses crawling (oleh user)
      */
     public void stop() {
         isStopped = true;
     }
 
     /**
-     * Method buat nge-fetch sebuah URL.
-     * Bisa sekaligus parsing HTML kalau isParseDoc = true.
-     *
+     * Method buat fetching URL dan parsing response body kalau diminta
+     * 
      * @param link       objek Link yang akan di-update informasinya
      * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
@@ -368,21 +349,20 @@ public class Crawler {
     }
 
     /**
-     * Method ini bertugas buat ngambil semua tag a dengan atribut href.
-     * dokumen HTML, terus kita convert ke URL absolut, normalisasi, dan simpan
-     * sebagai objek Link.
-     *
+     * Method buat mengambil semua link dari suatu dokumen HTML.
+     * URL akan di ekstrak dari tag a HTML pada atribut href
+     * 
      * @param doc dokumen HTML
      * @return Map dengan key dan value:
      *         - key = objek Link (URL unik yang sudah dinormalisasi)
      *         - value = anchor text dari link tersebut di HTML ini
      */
-    private Map<Link, String> extractLink(Document doc) {
+    private Map<Link, String> extractLink(Document HTML) {
         // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam tag a
         Map<Link, String> result = new HashMap<>();
 
         // Loop semua elemen tag a yang punya atribut href
-        for (Element a : doc.select("a[href]")) {
+        for (Element a : HTML.select("a[href]")) {
 
             // Ambil URL absolut dari atribut href (Jsoup akan gabungin dengan baseUri)
             String absoluteUrl = a.absUrl("href");
@@ -417,8 +397,11 @@ public class Crawler {
     /**
      * Method ini bertugas buat ngirim objek Link yang ditemukan / dicek selama
      * proses crawling ke controller (MainController).
+     * Disini pake Platform.runLater (dari javafx) biar data yang dikirim bisa
+     * diterima oleh controller, karena controller dijalankan pake thread javafx
+     * sedangkan crawler thread yang berbeda.
      *
-     * @param link objek Link yang ditemukan / dicek selama proses crawling
+     * @param link objek Link yang ditemukan crawling
      */
     private void send(Link link) {
         if (linkConsumer != null) {

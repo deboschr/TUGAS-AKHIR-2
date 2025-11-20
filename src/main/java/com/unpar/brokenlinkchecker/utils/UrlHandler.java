@@ -16,6 +16,7 @@ public class UrlHandler {
      * - Hapus port default (80 / 443)
      * - Bersihkan path dari dot-segment dan duplikasi garis miring
      * - Hapus fragment (#...)
+     * - Hapus user info
      *
      * @param rawUrl input mentah
      * @return URL hasil normalisasi atau null jika tidak memenuhi aturan atau URL
@@ -76,8 +77,8 @@ public class UrlHandler {
 
         } catch (Exception e) {
             /*
-             * Kalau gagal bikin objek URI, kita kembaliin URL awal biar nanti error pas
-             * pengecekan, karena akan dianggap invalid URL
+             * Kalau gagal bikin objek URI berarti URL nya invalid sintaks, kita kembaliin
+             * URL awal biar nanti error pas pengecekan, karena akan dianggap invalid URL
              */
             return rawUrl;
         }
