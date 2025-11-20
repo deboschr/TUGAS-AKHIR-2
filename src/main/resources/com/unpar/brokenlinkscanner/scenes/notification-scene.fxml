@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.unpar.brokenlinkscanner.controllers.NotificationController"
+            prefWidth="400" prefHeight="180"
+            stylesheets="@../styles/notification-style.css"
+            fx:id="root">
+
+    <!-- ================== TITLE BAR ================== -->
+    <top>
+        <HBox fx:id="titleBar" alignment="CENTER_LEFT" styleClass="title-bar">
+            <Label fx:id="titleLabel" styleClass="title-text" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="closeBtn" text="&#x2715;" styleClass="title-btn" />
+        </HBox>
+    </top>
+
+    <!-- ================== CONTENT ================== -->
+    <center>
+        <HBox spacing="16" alignment="CENTER_LEFT" styleClass="content-area">
+            <Label fx:id="iconLabel" styleClass="icon-label" />
+            <Label fx:id="messageLabel" wrapText="true" styleClass="message-text" />
+        </HBox>
+    </center>
+</BorderPane>
