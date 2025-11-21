@@ -11,11 +11,9 @@
 	-grey-dark: #353e3a;
 	-white: #f1f0eb;
 	-black: #222222;
-}
 
-.root.root {
+	-fx-border-width: 3;
 	-fx-border-color: -tertiary;
-	-fx-border-width: 2;
 }
 
 /* ======================= TITLE BAR ======================= */
@@ -27,7 +25,7 @@
 
 .title-text {
 	-fx-text-fill: -white;
-	-fx-font-size: 14px;
+	-fx-font-size: 18px;
 	-fx-font-weight: bold;
 	-fx-padding: 0 0 0 20;
 }
@@ -35,7 +33,7 @@
 .title-btn {
 	-fx-background-color: transparent;
 	-fx-text-fill: -white;
-	-fx-font-size: 16px;
+	-fx-font-size: 20px;
 	-fx-min-width: 48px;
 	-fx-min-height: 36px;
 	-fx-padding: 8 0 8 0;
@@ -52,12 +50,12 @@
 }
 
 /* ======================= CONTENT ======================= */
-.content-root {
+.content-area {
 	-fx-padding: 20;
 	-fx-background-color: -primary;
 }
 
-/* ======================= CARD ======================= */
+/* ============== LINK INFO CARD ============== */
 .card {
 	-fx-background-color: -secondary;
 	-fx-border-color: -tertiary;
@@ -66,7 +64,6 @@
 	-fx-padding: 16;
 }
 
-/* ======================= LABELS & FIELDS ======================= */
 .text-label {
 	-fx-text-fill: -white;
 	-fx-font-size: 15px;
@@ -93,14 +90,14 @@
 	-fx-opacity: 1;
 }
 
-/* ======================= TABLE ======================= */
+/* ============== WEBPAGE LINK TABLE ============== */
 .table-view {
 	-fx-background-color: -secondary;
 	-fx-border-color: -tertiary;
 	-fx-table-cell-border-color: -tertiary;
 }
 
-/* Header */
+/* Table Header */
 .table-view .column-header {
 	-fx-background-color: -grey-dark;
 	-fx-border-color: -tertiary;
@@ -119,7 +116,7 @@
 	-fx-background-color: -grey-dark;
 }
 
-/* Body */
+/* Table Body */
 .table-view .table-row-cell {
 	-fx-background-color: -primary;
 }
@@ -146,7 +143,7 @@
 	-fx-underline: true;
 }
 
-/* ===================== Scrollbar TableView ===================== */
+/* ============== SCROLLBAR TABLEVIEW ============== */
 .table-view .filler,
 .table-view .corner {
 	-fx-background-color: -grey-dark;

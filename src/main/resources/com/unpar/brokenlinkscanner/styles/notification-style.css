@@ -1,43 +1,56 @@
-#root {
+.root {
+	-primary: #f4ebdb;
+	-secondary: #2f5d50;
+	-tertiary: #0a3a32;
+	-yellow: #feb83c;
+	-orange: #f59e0b;
+	-red: #e55548;
+	-blue: #368ea1;
+	-green: #32956c;
+	-grey-light: #b6c5bf;
+	-grey-dark: #353e3a;
+	-white: #f1f0eb;
+	-black: #222222;
+
 	-fx-border-width: 3;
 }
 
 /* ======================= TITLE BAR ======================= */
 .title-bar {
-	-fx-alignment: center-left;
+	-fx-alignment: center-right;
 	-fx-background-insets: -1;
 }
 
 .title-text {
-	-fx-text-fill: white;
-	-fx-font-size: 14px;
+	-fx-text-fill: -white;
+	-fx-font-size: 18px;
 	-fx-font-weight: bold;
 	-fx-padding: 0 0 0 15;
 }
 
 .title-btn {
 	-fx-background-color: transparent;
-	-fx-text-fill: #f1f0eb;
+	-fx-text-fill: -white;
 	-fx-font-size: 20px;
 	-fx-min-width: 48px;
 	-fx-min-height: 36px;
 	-fx-padding: 5 0 5 0;
 	-fx-cursor: hand;
-	-fx-background-radius: 0;
 	-fx-border-radius: 0;
+	-fx-background-radius: 0;
 	-fx-background-insets: 0;
 	-fx-effect: none;
 }
 
 .title-btn:hover {
-	-fx-background-color: #494949;
-	-fx-text-fill: white;
+	-fx-background-color: -grey-dark;
+	-fx-text-fill: -white;
 }
 
 /* ======================= CONTENT ======================= */
 .content-area {
-	-fx-background-color: #f4ebdb;
 	-fx-padding: 20;
+	-fx-background-color: -primary;
 }
 
 .icon-label {
@@ -48,7 +61,7 @@
 }
 
 .message-text {
-	-fx-text-fill: #353e3a;
+	-fx-text-fill: -grey-dark;
 	-fx-font-size: 17px;
 	-fx-wrap-text: true;
 }

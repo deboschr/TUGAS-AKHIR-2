@@ -82,11 +82,11 @@ public class NotificationController {
         type = type.toUpperCase();
 
         switch (type) {
-            case "ERROR" -> applyStyle("#dc2626", "\u2716", "ERROR");
-            case "WARNING" -> applyStyle("#f59e0b", "\u26A0", "WARNING");
-            case "INFO" -> applyStyle("#3b82f6", "\u2139", "INFORMATION");
-            case "SUCCESS" -> applyStyle("#10b981", "\u2714", "SUCCESS");
-            default -> applyStyle("#6b7280", "\u2753", "UNKNOWN");
+            case "ERROR" -> applyStyle("-red", "\u2716", "ERROR");
+            case "WARNING" -> applyStyle("-orange", "\u26A0", "WARNING");
+            case "INFO" -> applyStyle("-blue", "\u2139", "INFORMATION");
+            case "SUCCESS" -> applyStyle("-green", "\u2714", "SUCCESS");
+            default -> applyStyle("-grey-light", "\u2753", "UNKNOWN");
         }
     }
 

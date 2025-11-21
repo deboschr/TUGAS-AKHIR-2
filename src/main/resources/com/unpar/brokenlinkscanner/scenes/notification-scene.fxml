@@ -5,22 +5,22 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.unpar.brokenlinkscanner.controllers.NotificationController"
-            prefWidth="400" prefHeight="180"
             stylesheets="@../styles/notification-style.css"
+            prefWidth="400" prefHeight="180"
             fx:id="root">
 
-    <!-- ================== TITLE BAR ================== -->
+    <!-- ===================== TITLE BAR ===================== -->
     <top>
-        <HBox fx:id="titleBar" alignment="CENTER_LEFT" styleClass="title-bar">
+        <HBox fx:id="titleBar" styleClass="title-bar">
             <Label fx:id="titleLabel" styleClass="title-text" />
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="closeBtn" text="&#x2715;" styleClass="title-btn" />
         </HBox>
     </top>
 
-    <!-- ================== CONTENT ================== -->
+    <!-- ===================== CONTENT ===================== -->
     <center>
-        <HBox spacing="16" alignment="CENTER_LEFT" styleClass="content-area">
+        <HBox spacing="16" styleClass="content-area">
             <Label fx:id="iconLabel" styleClass="icon-label" />
             <Label fx:id="messageLabel" wrapText="true" styleClass="message-text" />
         </HBox>

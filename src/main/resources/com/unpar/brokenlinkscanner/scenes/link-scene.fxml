@@ -5,10 +5,11 @@
 <?import java.lang.String?>
 
 <BorderPane
-        xmlns:fx="http://javafx.com/fxml"
-        fx:controller="com.unpar.brokenlinkscanner.controllers.LinkController"
-        stylesheets="@../styles/link-style.css"
-        prefWidth="900" prefHeight="600">
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.unpar.brokenlinkscanner.controllers.LinkController"
+    stylesheets="@../styles/link-style.css"
+    prefWidth="900" prefHeight="600"
+    fx:id="root">
 
 
     <!-- ===================== TITLE BAR ===================== -->
@@ -25,10 +26,11 @@
         </HBox>
     </top>
 
-    <!-- ===================== MAIN CONTENT ===================== -->
+    <!-- ===================== CONTENT ===================== -->
     <center>
-        <VBox spacing="16" styleClass="content-root">
-            <!-- === CARD === -->
+        <VBox spacing="16" styleClass="content-area">
+            
+            <!-- ======== LINK INFO CARD ======== -->
             <VBox spacing="12" styleClass="card">
                 <GridPane hgap="12" vgap="10">
                     <columnConstraints>
@@ -62,6 +64,7 @@
                 </GridPane>
             </VBox>
 
+            <!-- ======== WEBPAGE LINK TABLE ======== -->
             <TableView fx:id="webpageLinkTable" styleClass="table-view" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="anchorTextColumn" text="Anchor text" prefWidth="200" />
