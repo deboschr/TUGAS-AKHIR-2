@@ -30,7 +30,7 @@ public class Exporter {
             "Anchor Text"
     );
 
-    private CellStyle headerStyle; // Style khusus header tabel
+    private CellStyle headerStyle; // Style buat header tabel
     private CellStyle oddRowStyle; // Style buat body tabel baris ganjil
     private CellStyle evenRowStyle; // Style buat body tabel baris genap
     private CellStyle emptyStyle; // Style buat kolom dummy

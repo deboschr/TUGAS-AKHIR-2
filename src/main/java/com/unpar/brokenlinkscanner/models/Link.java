@@ -7,34 +7,39 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Link {
-    private final StringProperty url; // URL utama
-    private final StringProperty finalUrl; // URL hasil redirect (kalau ada)
-    private final IntegerProperty statusCode; // Kode status HTTP
-    private final StringProperty contentType; // Tipe konten (Content-Type)
-    private final StringProperty error; // Pesan error / reason phrase
-    private final BooleanProperty isWebpage; // Menandai apakah link ini adalah webpage same-host
+    // URL awal
+    private final StringProperty url;
+    // URL hasil redirect
+    private final StringProperty finalUrl = new SimpleStringProperty("");
+    // Kode status HTTP
+    private final IntegerProperty statusCode = new SimpleIntegerProperty(0);
+    // Tipe konten yang menjadi response body HTTP
+    private final StringProperty contentType = new SimpleStringProperty("");
+    // Pesan error connection atau ststus code + reason phrase
+    private final StringProperty error = new SimpleStringProperty("");
+
+    /**
+     * Untuk menandakan apakah link ini adalah link webpage atau bukan.
+     * Syarat sebuah link menjadi webpage link:
+     * - host-nya harus sama dengan host dari seed URL
+     * - response body-nya harus HTML
+     * - tidak error
+     */
+    private final BooleanProperty isWebpage = new SimpleBooleanProperty(false);
 
     /**
      * Menyimpan relasi antar Link:
      * - key = Link lain yang terhubung dengan link ini
-     * - value = anchor text (teks di dalam tag a HTML) yang menghubungkan keduanya
+     * - value = anchor text yaitu teks yang ada di dalam tag a HTML
      */
-    private final Map<Link, String> connections;
+    private final Map<Link, String> connections = new ConcurrentHashMap<>();
 
     public Link(String url) {
         if (url == null || url.isBlank()) {
-            throw new IllegalArgumentException("URL tidak boleh null atau kosong");
+            throw new IllegalArgumentException("URL cannot be null or empty");
         }
 
         this.url = new SimpleStringProperty(url);
-        this.finalUrl = new SimpleStringProperty("");
-        this.statusCode = new SimpleIntegerProperty(0);
-        this.contentType = new SimpleStringProperty("");
-        this.error = new SimpleStringProperty("");
-        this.isWebpage = new SimpleBooleanProperty(false);
-
-        // Pake ConcurrentHashMap biar aman untuk operasi multithread
-        this.connections = new ConcurrentHashMap<>();
     }
 
     // ===============================================================================
@@ -46,7 +51,7 @@ public class Link {
 
     public void setUrl(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("URL tidak boleh null atau kosong");
+            throw new IllegalArgumentException("URL cannot be null or empty");
         }
         url.set(value);
     }
@@ -145,7 +150,7 @@ public class Link {
      * - other ke this
      *
      * @param other      link lain yang terhubung
-     * @param anchorText teks anchor yang menghubungkan (boleh null, akan diset "")
+     * @param anchorText teks yang menghubungkan (boleh null, akan diset "")
      */
     public void addConnection(Link other, String anchorText) {
         if (other == null || other == this) {
