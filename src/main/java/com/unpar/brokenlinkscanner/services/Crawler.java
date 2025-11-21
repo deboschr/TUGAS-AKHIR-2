@@ -16,10 +16,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public class Crawler {
@@ -145,12 +142,8 @@ public class Crawler {
             // Ekstrak seluruh link dari webpage
             Map<Link, String> linksOnWebpage = extractLink(doc);
 
-            // Executor berbasis virtual thread
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-
                 for (var entry : linksOnWebpage.entrySet()) {
-
-                    // Kalau limit sudah tercapai, hentikan looping dan kosongkan frontier
                     if (repositories.size() >= MAX_LINKS || isStopped) {
                         frontier.clear();
                         break;
@@ -159,53 +152,33 @@ public class Crawler {
                     Link link = entry.getKey();
                     String anchorText = entry.getValue();
 
-                    // Cek apakah URL ini sudah pernah tercatat di repositories
                     Link existingLink = repositories.get(link.getUrl());
                     if (existingLink != null) {
-                        // Kalau sudah ada, cukup tambahkan koneksi (source webpage + anchor text)
                         existingLink.addConnection(currLink, anchorText);
                         continue;
                     }
 
-                    // URL ini belum pernah tercatat maka tambahkan koneksi pertama
                     link.addConnection(currLink, anchorText);
 
-                    // Dapatkan host dari artibut URL di link ini
                     String host = URLHandler.getHost(link.getUrl());
-
-                    /**
-                     * Kalau host sama dengan rootHost maka anggap sebagai webpage dan masukkan ke
-                     * frontier
-                     */
                     if (host.equalsIgnoreCase(rootHost)) {
                         frontier.offer(link);
                     } else {
-                        // Masukkan ke repositories sebagai link baru
                         repositories.putIfAbsent(link.getUrl(), link);
 
-                        // Submit task ke virtual thread buat cek fetch link
                         executor.submit(() -> {
-                            /*
-                             * Terapkan rate limiting per host biar ga dianggap serangan atau
-                             * kena error HTTP 429 (Too Many Requests).
-                             */
                             RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
                             limiter.delay();
 
-                            // Fetch URL tanpa parse HTML (kita cuma butuh status + header)
                             fetchLink(link, false);
 
-                            // Kirim hasil ke controller
                             send(link);
                         });
                     }
                 }
 
-                // Tutup executor: tidak menerima task baru lagi
                 executor.shutdown();
 
-                // Tunggu sampai semua virtual thread selesai sebelum lanjut ke halaman frontier
-                // berikutnya
                 executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
             } catch (InterruptedException e) {
@@ -227,7 +200,7 @@ public class Crawler {
      * @param link       objek Link yang akan di-update informasinya
      * @param isParseDoc true kalau body perlu di-parse jadi Document HTML
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
-     *         bukan HTML / error.
+     * bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
 
@@ -298,7 +271,7 @@ public class Crawler {
                 }
             }
 
-            // Kode status HTTP (contoh 200, 404, 500, dll.)
+            // Kode status HTTP
             int statusCode = res.statusCode();
             // URL final setelah redirect (kalau ada)
             String finalUrl = res.uri().toString();
@@ -354,8 +327,8 @@ public class Crawler {
      *
      * @param HTML dokumen HTML
      * @return Map dengan key dan value:
-     *         - key = objek Link (URL unik yang sudah dinormalisasi)
-     *         - value = anchor text dari link tersebut di HTML ini
+     * - key = objek Link (URL unik yang sudah dinormalisasi)
+     * - value = anchor text dari link tersebut di HTML ini
      */
     private Map<Link, String> extractLink(Document HTML) {
         // Map hasil ekstraksi. Key: Link, Value: teks yang ada di dalam tag a
