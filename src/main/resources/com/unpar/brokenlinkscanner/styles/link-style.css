@@ -16,7 +16,7 @@
 	-fx-border-color: -tertiary;
 }
 
-/* ======================= TITLE BAR ======================= */
+/* ######################### TITLE BAR ######################### */
 .title-bar {
 	-fx-background-color: -tertiary;
 	-fx-alignment: center-right;
@@ -49,10 +49,11 @@
 	-fx-text-fill: -white;
 }
 
-/* ======================= CONTENT ======================= */
+/* ######################### CONTENT ######################### */
 .content-area {
-	-fx-padding: 20;
 	-fx-background-color: -primary;
+	-fx-padding: 20;
+	-fx-spacing: 15;
 }
 
 /* ============== LINK INFO CARD ============== */
@@ -62,6 +63,7 @@
 	-fx-border-radius: 10;
 	-fx-background-radius: 10;
 	-fx-padding: 16;
+	-fx-spacing: 12;
 }
 
 .text-label {
@@ -97,7 +99,7 @@
 	-fx-table-cell-border-color: -tertiary;
 }
 
-/* Table Header */
+/* ******** Table Header ******** */
 .table-view .column-header {
 	-fx-background-color: -grey-dark;
 	-fx-border-color: -tertiary;
@@ -116,7 +118,7 @@
 	-fx-background-color: -grey-dark;
 }
 
-/* Table Body */
+/* ******** Table Body ******** */
 .table-view .table-row-cell {
 	-fx-background-color: -primary;
 }
@@ -132,7 +134,7 @@
 	-fx-font-size: 15px;
 }
 
-/* Hyperlink */
+/* ******** Hyperlink ******** */
 
 .hyperlink {
 	-fx-text-fill: #19539a;

@@ -27,7 +27,7 @@
 
 
     <center>
-        <VBox styleClass="content-root">
+        <VBox styleClass="content-area">
 
             <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
             <HBox alignment="CENTER_LEFT" styleClass="input-wrapper">

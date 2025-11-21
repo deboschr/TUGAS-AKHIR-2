@@ -28,10 +28,10 @@
 
     <!-- ===================== CONTENT ===================== -->
     <center>
-        <VBox spacing="16" styleClass="content-area">
+        <VBox styleClass="content-area">
             
             <!-- ======== LINK INFO CARD ======== -->
-            <VBox spacing="12" styleClass="card">
+            <VBox styleClass="card">
                 <GridPane hgap="12" vgap="10">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="20" />
