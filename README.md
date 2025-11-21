@@ -2,7 +2,7 @@
 
 ## Deskripsi
 
-**Broken Link Scanner** adalah aplikasi desktop berbasis **JavaFX** yang dikembangkan untuk membantu pengguna untuk memeriksa tautan rusak (*broken links*) yang ada pada sebuah situs web. Aplikasi ini menerima sebuah URL (*Seed URL*) sebagai titik awal pemeriksaan, lalu melakukan proses **Web Crawling** terhadap seluruh halaman situs web tersebut.
+**Broken Link Scanner** adalah aplikasi desktop berbasis **JavaFX** yang dikembangkan untuk membantu pengguna untuk memeriksa tautan rusak (*Broken Link*) yang ada pada sebuah situs web. Aplikasi ini menerima sebuah URL (*Seed URL*) sebagai titik awal pemeriksaan, lalu melakukan proses **Web Crawling** terhadap seluruh halaman situs web (*Webpage Link*) tersebut.
 
 Pada setiap halaman situs web yang ditemukan akan dilakukan *fetching* lalu *response body*-nya akan di-*parse* ke dokumen HTML. Selanjutnya ekstraksi tautan akan dilakukan pada dokumen HTML ini yang diambil berdasarkan elemen `<a href>`. Setiap tautan hasil ekstraksi akan dilakukan pemeriksaan dengan melakukan *fetching*. Tautan yang gagal diperiksa (*connection error*) atau mengembalikan kode status HTTP 4XX - 5XX maka akan dianggap tautan rusak.
 
@@ -43,22 +43,27 @@ Pada setiap halaman situs web yang ditemukan akan dilakukan *fetching* lalu *res
 
 ## Cara Menjalankan
 
+### Persyaratan Sistem
+```
+Java 21 atau lebih baru
+```
+
 ### Clone repository
-```bash
+```
 git clone https://github.com/deboschr/TUGAS-AKHIR-2
 ```
 
 ### Build proyek
-```bash
+```
 ./gradlew build
 ```
 
 ### Jalankan aplikasi
-```bash
+```
 ./gradlew run
 ```
 
 ### Masukan URL
-```bash
+```
 https://informatika.unpar.ac.id
 ```
