@@ -11,11 +11,12 @@ public class HTTPStatus {
 
 
     public static String getStatusError(int statusCode) {
-        // kalau 1xx, 2xx & 3xx maka artinya bukan error, jadi return null
+        // Kalau 1xx, 2xx & 3xx maka artinya bukan error
         if (statusCode >= 100 && statusCode < 400) {
             return null;
         }
 
+        // Kalau statusCode tidak ada di STATUS_MAP, maka yang dikembalikan adalah statusCode dalam bentuk string (default).
         return STATUS_MAP.getOrDefault(statusCode, String.valueOf(statusCode));
     }
 }
