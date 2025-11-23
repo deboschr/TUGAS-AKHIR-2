@@ -20,12 +20,40 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public class Crawler {
-    /*
-     * Untuk menyimpan host dari seed URL.
-     * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
-     * menjadi URL halaman situs web (Webpage Link).
+    /**
+     * Untuk melakukan request HTTP
+     *
+     * - followRedirects => alway, biar nanti kita bisa mendapatkan final URL. Kalau
+     * misalnya URL awal memiliki host yang sama dengan rootHost tapi final URL nya
+     * memiliki host yang beda dengan rootHost maka ga perlu kita crawling, karna
+     * itu artinya isi dia bukan merupakan halaman dari website yang lagi diperiksa.
+     *
+     * - connectTimeout => 5 detik, biar ga terlalu lama nunggu, kalau kelamaan
+     * sistem jadi lambat, tapi kalau terlalu cepat juga bisa-bisa semua URL error
+     * karena ga sempat bikin connection.
      */
-    private String rootHost;
+    private static final HttpClient HTTP_CLIENT = HttpClient
+            // Bikin HttpClient dengan tanpa konfigurasi default
+            .newBuilder()
+            // Ikuti redirect dari server website
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            // Timeout saat bikin koneksi
+            .connectTimeout(Duration.ofSeconds(5)).build();
+
+    /**
+     * Untuk menyimpan request header user-agent, dipake biar server website tujuan
+     * tahu siapa yang melakukan request, ini salah satu implementasi etika crawling
+     */
+    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
+
+    /**
+     * Untuk ngebatasin jumlah link yang diperiksa, jadi ukuran dari repositories ga
+     * boleh melebihi ini.
+     * 1000 dipilih karena setelah beberapa kali percobaan, ketika sudah mencapat
+     * 1000an, link aplikasi jadi lambat sekali, nyaris ga gerak.
+     */
+    private static final int MAX_LINKS = 1000;
+
 
     /**
      * Untuk menyimpan daftar antrian objek Link yang akan di-crawling.
@@ -66,45 +94,24 @@ public class Crawler {
     /**
      * Fungsi callback buat ngirim objek Link yang udah di fetching kembali ke
      * controller.
+     *
+     * Pake function interface Consumer karena dia cuma punya 1 method (accept), dan ga mengembalikan apa-apa.
      */
     private final Consumer<Link> linkConsumer;
 
-    // Penanda buat nentuin apakah proses dihentikan user atau tidak
+    /*
+     * Untuk menyimpan host dari seed URL.
+     * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
+     * menjadi URL halaman situs web (Webpage Link).
+     */
+    private String rootHost;
+
+    /**
+     * Penanda buat nentuin apakah proses dihentikan user atau tidak.
+     * True: Kalau proses dihentikan user
+     * False: Kalau proses tidak dihentikan
+     */
     private volatile boolean isStopped = false;
-
-    /**
-     * Untuk melakukan request HTTP
-     * 
-     * - followRedirects => alway, biar nanti kita bisa mendapatkan final URL. Kalau
-     * misalnya URL awal memiliki host yang sama dengan rootHost tapi final URL nya
-     * memiliki host yang beda dengan rootHost maka ga perlu kita crawling, karna
-     * itu artinya isi dia bukan merupakan halaman dari website yang lagi diperiksa.
-     * 
-     * - connectTimeout => 5 detik, biar ga terlalu lama nunggu, kalau kelamaan
-     * sistem jadi lambat, tapi kalau terlalu cepat juga bisa-bisa semua URL error
-     * karena ga sempat bikin connection.
-     */
-    private static final HttpClient HTTP_CLIENT = HttpClient
-            // Bikin HttpClient dengan tanpa konfigurasi default
-            .newBuilder()
-            // Ikuti redirect dari server website
-            .followRedirects(HttpClient.Redirect.ALWAYS)
-            // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofSeconds(5)).build();
-
-    /**
-     * Untuk menyimpan request header user-agent, dipake biar server website tujuan
-     * tahu siapa yang melakukan request, ini salah satu implementasi etika crawling
-     */
-    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
-
-    /**
-     * Untuk ngebatasin jumlah link yang diperiksa, jadi ukuran dari repositories ga
-     * boleh melebihi ini.
-     * 1000 dipilih karena setelah beberapa kali percobaan, ketika sudah mencapat
-     * 1000an, link aplikasi jadi lambat sekali, nyaris ga gerak.
-     */
-    private static final int MAX_LINKS = 1000;
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;

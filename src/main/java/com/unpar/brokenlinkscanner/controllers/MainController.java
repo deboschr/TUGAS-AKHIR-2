@@ -108,56 +108,54 @@ public class MainController {
      */
     @FXML
     private void onStartClick() {
+        try {
+            // Ambil input dari field dan hapus spasi di awal/akhir
+            String seedUrl = seedUrlField.getText().trim();
 
-        // Ambil input dari field dan hapus spasi di awal/akhir
-        String seedUrl = seedUrlField.getText().trim();
+            // Normalisasi URL supaya formatnya konsisten
+            String cleanedSeedUrl = URLHandler.normalizeUrl(seedUrl);
 
-        // Normalisasi URL supaya formatnya konsisten
-        String cleanedSeedUrl = URLHandler.normalizeUrl(seedUrl);
-
-        // Kalau seed URL kosong atau tidak valid → tampilkan pesan
-        if (cleanedSeedUrl == null) {
-            Application.openNotificationWindow("WARNING",
-                    "Please enter a valid seed URL before starting.");
-            return;
-        }
-
-        // Update URL di GUI dengan yang sudah di normalisasi
-        seedUrlField.setText(cleanedSeedUrl);
-
-        // Bersihkan semua data link lama di tabel dan struktur data internal
-        allLinks.clear();
-
-        // Ubah status jadi CHECKING
-        summary.setStatus(Status.CHECKING);
-
-        /*
-         * Jalankan proses crawling di thread yang berbeda dengan thread yang
-         * menjalankan GUI. Pake virtual thread biar lebih ringan karna thread biasa 1:1
-         * dengan thread laptop.
-         */
-        Thread.startVirtualThread(() -> {
-            try {
-                // Mulai proses crawling (BFS)
-                crawler.start(cleanedSeedUrl);
-
-                /*
-                 * Kalau crawling selesai secara normal (bukan dihentikan user),
-                 * maka ubah status menjadi COMPLETED.
-                 * Harus lewat Platform.runLater karena menyentuh UI.
-                 */
-                if (!crawler.isStopped()) {
-                    Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-                Platform.runLater(
-                        () -> Application.openNotificationWindow("ERROR",
-                                "An unexpected error occurred while crawling."));
+            // Kalau seed URL kosong atau tidak valid → tampilkan pesan
+            if (cleanedSeedUrl == null) {
+                showNofication("WARNING", "Please enter a valid seed URL before starting.");
+                return;
             }
-        });
+
+            // Update URL di GUI dengan yang sudah di normalisasi
+            seedUrlField.setText(cleanedSeedUrl);
+
+            // Bersihkan semua data link lama di tabel dan struktur data internal
+            allLinks.clear();
+
+            // Ubah status jadi CHECKING
+            summary.setStatus(Status.CHECKING);
+
+            /*
+             * Jalankan proses crawling di thread yang berbeda dengan thread yang
+             * menjalankan GUI. Pake virtual thread biar lebih ringan karna thread biasa 1:1
+             * dengan thread laptop.
+             */
+            Thread.startVirtualThread(() -> {
+                try {
+                    // Mulai proses crawling (BFS)
+                    crawler.start(cleanedSeedUrl);
+
+                    /*
+                     * Kalau crawling selesai secara normal (bukan dihentikan user),
+                     * maka ubah status menjadi COMPLETED.
+                     * Harus lewat Platform.runLater karena menyentuh UI.
+                     */
+                    if (!crawler.isStopped()) {
+                        Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
+                    }
+
+                } catch (Exception e) {
+                    showNofication("ERROR", e.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            showNofication("ERROR", e.getMessage());
+        }
     }
 
     /**
@@ -167,14 +165,19 @@ public class MainController {
      */
     @FXML
     private void onStopClick() {
-        // Pastikan crawler sudah pernah dibuat (tidak null)
-        if (crawler != null) {
-            // Hentikan proses crawling
-            crawler.stop();
+        try {
+            // Pastikan crawler sudah pernah dibuat (tidak null)
+            if (crawler != null) {
+                // Hentikan proses crawling
+                crawler.stop();
 
-            // Update status summary menjadi STOPPED
-            summary.setStatus(Status.STOPPED);
+                // Update status summary menjadi STOPPED
+                summary.setStatus(Status.STOPPED);
+            }
+        } catch (Exception e) {
+            showNofication("ERROR", e.getMessage());
         }
+
     }
 
     /**
@@ -188,19 +191,13 @@ public class MainController {
         // Export hanya bisa dilakukan setelah proses selesai
         Status status = summary.getStatus();
         if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow(
-                    "WARNING",
-                    "Export is only available after the process is finished."
-            );
+            Application.openNotificationWindow("WARNING", "Export is only available after the process is finished.");
             return;
         }
 
         // Tidak ada broken link → tidak perlu ekspor
         if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow(
-                    "WARNING",
-                    "There are no broken links to export."
-            );
+            Application.openNotificationWindow("WARNING", "There are no broken links to export.");
             return;
         }
 
@@ -209,9 +206,7 @@ public class MainController {
         chooser.setTitle("Save Excel File");
 
         // Hanya izinkan .xlsx
-        chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx")
-        );
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"));
 
         File file = chooser.showSaveDialog(null);
         if (file == null) {
@@ -232,22 +227,12 @@ public class MainController {
                 exporter.save(brokenLinks, finalFile);
 
                 // Notifikasi sukses
-                Platform.runLater(() ->
-                        Application.openNotificationWindow(
-                                "SUCCESS",
-                                "Data has been successfully exported to:\n" + finalFile.getAbsolutePath()
-                        )
-                );
+                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS", "Data has been successfully exported to:\n" + finalFile.getAbsolutePath()));
 
             } catch (Exception e) {
                 e.printStackTrace();
 
-                Platform.runLater(() ->
-                        Application.openNotificationWindow(
-                                "ERROR",
-                                "An error occurred while exporting the data."
-                        )
-                );
+                Platform.runLater(() -> Application.openNotificationWindow("ERROR", "An error occurred while exporting the data."));
             }
         });
     }
@@ -421,10 +406,7 @@ public class MainController {
 
         summary.totalLinksProperty().bind(Bindings.size(allLinks));
         summary.webpageLinksProperty().bind(Bindings.size(webpageLinks));
-        summary.brokenLinksProperty().bind(
-                Bindings.createIntegerBinding(
-                        () -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(),
-                        allLinks));
+        summary.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(), allLinks));
 
         // Warna dinamis berdasarkan status
         summary.statusProperty().addListener((obs, old, status) -> {
@@ -632,6 +614,18 @@ public class MainController {
             }
         });
         paginationBar.getChildren().add(nextBtn);
+    }
+
+    // ============================= PAGINATION ===============================
+
+    private void showNofication(String type, String message) {
+        String msg = (message == null || message.isBlank())
+                ? "Unknown error."
+                : message;
+
+        Platform.runLater(() ->
+                Application.openNotificationWindow(type, msg)
+        );
     }
 
 }

@@ -9,8 +9,13 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.net.URL;
+
 public class Application extends javafx.application.Application {
     private static Stage MAIN_STAGE;
+    private static final URL MAIN_FXML    = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml");
+    private static final URL LINK_FXML    = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml");
+    private static final URL NOTIFICATION_FXML   = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
 
     public static void main(String[] args) {
         launch();
@@ -25,9 +30,7 @@ public class Application extends javafx.application.Application {
 
     public static void openMainWindow() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml"));
-
+            FXMLLoader loader = new FXMLLoader(MAIN_FXML);
 
             Scene scene = new Scene(loader.load());
 
@@ -47,8 +50,7 @@ public class Application extends javafx.application.Application {
 
     public static void openLinkWindow(Link link) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml"));
+            FXMLLoader loader = new FXMLLoader(LINK_FXML);
 
             Scene scene = new Scene(loader.load());
 
@@ -69,8 +71,7 @@ public class Application extends javafx.application.Application {
 
     public static void openNotificationWindow(String type, String message) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml"));
+            FXMLLoader loader = new FXMLLoader(NOTIFICATION_FXML);
 
             Scene scene = new Scene(loader.load());
 
