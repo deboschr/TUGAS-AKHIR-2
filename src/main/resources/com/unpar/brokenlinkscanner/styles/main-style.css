@@ -11,9 +11,6 @@
 	-grey-dark: #353e3a;
 	-white: #f1f0eb;
 	-black: #222222;
-
-	-fx-border-width: 3;
-	-fx-border-color: -tertiary;
 }
 
 /* ######################### TITLE BAR ######################### */
@@ -57,6 +54,8 @@
 	-fx-background-color: -primary;
 	-fx-padding: 15 25;
 	-fx-spacing: 15;
+	-fx-border-width: 0 4 4 4;
+	-fx-border-color: -tertiary;
 }
 
 /* ============== TEXT FIELD ============== */
@@ -266,7 +265,7 @@
 .table-view .column-header .label {
 	-fx-font-weight: bold;
 	-fx-text-fill: -white;
-	-fx-alignment: CENTER_LEFT;
+	-fx-alignment: center-left;
 	-fx-padding: 0 10;
 	-fx-font-size: 17px;
 }
@@ -300,6 +299,17 @@
 .hyperlink:hover {
 	-fx-text-fill: #17447b;
 	-fx-underline: true;
+}
+
+/* ******** Table Information ******** */
+.table-info-box {
+	-fx-alignment: bottom-left;
+}
+
+.table-info-text {
+	-fx-font-size: 13px;
+	-fx-text-fill: -grey-light;
+	-fx-font-weight: bold;
 }
 
 /* ===================== Scrollbar TableView ===================== */

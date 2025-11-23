@@ -39,6 +39,8 @@ public class MainController {
     @FXML
     private Label statusLabel, allLinksCountLabel, webpageLinksCountLabel, brokenLinksCountLabel;
     @FXML
+    private Label pageInfoLabel, itemInfoLabel;
+    @FXML
     private TextField seedUrlField, urlFilterField, statusCodeFilterField;
     @FXML
     private ComboBox<String> urlFilterOption, statusCodeFilterOption;
@@ -81,6 +83,8 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        setupUncaughtExceptionHandler();
+
         Platform.runLater(() -> {
             setTitleBar();
             setButtonState();
@@ -183,60 +187,62 @@ public class MainController {
     /**
      * Event handler untuk tombol "Export"
      *
-     * Digunakan untuk menyimpan data broken link ke file lokal dalam format Excel (.xlsx)
+     * Digunakan untuk menyimpan data broken link ke file lokal dalam format Excel
+     * (.xlsx)
      */
     @FXML
     private void onExportClick() {
+        try {
+            // Dapatkan status proses pengecekan saat ini
+            Status status = summary.getStatus();
 
-        // Export hanya bisa dilakukan setelah proses selesai
-        Status status = summary.getStatus();
-        if (status != Status.STOPPED && status != Status.COMPLETED) {
-            Application.openNotificationWindow("WARNING", "Export is only available after the process is finished.");
-            return;
-        }
-
-        // Tidak ada broken link → tidak perlu ekspor
-        if (brokenLinks.isEmpty()) {
-            Application.openNotificationWindow("WARNING", "There are no broken links to export.");
-            return;
-        }
-
-        // ====================== FILE CHOOSER ======================
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Save Excel File");
-
-        // Hanya izinkan .xlsx
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"));
-
-        File file = chooser.showSaveDialog(null);
-        if (file == null) {
-            return; // User cancel
-        }
-
-        // Pastikan ekstensi selalu .xlsx meskipun user lupa menulis
-        if (!file.getName().toLowerCase().endsWith(".xlsx")) {
-            file = new File(file.getAbsolutePath() + ".xlsx");
-        }
-
-        // ====================== EKSEKUSI EXPORT ======================
-        File finalFile = file;
-
-        Thread.startVirtualThread(() -> {
-            try {
-                Exporter exporter = new Exporter();
-                exporter.save(brokenLinks, finalFile);
-
-                // Notifikasi sukses
-                Platform.runLater(() -> Application.openNotificationWindow("SUCCESS", "Data has been successfully exported to:\n" + finalFile.getAbsolutePath()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-                Platform.runLater(() -> Application.openNotificationWindow("ERROR", "An error occurred while exporting the data."));
+            // Export hanya bisa dilakukan setelah proses selesai
+            if (status != Status.STOPPED && status != Status.COMPLETED) {
+                showNofication("WARNING", "Export is only available after the process is finished.");
+                return;
             }
-        });
-    }
 
+            // Tidak ada broken link → tidak perlu ekspor
+            if (brokenLinks.isEmpty()) {
+                Application.openNotificationWindow("WARNING", "There are no broken links to export.");
+                return;
+            }
+
+            // ============ FILE CHOOSER ============
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Save Excel File");
+
+            // Hanya izinkan .xlsx
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"));
+
+            File file = chooser.showSaveDialog(null);
+            if (file == null) {
+                return; // User cancel
+            }
+
+            // Pastikan ekstensi selalu .xlsx meskipun user lupa menulis
+            if (!file.getName().toLowerCase().endsWith(".xlsx")) {
+                file = new File(file.getAbsolutePath() + ".xlsx");
+            }
+
+            // ============ EKSEKUSI EXPORT ============
+            File finalFile = file;
+
+            Thread.startVirtualThread(() -> {
+                try {
+                    Exporter exporter = new Exporter();
+                    exporter.save(brokenLinks, finalFile);
+
+                    showNofication("SUCCESS",
+                            "Data has been successfully exported to:\n" + finalFile.getAbsolutePath());
+                } catch (Exception e) {
+                    showNofication("ERROR", e.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            showNofication("ERROR", e.getMessage());
+        }
+    }
 
     // ============================= TITLE BAR ================================
     private void setTitleBar() {
@@ -406,7 +412,8 @@ public class MainController {
 
         summary.totalLinksProperty().bind(Bindings.size(allLinks));
         summary.webpageLinksProperty().bind(Bindings.size(webpageLinks));
-        summary.brokenLinksProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(), allLinks));
+        summary.brokenLinksProperty().bind(Bindings.createIntegerBinding(
+                () -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(), allLinks));
 
         // Warna dinamis berdasarkan status
         summary.statusProperty().addListener((obs, old, status) -> {
@@ -509,9 +516,8 @@ public class MainController {
         // Pertama kali, langsung render pagination berdasarkan data awal
         updatePagination();
 
-        // kalau data berubah (misalnya karna filter), pagination reset
+        // Jika brokenLinks berubah (data nambah, berkurang, filter aktif)
         brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> {
-            currentPage = 1;
             updatePagination();
         });
     }
@@ -538,14 +544,27 @@ public class MainController {
         // baris terakhir pada halaman saat ini (tidak di sertakan)
         int toIndex = Math.min(fromIndex + ROWS_PER_PAGE, totalRows);
 
-        // Ambil subset data dari brokenLinks untuk ditampilkan di halaman saat ini
-        paginationData.setAll(brokenLinks.subList(fromIndex, toIndex));
+        if (totalRows > 0) {
+            // Ambil subset data dari brokenLinks untuk ditampilkan di halaman saat ini
+            paginationData.setAll(brokenLinks.subList(fromIndex, toIndex));
+        } else {
+            paginationData.clear();
+        }
 
         // Pasang subset data ini ke tabel
         brokenLinkTable.setItems(paginationData);
 
         // Render ulang tombol navigasi (Prev, angka halaman, Next)
         renderPaginationButtons();
+
+        // ================ TABLE INFORMATION ================
+        int itemStart = (totalRows == 0) ? 0 : fromIndex + 1;
+        int itemEnd = (totalRows == 0) ? 0 : toIndex;
+
+        // page X of Y
+        pageInfoLabel.setText("Page " + currentPage + " of " + totalPages);
+        // items A–B of C
+        itemInfoLabel.setText("Item " + itemStart + "-" + itemEnd + " of " + totalRows);
     }
 
     private void renderPaginationButtons() {
@@ -616,16 +635,42 @@ public class MainController {
         paginationBar.getChildren().add(nextBtn);
     }
 
-    // ============================= PAGINATION ===============================
+    // ============================= NOTIFICATION HANDLER ===============================
 
     private void showNofication(String type, String message) {
         String msg = (message == null || message.isBlank())
                 ? "Unknown error."
                 : message;
 
-        Platform.runLater(() ->
-                Application.openNotificationWindow(type, msg)
-        );
+        Platform.runLater(() -> Application.openNotificationWindow(type, msg));
+    }
+
+    /**
+     * Method untuk menangani semua error yang tidak tertangkap (uncaught
+     * exceptions)
+     * di seluruh aplikasi, termasuk error yang terjadi di event handler JavaFX,
+     * virtual thread, atau background task lainnya.
+     *
+     * Dengan memasang DefaultUncaughtExceptionHandler, setiap error yang tidak
+     * ditangkap dengan try–catch akan otomatis diarahkan ke GUI melalui
+     * showNofication(), sehingga error dari kelas manapun bisa tampil di layar.
+     */
+    private void setupUncaughtExceptionHandler() {
+        // Pasang handler global untuk semua exception yang tidak tertangkap
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+
+            // Ambil pesan error asli dari exception
+            String message = throwable.getMessage();
+
+            // Jika pesan kosong atau null, pakai toString() biar tetap ada informasi
+            // error-nya
+            if (message == null || message.isBlank()) {
+                message = throwable.toString();
+            }
+
+            // Panggil notifikasi GUI untuk menampilkan error ke layar
+            showNofication("ERROR", message);
+        });
     }
 
 }
