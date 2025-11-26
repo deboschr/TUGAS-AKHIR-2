@@ -1,8 +1,8 @@
 package com.unpar.brokenlinkscanner.utils;
 
 public class RateLimiter {
-    // Waktu jarak antar request, karena 500ms maka hanya 2 req per detik
-    private static final long INTERVAL = 500L;
+    // Waktu jarak antar request
+    private static final long INTERVAL = 600L;
 
     // Waktu dari request terakhir
     private volatile long lastRequestTime = 0L;

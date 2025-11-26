@@ -1,6 +1,8 @@
 package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
+import com.unpar.brokenlinkscanner.models.Summary;
+import com.unpar.brokenlinkscanner.utils.HTTPHandler;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFColor;
@@ -11,39 +13,34 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 public class Exporter {
-    // Nama sheet yang dipakai di workbook Excel
-    private static final String SHEET_NAME = "Broken Links";
-
     // Daftar nama kolom header
-    private static final List<String> HEADERS = List.of(
-            "URL",
-            "Final URL",
-            "Content Type",
-            "Error",
-            "Source Webpage",
-            "Anchor Text"
-    );
+    private static final List<String> HEADERS = List.of("URL", "Final URL", "Content Type", "Error", "Source Webpage", "Anchor Text");
 
     private CellStyle headerStyle; // Style buat header tabel
     private CellStyle oddRowStyle; // Style buat body tabel baris ganjil
     private CellStyle evenRowStyle; // Style buat body tabel baris genap
-    private CellStyle emptyStyle; // Style buat kolom dummy
-
+    private CellStyle otherStyle; // Style buat cell lain
+    private CellStyle emptyStyle; // Style buat cell dummy
 
     /**
      * Method utama yang dipanggil dari luar buat export data ke Excel.
      *
-     * @param data daftar link yang mau diexport
-     * @param file file tujuan output (.xlsx) yang mau diisi datanya
+     * @param data    daftar link yang mau diexport
+     * @param summary objek Summary yang mau diexport
+     * @param file    file tujuan output (.xlsx) yang mau diisi datanya
      * @throws IOException kalau ada masalah waktu nulis file fisik
      */
-    public void save(List<Link> data, File file) throws IOException {
+    public void save(List<Link> data, Summary summary, File file) throws IOException {
         /**
          * Bikin list baru dari list asli karena nanti bakal di sort biar list asli ga berubah. List asli dipake di GUI, kalau urutannya berubah maka urutan di tabel GUI juga bakal berubah.
          */
@@ -60,31 +57,31 @@ public class Exporter {
          * Pake try-with-resources biar workbook lansung ketutup kalau udah selesai.
          */
         try (Workbook workbook = new XSSFWorkbook()) {
-            // bikin style header tabel
-            this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true);
-            // bikin style body tabel baris ganjil
-            this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false);
-            // bikin style body tabel baris genap
-            this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false);
-            // bikin style buat baris kosong (tanpa border dan warna)
+
+            this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
+            this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
+            this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false , Color.decode("#222222"), 12);
+            this.otherStyle = createRowStyle(workbook, Color.decode("#efefef"), true, true, Color.decode("#222222"), 12);
             this.emptyStyle = workbook.createCellStyle();
 
-            // bikin sheet baru pake nama yang sudah didefinisikan
-            Sheet sheet = workbook.createSheet(SHEET_NAME);
 
-            // tulis isi header tabel
-            writeHeaderRow(sheet);
+            // ==== SUMMARY SHEET ====
+            Sheet summarySheet = workbook.createSheet("Summary");
+            writeSummarySheet(summarySheet, summary, sortedData);
 
-            // tulis isi body tabel
-            writeBodyRows(sheet, sortedData);
+            // ==== RESULT SHEET ====
+            Sheet resultSheet = workbook.createSheet("Result");
+            writeHeaderRow(resultSheet);
+            writeBodyRows(resultSheet, sortedData);
 
-            sheet.setColumnWidth(HEADERS.indexOf("URL"), 15000); // atur lebar kolom URL
-            sheet.setColumnWidth(HEADERS.indexOf("Final URL"), 15000); // atur lebar kolom Final URL
-            sheet.setColumnWidth(HEADERS.indexOf("Content Type"), 10000); // atur lebar kolom Content Type
-            sheet.setColumnWidth(HEADERS.indexOf("Error"), 10000); // atur lebar kolom Error
-            sheet.setColumnWidth(HEADERS.indexOf("Source Webpage"), 15000); // atur lebar kolom Source Webpage
-            sheet.setColumnWidth(HEADERS.indexOf("Anchor Text"), 10000); // atur lebar kolom Anchor Text
-            sheet.setColumnWidth(HEADERS.size(), 20000); // atur lebar kolom dummy (kecil saja, cuma buat nahan overflow)
+
+            resultSheet.setColumnWidth(HEADERS.indexOf("URL"), 15000); // atur lebar kolom URL
+            resultSheet.setColumnWidth(HEADERS.indexOf("Final URL"), 15000); // atur lebar kolom Final URL
+            resultSheet.setColumnWidth(HEADERS.indexOf("Content Type"), 10000); // atur lebar kolom Content Type
+            resultSheet.setColumnWidth(HEADERS.indexOf("Error"), 10000); // atur lebar kolom Error
+            resultSheet.setColumnWidth(HEADERS.indexOf("Source Webpage"), 15000); // atur lebar kolom Source Webpage
+            resultSheet.setColumnWidth(HEADERS.indexOf("Anchor Text"), 10000); // atur lebar kolom Anchor Text
+            resultSheet.setColumnWidth(HEADERS.size(), 20000); // atur lebar kolom dummy (kecil saja, cuma buat nahan overflow)
 
             /**
              * Bikin FileOutputStream ke file tujuan.
@@ -101,10 +98,10 @@ public class Exporter {
      * Method buat nambahin style ke baris isi tabel.
      *
      * @param workbook workbook tempat style ini akan dipakai
-     * @param bgColor warna background buat baris (primary atau white)
+     * @param bgColor  warna background buat baris (primary atau white)
      * @return CellStyle yang siap dipasang ke baris
      */
-    private CellStyle createRowStyle(Workbook workbook, Color bgColor, Boolean isHeader) {
+    private CellStyle createRowStyle(Workbook workbook, Color bgColor, Boolean isCenter, Boolean isBold, Color fontColor, int fontSize) {
         // bikin objek style baru buat baris
         CellStyle style = workbook.createCellStyle();
 
@@ -115,24 +112,25 @@ public class Exporter {
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
         // atur teks di tengah kalau header atau di kiri kalau bukan
-        style.setAlignment(isHeader ? HorizontalAlignment.CENTER: HorizontalAlignment.LEFT);
+        style.setAlignment(isCenter ? HorizontalAlignment.CENTER : HorizontalAlignment.LEFT);
 
         // atur teks di tengah kalau header atau di atas kalau bukan
-        style.setVerticalAlignment(isHeader ? VerticalAlignment.CENTER : VerticalAlignment.TOP);
+        style.setVerticalAlignment(isCenter ? VerticalAlignment.CENTER : VerticalAlignment.TOP);
 
-        if (isHeader) {
-            // bikin font khusus untuk header
-            XSSFFont textFont = (XSSFFont) workbook.createFont();
+        // bikin font khusus untuk header
+        XSSFFont textFont = (XSSFFont) workbook.createFont();
 
-            // set tulisan header jadi bold
-            textFont.setBold(true);
+        // set tulisan header jadi bold
+        textFont.setBold(isBold);
 
-            // set warna teks header jadi putih krem
-            textFont.setColor(new XSSFColor(Color.decode("#f1f0eb"), null));
+        // set warna teks header jadi putih krem
+        textFont.setColor(new XSSFColor(fontColor, null));
 
-            // pasang font yang sudah disiapkan ke style
-            style.setFont(textFont);
-        }
+        // set ukuran font
+        textFont.setFontHeightInPoints((short) fontSize);
+
+        // pasang font yang sudah disiapkan ke style
+        style.setFont(textFont);
 
         // tambahkan border di semua sisi
         createBorder(style);
@@ -289,5 +287,235 @@ public class Exporter {
         style.setBorderTop(BorderStyle.MEDIUM); // border atas
         style.setBorderLeft(BorderStyle.MEDIUM); // border kiri
         style.setBorderRight(BorderStyle.MEDIUM); // border kanan
+    }
+
+
+    // ====================== SUMMARY ======================
+
+    // ====================== RESULT ======================
+    private void writeSummarySheet(Sheet sheet, Summary summary, List<Link> brokenLinks) {
+        int rowIndex = 0;
+
+        // ===== HEADER =====
+        Row headerRow = sheet.createRow(rowIndex++);
+        headerRow.setHeightInPoints(25);
+
+        Cell h1 = headerRow.createCell(0);
+        h1.setCellValue("Process Summary");
+        h1.setCellStyle(headerStyle);
+
+        Cell h2 = headerRow.createCell(1);
+        h2.setCellValue("");
+        h2.setCellStyle(headerStyle);
+
+        sheet.addMergedRegion(new CellRangeAddress(headerRow.getRowNum(), headerRow.getRowNum(), 0, 1));
+
+        sheet.setColumnWidth(0, 7000);
+        sheet.setColumnWidth(1, 7000);
+        sheet.setColumnWidth(1, 7000);
+
+        // Baris isi process summary
+        rowIndex = writeSummaryRow(sheet, rowIndex, "Status", String.valueOf(summary.getStatus()));
+        rowIndex = writeSummaryRow(sheet, rowIndex, "All Links", String.valueOf(summary.getTotalLinks()));
+        rowIndex = writeSummaryRow(sheet, rowIndex, "Webpage Links", String.valueOf(summary.getWebpages()));
+        rowIndex = writeSummaryRow(sheet, rowIndex, "Broken Links", String.valueOf(summary.getBrokenLinks()));
+
+        // Format waktu
+        long startMs = summary.getStartTime();
+        long endMs = summary.getEndTime();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss").withZone(ZoneId.systemDefault());
+
+        String startStr = startMs > 0 ? fmt.format(Instant.ofEpochMilli(startMs)) : "-";
+        String endStr = endMs > 0 ? fmt.format(Instant.ofEpochMilli(endMs)) : "-";
+
+        rowIndex = writeSummaryRow(sheet, rowIndex, "Start Time", startStr);
+        rowIndex = writeSummaryRow(sheet, rowIndex, "End Time", endStr);
+
+        // Durasi
+        String durationStr = "-";
+        if (startMs > 0 && endMs > 0 && endMs >= startMs) {
+            Duration d = Duration.ofMillis(endMs - startMs);
+            long m = d.toMinutes();
+            long s = d.minusMinutes(m).toSeconds();
+            durationStr = m + "m " + s + "s";
+        }
+        rowIndex = writeSummaryRow(sheet, rowIndex, "Duration", durationStr);
+
+        // ==== JARAK 2 BARIS ANTAR TABEL ====
+        sheet.createRow(rowIndex++);
+        sheet.createRow(rowIndex++);
+
+        // ======= BROKEN LINK SUMMARY (TABEL KEDUA) =======
+        writeBrokenLinkSummary(sheet, rowIndex, brokenLinks);
+    }
+
+    private int writeSummaryRow(Sheet sheet, int rowIndex, String key, String value) {
+        Row row = sheet.createRow(rowIndex);
+
+        CellStyle style = (rowIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
+
+        Cell c1 = row.createCell(0);
+        c1.setCellValue(key);
+        c1.setCellStyle(style);
+
+        Cell c2 = row.createCell(1);
+        c2.setCellValue(value != null ? value : "");
+        c2.setCellStyle(style);
+
+        return rowIndex + 1;
+    }
+
+    /**
+     * Tabel Broken Link Summary
+     * Header: merge 3 kolom "Broken Link Summary"
+     * Sub-header: Category | Error | Count
+     * Isi: dikelompokkan per kategori & error, ditambah Total per kategori.
+     */
+    private void writeBrokenLinkSummary(Sheet sheet, int startRow, List<Link> brokenLinks) {
+        int rowIndex = startRow;
+
+        // ===== HEADER UTAMA (merge 3 kolom) =====
+        Row headerRow = sheet.createRow(rowIndex++);
+        headerRow.setHeightInPoints(25);
+
+        Cell h1 = headerRow.createCell(0);
+        h1.setCellValue("Broken Link Summary");
+        h1.setCellStyle(headerStyle);
+
+        Cell h2 = headerRow.createCell(1);
+        h2.setCellValue("");
+        h2.setCellStyle(headerStyle);
+
+        Cell h3 = headerRow.createCell(2);
+        h3.setCellValue("");
+        h3.setCellStyle(headerStyle);
+
+        sheet.addMergedRegion(new CellRangeAddress(headerRow.getRowNum(), headerRow.getRowNum(), 0, 2));
+
+        // ===== SUB-HEADER =====
+        Row subHeader = sheet.createRow(rowIndex++);
+        CellStyle subHeaderStyle = headerStyle; // pakai headerStyle yang sama
+
+        Cell sh1 = subHeader.createCell(0);
+        sh1.setCellValue("Category");
+        sh1.setCellStyle(subHeaderStyle);
+
+        Cell sh2 = subHeader.createCell(1);
+        sh2.setCellValue("Error");
+        sh2.setCellStyle(subHeaderStyle);
+
+        Cell sh3 = subHeader.createCell(2);
+        sh3.setCellValue("Count");
+        sh3.setCellStyle(subHeaderStyle);
+
+        // ===== GROUPING PER KATEGORI & ERROR =====
+        // Map per kategori: key = error (String), value = count
+        java.util.Map<String, Integer> connMap = new java.util.HashMap<>();
+        java.util.Map<String, Integer> client4xxMap = new java.util.HashMap<>();
+        java.util.Map<String, Integer> server5xxMap = new java.util.HashMap<>();
+        java.util.Map<String, Integer> nonStdMap = new java.util.HashMap<>();
+
+        int connTotal = 0;
+        int clientTotal = 0;
+        int serverTotal = 0;
+        int nonStdTotal = 0;
+
+        for (Link link : brokenLinks) {
+            Integer statusCode = link.getStatusCode();
+            int code = statusCode != null ? statusCode : 0;
+            String error = link.getError() != null ? link.getError() : "Unknown";
+
+            String category;
+            java.util.Map<String, Integer> targetMap;
+
+            if (code == 0) {
+                category = "Connection Error";
+                targetMap = connMap;
+                connTotal++;
+            } else {
+                boolean isStandard = HTTPHandler.isStandardError(code);
+
+                if (isStandard && code >= 400 && code < 500) {
+                    category = "4XX Client Error";
+                    targetMap = client4xxMap;
+                    clientTotal++;
+                } else if (isStandard && code >= 500 && code < 600) {
+                    category = "5XX Server Error";
+                    targetMap = server5xxMap;
+                    serverTotal++;
+                } else {
+                    category = "Non-Standard Error";
+                    targetMap = nonStdMap;
+                    nonStdTotal++;
+                }
+            }
+
+            targetMap.merge(error, 1, Integer::sum);
+        }
+
+        // tulis kategori secara berurutan
+        rowIndex = writeBrokenLinkCategoryBlock(sheet, rowIndex, "Connection Error", connMap, connTotal);
+        rowIndex = writeBrokenLinkCategoryBlock(sheet, rowIndex, "4XX Client Error", client4xxMap, clientTotal);
+        rowIndex = writeBrokenLinkCategoryBlock(sheet, rowIndex, "5XX Server Error", server5xxMap, serverTotal);
+        rowIndex = writeBrokenLinkCategoryBlock(sheet, rowIndex, "Non-Standard Error", nonStdMap, nonStdTotal);
+    }
+
+    /**
+     * Menulis blok baris untuk satu kategori:
+     * - Beberapa baris error
+     * - Category di-merge vertikal di kolom 0
+     * - Baris Total di bawahnya (merge kolom 0–1)
+     */
+    private int writeBrokenLinkCategoryBlock(Sheet sheet, int rowIndex, String categoryName, java.util.Map<String, Integer> errorMap, int totalCount) {
+        if (totalCount == 0 || errorMap.isEmpty()) {
+            return rowIndex;
+        }
+
+        // Sort error berdasarkan nama error biar rapi
+        java.util.List<String> errors = new java.util.ArrayList<>(errorMap.keySet());
+        errors.sort(String::compareTo);
+
+        int blockStartRow = rowIndex;
+
+        for (String error : errors) {
+            Row row = sheet.createRow(rowIndex);
+            CellStyle style = (rowIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
+
+            // Category hanya muncul di baris pertama kategori
+            if (rowIndex == blockStartRow) {
+                createTableCell(row, 0, categoryName, style);
+            } else {
+                createTableCell(row, 0, "", style);
+            }
+
+            CellStyle countStyle = sheet.getWorkbook().createCellStyle();
+            countStyle.cloneStyleFrom(style);
+            countStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            createTableCell(row, 1, error, style);
+            createTableCell(row, 2, String.valueOf(errorMap.get(error)), countStyle);
+
+            rowIndex++;
+        }
+
+        int blockEndRow = rowIndex - 1;
+
+        // Merge category secara vertikal di kolom 0
+        if (blockEndRow > blockStartRow) {
+            sheet.addMergedRegion(new CellRangeAddress(blockStartRow, blockEndRow, 0, 0));
+        }
+
+        // Baris Total
+        Row totalRow = sheet.createRow(rowIndex);
+
+        createTableCell(totalRow, 0, "Total", otherStyle);
+        createTableCell(totalRow, 1, "", otherStyle);
+        createTableCell(totalRow, 2, String.valueOf(totalCount), otherStyle);
+
+        // Merge kolom 0–1 untuk tulisan "Total"
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, 1));
+
+        return rowIndex + 1;
     }
 }

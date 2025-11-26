@@ -81,6 +81,8 @@ public class MainController {
     // Untuk menyimpan instance dari kelas Crawler
     private Crawler crawler;
 
+
+
     @FXML
     public void initialize() {
         setupUncaughtExceptionHandler();
@@ -141,8 +143,15 @@ public class MainController {
              */
             Thread.startVirtualThread(() -> {
                 try {
-                    // Mulai proses crawling (BFS)
+                    // Simpan waktu mulai proses
+                    summary.setStartTime(System.currentTimeMillis());
+
+                    // Mulai proses crawling
                     crawler.start(cleanedSeedUrl);
+
+                    // Simpan waktu selesai proses
+                    summary.setEndTime(System.currentTimeMillis());
+
 
                     /*
                      * Kalau crawling selesai secara normal (bukan dihentikan user),
@@ -231,7 +240,7 @@ public class MainController {
             Thread.startVirtualThread(() -> {
                 try {
                     Exporter exporter = new Exporter();
-                    exporter.save(brokenLinks, finalFile);
+                    exporter.save(brokenLinks, summary, finalFile);
 
                     showNofication("SUCCESS",
                             "Data has been successfully exported to:\n" + finalFile.getAbsolutePath());
@@ -304,12 +313,7 @@ public class MainController {
                     stopBtn.setDisable(false);
                     exportBtn.setDisable(true);
                 }
-                case STOPPED -> {
-                    startBtn.setDisable(false);
-                    stopBtn.setDisable(false);
-                    exportBtn.setDisable(false);
-                }
-                case COMPLETED -> {
+                case STOPPED, COMPLETED -> {
                     startBtn.setDisable(false);
                     stopBtn.setDisable(true);
                     exportBtn.setDisable(false);

@@ -13,9 +13,12 @@ import java.net.URL;
 
 public class Application extends javafx.application.Application {
     private static Stage MAIN_STAGE;
-    private static final URL MAIN_FXML    = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml");
-    private static final URL LINK_FXML    = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml");
-    private static final URL NOTIFICATION_FXML   = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
+    private static final URL MAIN_FXML = Application.class
+            .getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml");
+    private static final URL LINK_FXML = Application.class
+            .getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml");
+    private static final URL NOTIFICATION_FXML = Application.class
+            .getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
 
     public static void main(String[] args) {
         launch();

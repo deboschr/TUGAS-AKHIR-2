@@ -1,6 +1,7 @@
 package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
+import com.unpar.brokenlinkscanner.utils.HTTPHandler;
 import com.unpar.brokenlinkscanner.utils.RateLimiter;
 import com.unpar.brokenlinkscanner.utils.URLHandler;
 import javafx.application.Platform;
@@ -8,11 +9,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -21,45 +18,10 @@ import java.util.function.Consumer;
 
 public class Crawler {
     /**
-     * Untuk melakukan request HTTP
-     *
-     * - followRedirects => alway, biar nanti kita bisa mendapatkan final URL. Kalau
-     * misalnya URL awal memiliki host yang sama dengan rootHost tapi final URL nya
-     * memiliki host yang beda dengan rootHost maka ga perlu kita crawling, karna
-     * itu artinya isi dia bukan merupakan halaman dari website yang lagi diperiksa.
-     *
-     * - connectTimeout => 5 detik, biar ga terlalu lama nunggu, kalau kelamaan
-     * sistem jadi lambat, tapi kalau terlalu cepat juga bisa-bisa semua URL error
-     * karena ga sempat bikin connection.
-     */
-    private static final HttpClient HTTP_CLIENT = HttpClient
-            // Bikin HttpClient dengan tanpa konfigurasi default
-            .newBuilder()
-            // Ikuti redirect dari server website
-            .followRedirects(HttpClient.Redirect.ALWAYS)
-            // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofSeconds(5)).build();
-
-    /**
-     * Untuk menyimpan request header user-agent, dipake biar server website tujuan
-     * tahu siapa yang melakukan request, ini salah satu implementasi etika crawling
-     */
-    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
-
-    /**
-     * Untuk ngebatasin jumlah link yang diperiksa, jadi ukuran dari repositories ga
-     * boleh melebihi ini.
-     * 1000 dipilih karena setelah beberapa kali percobaan, ketika sudah mencapat
-     * 1000an, link aplikasi jadi lambat sekali, nyaris ga gerak.
-     */
-    private static final int MAX_LINKS = 1000;
-
-
-    /**
      * Untuk menyimpan daftar antrian objek Link yang akan di-crawling.
      * Struktur data Queue dipakai karena cocok dengan skema FIFO pada algoritma BFS
      * (offer() menambah ke belakang, poll() mengambil dari depan).
-     * 
+     *
      * ConcurrentLinkedQueue dipakai karena thread-safe.
      */
     private final Queue<Link> frontier = new ConcurrentLinkedQueue<>();
@@ -68,11 +30,11 @@ public class Crawler {
      * Untuk menyimpan semua URL unik yang sudah atau akan diperiksa selama proses
      * crawling. Digunakan untuk memastikan tidak ada URL yang diperiksa lebih dari
      * sekali.
-     * 
+     *
      * Struktur data Map dipakai untuk menyimpan pasangan key dan value:
      * - Key : URL
      * - Value : Objek Link yang merepresentasikan URL tersebut
-     * 
+     *
      * ConcurrentHashMap dipakai karena thread-safe.
      */
     private final Map<String, Link> repositories = new ConcurrentHashMap<>();
@@ -82,11 +44,11 @@ public class Crawler {
      * pembatasan kecepatan fetching dilakukan per-host URL agar tidak dianggap
      * sebagai serangan oleh server website tujuan dan tidak mendapat error 429
      * (Too Many Requests).
-     * 
+     *
      * Struktur data Map dipakai untuk menyimpan pasangan key dan value:
      * - Key : Host dari URL
      * - Value : Objek RateLimiter untuk membatasi fetching ke host tersebut
-     * 
+     *
      * ConcurrentHashMap dipakai karena thread-safe.
      */
     private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
@@ -95,7 +57,8 @@ public class Crawler {
      * Fungsi callback buat ngirim objek Link yang udah di fetching kembali ke
      * controller.
      *
-     * Pake function interface Consumer karena dia cuma punya 1 method (accept), dan ga mengembalikan apa-apa.
+     * Pake function interface Consumer karena dia cuma punya 1 method (accept), dan
+     * ga mengembalikan apa-apa.
      */
     private final Consumer<Link> linkConsumer;
 
@@ -112,6 +75,14 @@ public class Crawler {
      * False: Kalau proses tidak dihentikan
      */
     private volatile boolean isStopped = false;
+
+    /**
+     * Untuk ngebatasin jumlah link yang diperiksa, jadi ukuran dari repositories ga
+     * boleh melebihi ini.
+     * 1000 dipilih karena setelah beberapa kali percobaan, ketika sudah mencapat
+     * 1000an, link aplikasi jadi lambat sekali, nyaris ga gerak.
+     */
+    private static final int MAX_LINKS = 1000;
 
     public Crawler(Consumer<Link> linkConsumer) {
         this.linkConsumer = linkConsumer;
@@ -139,7 +110,7 @@ public class Crawler {
          * Loop untuk crawling, mengimplementasikan algoritma BFS.
          * Jadi kita ga akan berpindah ke fontier berikutnya kalau fontier yang saat ini
          * belum selesai diperiksa semua, meskipun kita pakai banyak thread.
-         * 
+         *
          * Loop akan tetap berjalan selama:
          * - tidak dihentikan user
          * - frontier masih ada isinya
@@ -184,8 +155,9 @@ public class Crawler {
              * - doc adalah null, berarti bukan HTML (ga bisa ekstrak link)
              * - host dari finalUrl beda dengan rootHost (redirect ke domain lain)
              */
-            String finalUrlHost = URLHandler.getHost(currLink.getFinalUrl());
-            if (!currLink.getError().isEmpty() || doc == null || !finalUrlHost.equalsIgnoreCase(rootHost)) {
+            if (!currLink.getError().isEmpty() ||
+                    doc == null ||
+                    !URLHandler.getHost(currLink.getFinalUrl()).equals(rootHost)) {
                 continue;
             }
 
@@ -236,14 +208,11 @@ public class Crawler {
                     // Kalau belum pernah di periksa, berarti kita bikin koneksi pertama
                     link.addConnection(currLink, anchorText);
 
-                    // Ambil host dari URL link ini
-                    String host = URLHandler.getHost(link.getUrl());
-
                     /**
                      * Kalau hostnya sama dengan rootHost berarti link ini berpotensi jadi webpage.
                      * maka kita masukan ke frontier antrian paling belakang.
                      */
-                    if (host.equalsIgnoreCase(rootHost)) {
+                    if (URLHandler.getHost(link.getUrl()).equalsIgnoreCase(rootHost)) {
                         frontier.offer(link);
                     }
                     /**
@@ -260,11 +229,6 @@ public class Crawler {
                          * Tugas di sini I/O bound jadi cocok buat virtual thread.
                          */
                         executor.submit(() -> {
-                            // Ambil atau buat RateLimiter untuk host ini
-                            RateLimiter limiter = rateLimiters.computeIfAbsent(host, h -> new RateLimiter());
-                            // Kasih delay ke thread ini buat ngelakuin request
-                            limiter.delay();
-
                             /**
                              * Fetch link ini pake thread tersendiri, tapi jangan minta buat nge-parse
                              * response body karena ini URL eksternal.
@@ -310,71 +274,41 @@ public class Crawler {
      *         bukan HTML / error.
      */
     private Document fetchLink(Link link, boolean isParseDoc) {
-
         try {
+            // Ambil atau buat RateLimiter untuk host ini
+            RateLimiter limiter = rateLimiters.computeIfAbsent(URLHandler.getHost(link.getUrl()),
+                    h -> new RateLimiter());
+            // Kasih delay ke thread ini buat ngelakuin request
+            limiter.delay();
+
             // variabel buat nyimpen hasil response dari server
             HttpResponse<?> res;
 
-            /*
-             * Kalau kita memang butuh parse HTML maka SELALU pakai GET. GET wajib dipakai
-             * karena kita butuh isi body-nya (HTML)
-             */
             if (isParseDoc) {
-                HttpRequest request = HttpRequest.newBuilder()
-                        // URL tujuan
-                        .uri(URI.create(link.getUrl()))
-                        // Header biar server tahu yg minta request adalah aplikasi kita
-                        .header("User-Agent", USER_AGENT)
-                        // Timeout total request (connect + read)
-                        .timeout(Duration.ofSeconds(10))
-                        // Pakai GET karena butuh body HTML lengkap
-                        .GET()
-                        // Build objek HttpRequest
-                        .build();
-
-                // Kirim request & baca seluruh body sebagai String
-                res = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-            }
-            /*
-             * Kalau TIDAK perlu parse maka coba HEAD dulu, pake HEAD karena lebih cepet
-             * karena tidak download body
-             */
-            else {
-                try {
-                    HttpRequest headReq = HttpRequest.newBuilder()
-                            // URL target
-                            .uri(URI.create(link.getUrl()))
-                            // Header biar server tahu yg minta request adalah aplikasi kita
-                            .header("User-Agent", USER_AGENT)
-                            // Timeout total request (connect + read)
-                            .timeout(Duration.ofSeconds(10))
-                            // Method HEAD dg hanya minta header, tanpa body
-                            .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                            // Build objek HttpRequest
-                            .build();
-
-                    // Kirim HEAD request, body dibuang (discard)
-                    res = HTTP_CLIENT.send(headReq, HttpResponse.BodyHandlers.discarding());
-                }
                 /*
-                 * Kalau HEAD gagal (server tidak support, SSL problem, dll) maka kita fallback
-                 * ke GET, tapi tetap discard body biar cepat
-                 */ catch (Exception headError) {
-                    HttpRequest getReq = HttpRequest
-                            .newBuilder()
-                            // URL target
-                            .uri(URI.create(link.getUrl()))
-                            // Header biar server tahu yg minta request adalah aplikasi kita
-                            .header("User-Agent", USER_AGENT)
-                            // Timeout total request (connect + read)
-                            .timeout(Duration.ofSeconds(10))
-                            // Method GET
-                            .GET()
-                            // Build objek HttpRequest
-                            .build();
+                 * Kalau kita memang butuh parse HTML maka SELALU pakai GET karna kita butuh isi
+                 * body-nya (HTML), jadi isDiscardBody kita kirim false
+                 */
+                res = HTTPHandler.fetch("GET", link.getUrl(), false);
+            } else {
+                try {
+                    /**
+                     * Kalau ga perlu parsing, kita coba dulu pake method HEAD dan discard body
+                     * karna kita ga butuh
+                     */
+                    res = HTTPHandler.fetch("HEAD", link.getUrl(), true);
 
-                    // GET dipakai, tapi body langsung dibuang (nggak dibaca)
-                    res = HTTP_CLIENT.send(getReq, HttpResponse.BodyHandlers.discarding());
+                    // Kalau server ga support HEAD tapi ga ngembaliin exception, kita bikin
+                    // exception manual
+                    if (res.statusCode() == 405 || res.statusCode() == 501) {
+                        throw new Exception("HEAD not supported");
+                    }
+                } catch (Exception headError) {
+                    /**
+                     * Kalau HEAD gagal kita retry pake GET, buat mastiin aja siap tau HEAD ga
+                     * didukung tapi GET didukung.
+                     */
+                    res = HTTPHandler.fetch("GET", link.getUrl(), true);
                 }
             }
 

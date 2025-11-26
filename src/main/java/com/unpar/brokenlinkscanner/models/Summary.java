@@ -1,8 +1,10 @@
 package com.unpar.brokenlinkscanner.models;
 
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 public class Summary {
@@ -10,6 +12,10 @@ public class Summary {
     private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
     private final IntegerProperty webpageLinks = new SimpleIntegerProperty(0);
     private final IntegerProperty brokenLinks = new SimpleIntegerProperty(0);
+
+    // Start & End time (dalam millisecond)
+    private final LongProperty startTime = new SimpleLongProperty(0);
+    private final LongProperty endTime = new SimpleLongProperty(0);
 
     // ===============================================================================
     // Status
@@ -42,7 +48,6 @@ public class Summary {
 
     // ===============================================================================
     // Webpages
-
     public int getWebpages() {
         return webpageLinks.get();
     }
@@ -58,7 +63,6 @@ public class Summary {
 
     // ===============================================================================
     // BrokenLinks
-
     public int getBrokenLinks() {
         return brokenLinks.get();
     }
@@ -70,5 +74,33 @@ public class Summary {
     @SuppressWarnings("exports")
     public IntegerProperty brokenLinksProperty() {
         return brokenLinks;
+    }
+
+    // ===============================================================================
+    // Start Time (ms)
+    public long getStartTime() {
+        return startTime.get();
+    }
+
+    public void setStartTime(long value) {
+        this.startTime.set(value);
+    }
+
+    public LongProperty startTimeProperty() {
+        return startTime;
+    }
+
+    // ===============================================================================
+    // End Time (ms)
+    public long getEndTime() {
+        return endTime.get();
+    }
+
+    public void setEndTime(long value) {
+        this.endTime.set(value);
+    }
+
+    public LongProperty endTimeProperty() {
+        return endTime;
     }
 }

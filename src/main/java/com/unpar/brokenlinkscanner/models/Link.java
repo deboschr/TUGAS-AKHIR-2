@@ -1,6 +1,6 @@
 package com.unpar.brokenlinkscanner.models;
 
-import com.unpar.brokenlinkscanner.utils.HTTPStatus;
+import com.unpar.brokenlinkscanner.utils.HTTPHandler;
 import javafx.beans.property.*;
 
 import java.util.Map;
@@ -84,7 +84,7 @@ public class Link {
 
     public void setStatusCode(int value) {
         // Kalau status kode termasuk error, set juga pesan error-nya
-        String status = HTTPStatus.getStatusError(value);
+        String status = HTTPHandler.getStatusError(value);
         if (status != null) {
             error.set(status);
         }
