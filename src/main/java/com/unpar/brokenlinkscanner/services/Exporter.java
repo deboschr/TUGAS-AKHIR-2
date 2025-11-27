@@ -509,7 +509,7 @@ public class Exporter {
         // Baris Total
         Row totalRow = sheet.createRow(rowIndex);
 
-        createTableCell(totalRow, 0, "Total", otherStyle);
+        createTableCell(totalRow, 0, "Total " + categoryName, otherStyle);
         createTableCell(totalRow, 1, "", otherStyle);
         createTableCell(totalRow, 2, String.valueOf(totalCount), otherStyle);
 
