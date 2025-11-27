@@ -21,7 +21,7 @@ public class URLHandler {
      * @return URL hasil normalisasi atau null jika tidak memenuhi aturan atau URL
      *         asli kalau sintaks tidak valid
      */
-    public static String normalizeUrl(String rawUrl) {
+    public static String normalizeUrl(String rawUrl, boolean isStrict) {
         // URL tidak boleh null atau string kosong
         if (rawUrl == null || rawUrl.trim().isEmpty()) {
             return null;
@@ -38,9 +38,10 @@ public class URLHandler {
             String path = uri.getRawPath();
             String query = uri.getRawQuery();
 
-            // Scheme wajib ada
-            if (scheme == null || scheme.isEmpty()) {
-                return null;
+
+            if (isStrict) {
+                if (scheme == null || scheme.isEmpty()) return null;
+                if (host == null || host.isEmpty()) return null;
             }
 
             // Scheme wajib HTTP/HTTPS
@@ -48,17 +49,12 @@ public class URLHandler {
                 return null;
             }
 
-            // Host wajib ada
-            if (host == null || host.isEmpty()) {
-                return null;
-            }
-
             // Hapus port default
-            if ((scheme.equals("http") && port == 80) || (scheme.equals("https") && port == 443)) {
+            if ((scheme.equalsIgnoreCase("http") && port == 80) || (scheme.equalsIgnoreCase("https") && port == 443)) {
                 port = -1;
             }
 
-            // Bersihkan path dari dot-segment
+            // Bersihkan path dari dot-segment dan duplikasi garis miring
             path = normalizePath(path);
 
             // Rakit ulang tanpa fragment dan userinfo

@@ -62,19 +62,19 @@ public class Crawler {
      */
     private final Consumer<Link> linkConsumer;
 
-    /*
-     * Untuk menyimpan host dari seed URL.
-     * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
-     * menjadi URL halaman situs web (Webpage Link).
-     */
-    private String rootHost;
-
     /**
      * Penanda buat nentuin apakah proses dihentikan user atau tidak.
      * True: Kalau proses dihentikan user
      * False: Kalau proses tidak dihentikan
      */
     private volatile boolean isStopped = false;
+
+    /*
+     * Untuk menyimpan host dari seed URL.
+     * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
+     * menjadi URL halaman situs web (Webpage Link).
+     */
+    private String rootHost;
 
     /**
      * Untuk ngebatasin jumlah link yang diperiksa, jadi ukuran dari repositories ga
@@ -100,7 +100,11 @@ public class Crawler {
         rateLimiters.clear();
         frontier.clear();
 
-        // Ambil host dari seed URL buat nanti identifikasi webpage link
+        /*
+         * Untuk menyimpan host dari seed URL.
+         * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
+         * menjadi URL halaman situs web (Webpage Link).
+         */
         rootHost = URLHandler.getHost(seedUrl);
 
         // Buat objek link baru + masukin ke fontier urutan paling belakang
@@ -144,25 +148,17 @@ public class Crawler {
              * berpotensi jadi halaman website, kalau halaman website maka kita akan ekstrak
              * link didalamnya.
              */
-            Document doc = fetchLink(currLink, true);
+            Document doc = checkLink(currLink, true);
 
             // Kirim hasil ke controller apapun hasilnya, sukses / error
             send(currLink);
 
             /**
-             * Skip kalau:
-             * - error, berarti Broken link
-             * - doc adalah null, berarti bukan HTML (ga bisa ekstrak link)
-             * - host dari finalUrl beda dengan rootHost (redirect ke domain lain)
+             * Skip kalau error (berarti Broken link) atau kalau bukan halaman situ web.
              */
-            if (!currLink.getError().isEmpty() ||
-                    doc == null ||
-                    !URLHandler.getHost(currLink.getFinalUrl()).equals(rootHost)) {
+            if (!currLink.getError().isEmpty() || !currLink.isWebpage()) {
                 continue;
             }
-
-            // Kalau sampai sini, berarti link saat ini adalah webpage link yang valid
-            currLink.setIsWebpage(true);
 
             // Ekstrak seluruh link dari webpage
             Map<Link, String> linksOnWebpage = extractLink(doc);
@@ -233,7 +229,7 @@ public class Crawler {
                              * Fetch link ini pake thread tersendiri, tapi jangan minta buat nge-parse
                              * response body karena ini URL eksternal.
                              */
-                            fetchLink(link, false);
+                            checkLink(link, false);
 
                             // Kirim link yang atributnya udah di update saat fetching
                             send(link);
@@ -273,51 +269,22 @@ public class Crawler {
      * @return Document hasil parse HTML (kalau diminta dan valid), atau null kalau
      *         bukan HTML / error.
      */
-    private Document fetchLink(Link link, boolean isParseDoc) {
+    private Document checkLink(Link link, boolean isParseDoc) {
         try {
             // Ambil atau buat RateLimiter untuk host ini
-            RateLimiter limiter = rateLimiters.computeIfAbsent(URLHandler.getHost(link.getUrl()),
-                    h -> new RateLimiter());
+            RateLimiter limiter = rateLimiters.computeIfAbsent(URLHandler.getHost(link.getUrl()), h -> new RateLimiter());
             // Kasih delay ke thread ini buat ngelakuin request
             limiter.delay();
 
             // variabel buat nyimpen hasil response dari server
-            HttpResponse<?> res;
+            HttpResponse<?> res = HTTPHandler.fetch(link.getUrl(), isParseDoc);
 
-            if (isParseDoc) {
-                /*
-                 * Kalau kita memang butuh parse HTML maka SELALU pakai GET karna kita butuh isi
-                 * body-nya (HTML), jadi isDiscardBody kita kirim false
-                 */
-                res = HTTPHandler.fetch("GET", link.getUrl(), false);
-            } else {
-                try {
-                    /**
-                     * Kalau ga perlu parsing, kita coba dulu pake method HEAD dan discard body
-                     * karna kita ga butuh
-                     */
-                    res = HTTPHandler.fetch("HEAD", link.getUrl(), true);
-
-                    // Kalau server ga support HEAD tapi ga ngembaliin exception, kita bikin
-                    // exception manual
-                    if (res.statusCode() == 405 || res.statusCode() == 501) {
-                        throw new Exception("HEAD not supported");
-                    }
-                } catch (Exception headError) {
-                    /**
-                     * Kalau HEAD gagal kita retry pake GET, buat mastiin aja siap tau HEAD ga
-                     * didukung tapi GET didukung.
-                     */
-                    res = HTTPHandler.fetch("GET", link.getUrl(), true);
-                }
-            }
-
-            // Kode status HTTP
-            int statusCode = res.statusCode();
-            // URL final setelah redirect (kalau ada)
-            String finalUrl = res.uri().toString();
-            // Ambil header Content-Type (bisa kosong kalau server tidak kirim)
-            String contentType = res.headers().firstValue("Content-Type").orElse("").toLowerCase();
+            // simpan final URL
+            link.setFinalUrl(res.uri().toString());
+            // simpan tipe konten
+            link.setContentType(res.headers().firstValue("Content-Type").orElse("").toLowerCase());
+            // simpan status code
+            link.setStatusCode(res.statusCode());
 
             Document doc = null;
 
@@ -327,26 +294,23 @@ public class Crawler {
              * - request-nya oke
              * - response body-nya HTML
              */
-            if (isParseDoc && statusCode == 200 && contentType.contains("text/html")) {
+            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && !URLHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
 
-                // body sudah String karena kita pakai BodyHandlers.ofString() di mode parse
                 String body = (String) res.body();
 
                 try {
                     // Jsoup parse body string ke dokumen HTML
-                    doc = Jsoup.parse(body, finalUrl);
+                    doc = Jsoup.parse(body, link.getFinalUrl());
+
+                    // Tandai sebagai webpage
+                    link.setIsWebpage(true);
                 } catch (Exception ignore) {
                     doc = null;
                 }
             }
 
-            link.setFinalUrl(finalUrl); // simpan final URL
-            link.setContentType(contentType); // simpan tipe konten
-            link.setStatusCode(statusCode); // set status (dan otomatis set error message)
-
             // bisa null kalau bukan HTML atau error
             return doc;
-
         } catch (Throwable e) {
             // Ambil nama error/class (misal "IOException")
             String errorName = e.getClass().getSimpleName();
@@ -387,7 +351,7 @@ public class Crawler {
             }
 
             // Normalize URL
-            String normalizedUrl = URLHandler.normalizeUrl(absoluteUrl);
+            String normalizedUrl = URLHandler.normalizeUrl(absoluteUrl, false);
 
             // Skip kalau gagal normalisasi
             if (normalizedUrl == null) {
@@ -428,7 +392,7 @@ public class Crawler {
      *
      * @return true kalau dihentikan user, false kalau natural
      */
-    public boolean isStopped() {
+    public boolean isStoppedByUser() {
         return isStopped;
     }
 

@@ -47,39 +47,34 @@ public class HTTPHandler {
             // 5xx - Server Errors
             Map.entry(500, "500 Internal Server Error"), Map.entry(501, "501 Not Implemented"), Map.entry(502, "502 Bad Gateway"), Map.entry(503, "503 Service Unavailable"), Map.entry(504, "504 Gateway Timeout"), Map.entry(505, "505 HTTP Version Not Supported"), Map.entry(506, "506 Variant Also Negotiates"), Map.entry(507, "507 Insufficient Storage"), Map.entry(508, "508 Loop Detected"), Map.entry(510, "510 Not Extended"), Map.entry(511, "511 Network Authentication Required"));
 
-    public static HttpResponse<?> fetch(String method, String url, boolean isDiscardBody) throws Exception {
+    public static HttpResponse<?> fetch(String url, boolean needResponseBody) throws Exception {
 
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
+        HttpRequest request = HttpRequest.newBuilder()
                 // URL tujuan
                 .uri(URI.create(url))
+                // Menggunakan metode GET untuk fetching
+                .GET()
                 // Header biar server tahu yg minta request adalah aplikasi kita
                 .header("User-Agent", USER_AGENT)
                 // Timeout total request (connect + read)
-                .timeout(Duration.ofSeconds(30));
+                .timeout(Duration.ofSeconds(30))
+                // Bikin objek request
+                .build();
 
-        if (method.equalsIgnoreCase("GET")) {
-            builder.GET();
-        } else if (method.equalsIgnoreCase("HEAD")) {
-            builder.method("HEAD", HttpRequest.BodyPublishers.noBody());
-            // Pastiin method HEAD tidak membaca body
-            isDiscardBody = true;
-        } else {
-            throw new IllegalArgumentException("Only GET and HEAD are supported.");
-        }
+        HttpResponse<?> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
 
-        // Bikin objek HttpRequest
-        HttpRequest request = builder.build();
+        int statusCode = response.statusCode();
+        String contentType = response.headers()
+                .firstValue("Content-Type")
+                .orElse("")
+                .toLowerCase();
 
-        HttpResponse<?> response;
-        if (isDiscardBody) {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
-        } else {
+        if (needResponseBody && statusCode == 200 && contentType.contains("text/html")) {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         }
 
         return response;
     }
-
 
     public static String getStatusError(int statusCode) {
         // Kalau 1xx, 2xx & 3xx maka artinya bukan error

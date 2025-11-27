@@ -119,7 +119,7 @@ public class MainController {
             String seedUrl = seedUrlField.getText().trim();
 
             // Normalisasi URL supaya formatnya konsisten
-            String cleanedSeedUrl = URLHandler.normalizeUrl(seedUrl);
+            String cleanedSeedUrl = URLHandler.normalizeUrl(seedUrl, true);
 
             // Kalau seed URL kosong atau tidak valid → tampilkan pesan
             if (cleanedSeedUrl == null) {
@@ -158,7 +158,7 @@ public class MainController {
                      * maka ubah status menjadi COMPLETED.
                      * Harus lewat Platform.runLater karena menyentuh UI.
                      */
-                    if (!crawler.isStopped()) {
+                    if (!crawler.isStoppedByUser()) {
                         Platform.runLater(() -> summary.setStatus(Status.COMPLETED));
                     }
 

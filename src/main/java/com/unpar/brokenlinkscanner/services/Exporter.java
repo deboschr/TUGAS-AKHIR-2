@@ -70,7 +70,7 @@ public class Exporter {
             writeSummarySheet(summarySheet, summary, sortedData);
 
             // ==== RESULT SHEET ====
-            Sheet resultSheet = workbook.createSheet("Result");
+            Sheet resultSheet = workbook.createSheet("Broken Links");
             writeHeaderRow(resultSheet);
             writeBodyRows(resultSheet, sortedData);
 
