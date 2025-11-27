@@ -153,10 +153,8 @@ public class Crawler {
             // Kirim hasil ke controller apapun hasilnya, sukses / error
             send(currLink);
 
-            /**
-             * Skip kalau error (berarti Broken link) atau kalau bukan halaman situ web.
-             */
-            if (!currLink.getError().isEmpty() || !currLink.isWebpage()) {
+            // Kalau bukan halaman situs web (response body bukan HTML) maka skip
+            if (!currLink.isWebpage()) {
                 continue;
             }
 
@@ -292,9 +290,9 @@ public class Crawler {
              * Parse body response hanya kalau:
              * - diminta untuk parsing
              * - request-nya oke
-             * - response body-nya HTML
+             * - response body-nya bukan null (artinya HTML)
              */
-            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && !URLHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
+            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && URLHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
 
                 String body = (String) res.body();
 
