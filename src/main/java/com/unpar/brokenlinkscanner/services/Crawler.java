@@ -171,7 +171,6 @@ public class Crawler {
              * lanjut ke iterasi berikutnya.
              */
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-
                 // Loop semua link yang berhasil diekstrak dari webpage
                 for (var entry : linksOnWebpage.entrySet()) {
                     /**

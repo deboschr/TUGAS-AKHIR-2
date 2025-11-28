@@ -387,7 +387,7 @@ public class MainController {
                             Desktop.getDesktop().browse(new URI(url));
                         }
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        showNofication("ERROR", ex.getMessage());
                     }
                 });
             }
@@ -520,10 +520,8 @@ public class MainController {
         // Pertama kali, langsung render pagination berdasarkan data awal
         updatePagination();
 
-        // Jika brokenLinks berubah (data nambah, berkurang, filter aktif)
-        brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> {
-            updatePagination();
-        });
+        // Jika brokenLinks berubah (data nambah, berkurang, filter aktif) maka update pagination
+        brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> updatePagination());
     }
 
     private void updatePagination() {
