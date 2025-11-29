@@ -20,32 +20,33 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Exporter {
+    private final List<Link> brokenLinks;
+    private final Summary summary;
+
     private CellStyle headerStyle;
     private CellStyle oddRowStyle;
     private CellStyle evenRowStyle;
     private CellStyle otherStyle;
     private CellStyle emptyStyle;
 
-    public void save(List<Link> data, Summary summary, File file) throws IOException {
+    public Exporter( Summary summary, List<Link> data) {
+        this.summary = summary;
+        this.brokenLinks = new ArrayList<>(data);
+        this.brokenLinks.sort(Comparator.comparingInt(a -> a.getConnection().size()));
+    }
 
-        List<Link> brokenLinkData = new ArrayList<>(data);
-
-        brokenLinkData.sort(Comparator.comparingInt(a -> a.getConnection().size()));
+    public void save(File file) throws IOException {
 
         try (Workbook workbook = new XSSFWorkbook()) {
 
-            this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
-            this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
-            this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false, Color.decode("#222222"), 12);
-            this.otherStyle = createRowStyle(workbook, Color.decode("#efefef"), true, true, Color.decode("#222222"), 12);
-            this.emptyStyle = workbook.createCellStyle();
+            initStyles(workbook);
 
             Sheet summarySheet = workbook.createSheet("Summary");
-            writeProcessSummaryTable(summarySheet, summary);
-            writeBrokenLinkSummaryTable(summarySheet, brokenLinkData);
+            writeProcessSummaryTable(summarySheet);
+            writeBrokenLinkSummaryTable(summarySheet);
 
             Sheet brokenLinkSheet = workbook.createSheet("Broken Links");
-            writeBrokenLinkTable(brokenLinkSheet, brokenLinkData);
+            writeBrokenLinkTable(brokenLinkSheet);
 
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
@@ -53,7 +54,7 @@ public class Exporter {
         }
     }
 
-    private void writeProcessSummaryTable(Sheet sheet, Summary summary) {
+    private void writeProcessSummaryTable(Sheet sheet) {
         int rowIndex = 0;
 
         // ================= HEADER TABLE =================
@@ -112,7 +113,7 @@ public class Exporter {
         sheet.setColumnWidth(1, 7000);
     }
 
-    private void writeBrokenLinkSummaryTable(Sheet sheet, List<Link> data) {
+    private void writeBrokenLinkSummaryTable(Sheet sheet) {
         int rowIndex = 10;
 
         // ================= HEADER =================
@@ -150,7 +151,7 @@ public class Exporter {
         int serverErrorTotal = 0;
         int nonStandardErrorTotal = 0;
 
-        for (Link link : data) {
+        for (Link link : brokenLinks) {
             int code = link.getStatusCode();
             String err = link.getError();
             boolean isStandard = HttpHandler.isStandardError(code);
@@ -229,7 +230,7 @@ public class Exporter {
         }
     }
 
-    private void writeBrokenLinkTable(Sheet sheet, List<Link> data) {
+    private void writeBrokenLinkTable(Sheet sheet) {
 
         List<String> columnList = List.of("URL", "Final URL", "Content Type", "Error", "Source Webpage", "Anchor Text");
 
@@ -253,7 +254,7 @@ public class Exporter {
 
         int groupIndex = 1;
 
-        for (Link link : data) {
+        for (Link link : brokenLinks) {
 
             int startRow = rowIndex;
 
@@ -315,6 +316,30 @@ public class Exporter {
         sheet.setColumnWidth(columnList.size(), 20000);
     }
 
+    private void createTableCell(Row row, int col, String value, CellStyle style) {
+
+        Cell cell = row.createCell(col);
+
+        cell.setCellValue(value != null ? value : "");
+
+        cell.setCellStyle(style);
+    }
+
+    private void createBorder(CellStyle style) {
+        style.setBorderBottom(BorderStyle.MEDIUM);
+        style.setBorderTop(BorderStyle.MEDIUM);
+        style.setBorderLeft(BorderStyle.MEDIUM);
+        style.setBorderRight(BorderStyle.MEDIUM);
+    }
+
+    private void initStyles(Workbook workbook) {
+        this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
+        this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
+        this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false, Color.decode("#222222"), 12);
+        this.otherStyle = createRowStyle(workbook, Color.decode("#efefef"), true, true, Color.decode("#222222"), 12);
+        this.emptyStyle = workbook.createCellStyle();
+    }
+
     private CellStyle createRowStyle(Workbook workbook, Color bgColor, Boolean isCenter, Boolean isBold, Color fontColor, int fontSize) {
 
         CellStyle style = workbook.createCellStyle();
@@ -340,22 +365,6 @@ public class Exporter {
         createBorder(style);
 
         return style;
-    }
-
-    private void createTableCell(Row row, int col, String value, CellStyle style) {
-
-        Cell cell = row.createCell(col);
-
-        cell.setCellValue(value != null ? value : "");
-
-        cell.setCellStyle(style);
-    }
-
-    private void createBorder(CellStyle style) {
-        style.setBorderBottom(BorderStyle.MEDIUM);
-        style.setBorderTop(BorderStyle.MEDIUM);
-        style.setBorderLeft(BorderStyle.MEDIUM);
-        style.setBorderRight(BorderStyle.MEDIUM);
     }
 
 }

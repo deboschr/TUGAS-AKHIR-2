@@ -7,7 +7,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
-public class HTTPHandler {
+public class HttpHandler {
     /**
      * Untuk melakukan request HTTP
      *

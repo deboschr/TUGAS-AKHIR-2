@@ -5,7 +5,29 @@ import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class URLHandler {
+public class UrlHandler {
+
+    /**
+     * Ambil host dari URL dan ubah ke format ASCII (IDN).
+     * Digunakan untuk membandingkan host antar URL.
+     */
+    public static String getHost(String url) {
+        try {
+            URI uri = URI.create(url.trim());
+            String host = uri.getHost();
+
+            if (host == null || host.isEmpty()) {
+                return "";
+            }
+
+            // konversi ke format ASCII untuk domain internasional
+            return IDN.toASCII(host.toLowerCase());
+        } catch (IllegalArgumentException e) {
+            // URL tidak valid secara sintaks
+            return "";
+        }
+    }
+
     /**
      * Validasi dan normalisasi URL (misalnya untuk seed URL).
      *
@@ -133,24 +155,4 @@ public class URLHandler {
         return sb.isEmpty() ? "/" : sb.toString();
     }
 
-    /**
-     * Ambil host dari URL dan ubah ke format ASCII (IDN).
-     * Digunakan untuk membandingkan host antar URL.
-     */
-    public static String getHost(String url) {
-        try {
-            URI uri = URI.create(url.trim());
-            String host = uri.getHost();
-
-            if (host == null || host.isEmpty()) {
-                return "";
-            }
-
-            // konversi ke format ASCII untuk domain internasional
-            return IDN.toASCII(host.toLowerCase());
-        } catch (IllegalArgumentException e) {
-            // URL tidak valid secara sintaks
-            return "";
-        }
-    }
 }

@@ -1,9 +1,9 @@
 package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
-import com.unpar.brokenlinkscanner.utils.HTTPHandler;
+import com.unpar.brokenlinkscanner.utils.HttpHandler;
 import com.unpar.brokenlinkscanner.utils.RateLimiter;
-import com.unpar.brokenlinkscanner.utils.URLHandler;
+import com.unpar.brokenlinkscanner.utils.UrlHandler;
 import javafx.application.Platform;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -105,7 +105,7 @@ public class Crawler {
          * Digunakan untuk membandingkan host dari URL lain, kalau sama maka berpotensi
          * menjadi URL halaman situs web (Webpage Link).
          */
-        rootHost = URLHandler.getHost(seedUrl);
+        rootHost = UrlHandler.getHost(seedUrl);
 
         // Buat objek link baru + masukin ke fontier urutan paling belakang
         frontier.offer(new Link(seedUrl));
@@ -205,7 +205,7 @@ public class Crawler {
                      * Kalau hostnya sama dengan rootHost berarti link ini berpotensi jadi webpage.
                      * maka kita masukan ke frontier antrian paling belakang.
                      */
-                    if (URLHandler.getHost(link.getUrl()).equalsIgnoreCase(rootHost)) {
+                    if (UrlHandler.getHost(link.getUrl()).equalsIgnoreCase(rootHost)) {
                         frontier.offer(link);
                     }
                     /**
@@ -269,12 +269,12 @@ public class Crawler {
     private Document checkLink(Link link, boolean isParseDoc) {
         try {
             // Ambil atau buat RateLimiter untuk host ini
-            RateLimiter limiter = rateLimiters.computeIfAbsent(URLHandler.getHost(link.getUrl()), h -> new RateLimiter());
+            RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(link.getUrl()), h -> new RateLimiter());
             // Kasih delay ke thread ini buat ngelakuin request
             limiter.delay();
 
             // variabel buat nyimpen hasil response dari server
-            HttpResponse<?> res = HTTPHandler.fetch(link.getUrl(), isParseDoc);
+            HttpResponse<?> res = HttpHandler.fetch(link.getUrl(), isParseDoc);
 
             // simpan final URL
             link.setFinalUrl(res.uri().toString());
@@ -291,7 +291,7 @@ public class Crawler {
              * - request-nya oke
              * - response body-nya bukan null (artinya HTML)
              */
-            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && URLHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
+            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && UrlHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
 
                 String body = (String) res.body();
 
@@ -348,7 +348,7 @@ public class Crawler {
             }
 
             // Normalize URL
-            String normalizedUrl = URLHandler.normalizeUrl(absoluteUrl, false);
+            String normalizedUrl = UrlHandler.normalizeUrl(absoluteUrl, false);
 
             // Skip kalau gagal normalisasi
             if (normalizedUrl == null) {

@@ -6,7 +6,7 @@ import com.unpar.brokenlinkscanner.services.Exporter;
 import com.unpar.brokenlinkscanner.models.Status;
 import com.unpar.brokenlinkscanner.models.Link;
 import com.unpar.brokenlinkscanner.models.Summary;
-import com.unpar.brokenlinkscanner.utils.URLHandler;
+import com.unpar.brokenlinkscanner.utils.UrlHandler;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -119,7 +119,7 @@ public class MainController {
             String seedUrl = seedUrlField.getText().trim();
 
             // Normalisasi URL supaya formatnya konsisten
-            String cleanedSeedUrl = URLHandler.normalizeUrl(seedUrl, true);
+            String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl, true);
 
             // Kalau seed URL kosong atau tidak valid → tampilkan pesan
             if (cleanedSeedUrl == null) {
@@ -213,7 +213,7 @@ public class MainController {
 
             // Tidak ada broken link → tidak perlu ekspor
             if (brokenLinks.isEmpty()) {
-                Application.openNotificationWindow("WARNING", "There are no broken links to export.");
+                showNofication("WARNING", "There are no broken links to export.");
                 return;
             }
 

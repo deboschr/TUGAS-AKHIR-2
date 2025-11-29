@@ -13,16 +13,6 @@ import java.net.URL;
 
 public class Application extends javafx.application.Application {
     private static Stage MAIN_STAGE;
-    private static final URL MAIN_FXML = Application.class
-            .getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml");
-    private static final URL LINK_FXML = Application.class
-            .getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml");
-    private static final URL NOTIFICATION_FXML = Application.class
-            .getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
-
-    public static void main(String[] args) {
-        launch();
-    }
 
     @Override
     public void start(Stage stage) {
@@ -31,9 +21,15 @@ public class Application extends javafx.application.Application {
         openMainWindow();
     }
 
+    public static void main(String[] args) {
+        launch();
+    }
+
     public static void openMainWindow() {
         try {
-            FXMLLoader loader = new FXMLLoader(MAIN_FXML);
+            URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/main-scene.fxml");
+
+            FXMLLoader loader = new FXMLLoader(fxml);
 
             Scene scene = new Scene(loader.load());
 
@@ -53,7 +49,9 @@ public class Application extends javafx.application.Application {
 
     public static void openLinkWindow(Link link) {
         try {
-            FXMLLoader loader = new FXMLLoader(LINK_FXML);
+            URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/link-scene.fxml");
+
+            FXMLLoader loader = new FXMLLoader(fxml);
 
             Scene scene = new Scene(loader.load());
 
@@ -74,7 +72,9 @@ public class Application extends javafx.application.Application {
 
     public static void openNotificationWindow(String type, String message) {
         try {
-            FXMLLoader loader = new FXMLLoader(NOTIFICATION_FXML);
+            URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
+
+            FXMLLoader loader = new FXMLLoader(fxml);
 
             Scene scene = new Scene(loader.load());
 
