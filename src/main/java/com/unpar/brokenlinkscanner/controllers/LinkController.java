@@ -28,13 +28,20 @@ public class LinkController {
     @FXML
     private TableColumn<Map.Entry<Link, String>, String> anchorTextColumn, webpageUrlColumn;
 
-    private final ObservableList<Map.Entry<Link, String>> webpageLinks = FXCollections.observableArrayList();
     private double xOffset;
     private double yOffset;
+
+    private final Link link;
+
+    public LinkController(Link link) {
+        this.link = link;
+    }
 
     @FXML
     private void initialize() {
         setTitleBar();
+        setFieldValue();
+        setTableValue();
     }
 
     /**
@@ -75,41 +82,62 @@ public class LinkController {
 
     /**
      * Method buat menetapkan data dari objek Link yang akan ditampilkan di window.
-     *
-     * @param link Objek Link yang akan ditampilkan
      */
-    public void setLink(Link link) {
+    public void setFieldValue() {
         // Set value dari field
         urlField.setText(link.getUrl());
         finalUrlField.setText(link.getFinalUrl());
         contentTypeField.setText(link.getContentType());
         errorField.setText(link.getError());
 
-        // Set isi list webpage links
-        webpageLinks.setAll(link.getConnection().entrySet());
-
         makeFieldClickable(urlField);
         makeFieldClickable(finalUrlField);
-
-        // Siapkan tampilan tabel
-        setTableView();
     }
 
     /**
      * Method buat ngatur konfigurasi tabel.
      */
-    private void setTableView() {
+    private void setTableValue() {
 
         // Biar kolom terakhir selalu memenuhi ukuan tabel sisa
         webpageLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        // Set value dari kolom
-        anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
-        webpageUrlColumn
-                .setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
+        // Isi tabel langsung dari link.getConnection()
+        webpageLinkTable.setItems(FXCollections.observableArrayList(link.getConnection().entrySet()));
 
-        // Hubungkan data (ObservableList) ke tabel
-        webpageLinkTable.setItems(webpageLinks);
+        // Kolom anchor text
+        anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
+
+        // Kolom URL
+        webpageUrlColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
+
+        setupHyperlinkColumn(webpageUrlColumn);
+    }
+
+    /**
+     * Method buat bikin TextField bisa di klik dan membuka URL di browser.
+     *
+     * @param field Field teks yang menampilkan URL.
+     */
+    private void makeFieldClickable(TextField field) {
+        // Tambahkan event klik untuk membuka URL di browser default
+        field.setOnMouseClicked(e -> {
+            String url = field.getText(); // ambil isi teks (URL) dari field
+
+            if (url != null && !url.isEmpty()) { // pastikan tidak kosong
+                try {
+                    Desktop.getDesktop().browse(new URI(url)); // buka di browser
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        // Ubah warna teks jadi biru dan kursor jadi tangan (pointer)
+        field.setStyle("-fx-text-fill: #19539a; -fx-cursor: hand;");
+    }
+
+    private void setupHyperlinkColumn(TableColumn<Map.Entry<Link, String>, String> column) {
 
         /*
          * Mengatur kolom URL biar ditampilkan sebagai hyperlink.
@@ -117,7 +145,8 @@ public class LinkController {
          * Pake cell factory karena kita mau mengganti tampilan default cell
          * (yang biasanya cuma teks biasa) menjadi komponen hyperlink.
          */
-        webpageUrlColumn.setCellFactory(col -> new TableCell<>() {
+        column.setCellFactory(col -> new TableCell<>() {
+
             // Komponen Hyperlink untuk setiap sel URL
             private final Hyperlink linkView = new Hyperlink();
 
@@ -128,8 +157,7 @@ public class LinkController {
              *
              * Bikin even handler, kalau hyperlink di klik maka kita buka URLnya
              * di browser bawaan OS.
-             */
-            {
+             */ {
                 linkView.setOnAction(e -> {
                     try {
                         Desktop.getDesktop().browse(new URI(linkView.getText()));
@@ -161,29 +189,6 @@ public class LinkController {
                 }
             }
         });
-    }
-
-    /**
-     * Method buat bikin TextField bisa di klik dan membuka URL di browser.
-     *
-     * @param field Field teks yang menampilkan URL.
-     */
-    private void makeFieldClickable(TextField field) {
-        // Tambahkan event klik untuk membuka URL di browser default
-        field.setOnMouseClicked(e -> {
-            String url = field.getText(); // ambil isi teks (URL) dari field
-
-            if (url != null && !url.isEmpty()) { // pastikan tidak kosong
-                try {
-                    Desktop.getDesktop().browse(new URI(url)); // buka di browser
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        // Ubah warna teks jadi biru dan kursor jadi tangan (pointer)
-        field.setStyle("-fx-text-fill: #19539a; -fx-cursor: hand;");
     }
 
 }

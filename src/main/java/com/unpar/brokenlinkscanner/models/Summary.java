@@ -9,9 +9,9 @@ import javafx.beans.property.SimpleObjectProperty;
 
 public class Summary {
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.IDLE);
-    private final IntegerProperty totalLinks = new SimpleIntegerProperty(0);
-    private final IntegerProperty webpageLinks = new SimpleIntegerProperty(0);
-    private final IntegerProperty brokenLinks = new SimpleIntegerProperty(0);
+    private final IntegerProperty allLinksCount = new SimpleIntegerProperty(0);
+    private final IntegerProperty webpageLinksCount = new SimpleIntegerProperty(0);
+    private final IntegerProperty brokenLinksCount = new SimpleIntegerProperty(0);
 
     // Start & End time (dalam millisecond)
     private final LongProperty startTime = new SimpleLongProperty(0);
@@ -33,47 +33,47 @@ public class Summary {
 
     // ===============================================================================
     // TotalLinks
-    public int getTotalLinks() {
-        return totalLinks.get();
+    public int getAllLinksCount() {
+        return allLinksCount.get();
     }
 
-    public void setTotalLinks(int value) {
-        this.totalLinks.set(value);
+    public void setAllLinksCount(int value) {
+        this.allLinksCount.set(value);
     }
 
     @SuppressWarnings("exports")
-    public IntegerProperty totalLinksProperty() {
-        return totalLinks;
+    public IntegerProperty allLinksCountProperty() {
+        return allLinksCount;
     }
 
     // ===============================================================================
     // Webpages
     public int getWebpages() {
-        return webpageLinks.get();
+        return webpageLinksCount.get();
     }
 
     public void setWebpages(int value) {
-        this.webpageLinks.set(value);
+        this.webpageLinksCount.set(value);
     }
 
     @SuppressWarnings("exports")
-    public IntegerProperty webpageLinksProperty() {
-        return webpageLinks;
+    public IntegerProperty webpageLinksCountProperty() {
+        return webpageLinksCount;
     }
 
     // ===============================================================================
     // BrokenLinks
-    public int getBrokenLinks() {
-        return brokenLinks.get();
+    public int getBrokenLinksCount() {
+        return brokenLinksCount.get();
     }
 
-    public void setBrokenLinks(int value) {
-        this.brokenLinks.set(value);
+    public void setBrokenLinksCount(int value) {
+        this.brokenLinksCount.set(value);
     }
 
     @SuppressWarnings("exports")
-    public IntegerProperty brokenLinksProperty() {
-        return brokenLinks;
+    public IntegerProperty brokenLinksCountProperty() {
+        return brokenLinksCount;
     }
 
     // ===============================================================================

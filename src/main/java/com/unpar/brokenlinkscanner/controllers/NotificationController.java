@@ -26,9 +26,18 @@ public class NotificationController {
     private double xOffset;
     private double yOffset;
 
+    private final String type;
+    private final String message;
+
+    public NotificationController(String type, String message) {
+        this.type = type.toUpperCase();
+        this.message = message;
+    }
+
     @FXML
     private void initialize() {
         setTitleBar();
+        setNotification();
     }
 
     /**
@@ -71,15 +80,10 @@ public class NotificationController {
 
     /**
      * Method buat menetapkan nilai yang mau di tampilin di window
-     *
-     * @param type    Jenis notifikasi: "ERROR", "WARNING", "INFO", atau "SUCCESS"
-     * @param message Pesan yang mau ditampilin
      */
-    public void setNotification(String type, String message) {
+    public void setNotification() {
         // Set pesan notifikasi
         messageLabel.setText(message);
-        // Ubah tipe jadi huruf besar
-        type = type.toUpperCase();
 
         switch (type) {
             case "ERROR" -> applyStyle("-red", "\u2716", "ERROR");
@@ -110,6 +114,7 @@ public class NotificationController {
         // Atur warna icon biar sama kaya warna title bar
         iconLabel.setStyle("-fx-text-fill: " + color + ";");
 
+        // Border
         String existing = root.getStyle();
         root.setStyle(existing + "-fx-border-color: " + color + ";");
 

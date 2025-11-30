@@ -239,8 +239,8 @@ public class MainController {
 
             Thread.startVirtualThread(() -> {
                 try {
-                    Exporter exporter = new Exporter();
-                    exporter.save(brokenLinks, summary, finalFile);
+                    Exporter exporter = new Exporter(summary, brokenLinks);
+                    exporter.save(finalFile);
 
                     showNofication("SUCCESS",
                             "Data has been successfully exported to:\n" + finalFile.getAbsolutePath());
@@ -410,13 +410,13 @@ public class MainController {
     private void setSummaryCard() {
         // Label mengikuti nilai di Summary
         statusLabel.textProperty().bind(summary.statusProperty().asString());
-        allLinksCountLabel.textProperty().bind(summary.totalLinksProperty().asString());
-        webpageLinksCountLabel.textProperty().bind(summary.webpageLinksProperty().asString());
-        brokenLinksCountLabel.textProperty().bind(summary.brokenLinksProperty().asString());
+        allLinksCountLabel.textProperty().bind(summary.allLinksCountProperty().asString());
+        webpageLinksCountLabel.textProperty().bind(summary.webpageLinksCountProperty().asString());
+        brokenLinksCountLabel.textProperty().bind(summary.brokenLinksCountProperty().asString());
 
-        summary.totalLinksProperty().bind(Bindings.size(allLinks));
-        summary.webpageLinksProperty().bind(Bindings.size(webpageLinks));
-        summary.brokenLinksProperty().bind(Bindings.createIntegerBinding(
+        summary.allLinksCountProperty().bind(Bindings.size(allLinks));
+        summary.webpageLinksCountProperty().bind(Bindings.size(webpageLinks));
+        summary.brokenLinksCountProperty().bind(Bindings.createIntegerBinding(
                 () -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(), allLinks));
 
         // Warna dinamis berdasarkan status
