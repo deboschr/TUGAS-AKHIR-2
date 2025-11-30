@@ -60,7 +60,7 @@ public class Crawler {
      * Pake function interface Consumer karena dia cuma punya 1 method (accept), dan
      * ga mengembalikan apa-apa.
      */
-    private final Consumer<Link> linkConsumer;
+    private final Consumer<Link> linkSender;
 
     /**
      * Penanda buat nentuin apakah proses dihentikan user atau tidak.
@@ -84,8 +84,8 @@ public class Crawler {
      */
     private static final int MAX_LINKS = 1000;
 
-    public Crawler(Consumer<Link> linkConsumer) {
-        this.linkConsumer = linkConsumer;
+    public Crawler(Consumer<Link> linkSender) {
+        this.linkSender = linkSender;
     }
 
     /**
@@ -149,9 +149,6 @@ public class Crawler {
              * link didalamnya.
              */
             Document doc = checkLink(currLink, true);
-
-            // Kirim hasil ke controller apapun hasilnya, sukses / error
-            send(currLink);
 
             // Kalau bukan halaman situs web (response body bukan HTML) maka skip
             if (!currLink.isWebpage()) {
@@ -227,9 +224,6 @@ public class Crawler {
                              * response body karena ini URL eksternal.
                              */
                             checkLink(link, false);
-
-                            // Kirim link yang atributnya udah di update saat fetching
-                            send(link);
                         });
                     }
                 }
@@ -320,6 +314,11 @@ public class Crawler {
             link.setError(errorName);
 
             return null;
+        } finally {
+            // Kirim hasil ke controller apapun hasilnya, sukses / error
+            if (linkSender != null) {
+                Platform.runLater(() -> linkSender.accept(link));
+            }
         }
     }
 
@@ -377,11 +376,6 @@ public class Crawler {
      *
      * @param link objek Link yang ditemukan crawling
      */
-    private void send(Link link) {
-        if (linkConsumer != null) {
-            Platform.runLater(() -> linkConsumer.accept(link));
-        }
-    }
 
     /**
      * Method getter biar controller bisa tahu apakah proses dihentikan oleh user
