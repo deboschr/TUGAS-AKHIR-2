@@ -26,7 +26,7 @@ public class HttpHandler {
             // Ikuti redirect dari server website
             .followRedirects(HttpClient.Redirect.ALWAYS)
             // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofMillis(8000)).build();
+            .connectTimeout(Duration.ofSeconds(10)).build();
 
     /**
      * Untuk menyimpan request header user-agent, dipake biar server website tujuan
@@ -57,7 +57,7 @@ public class HttpHandler {
                 // Header biar server tahu yg minta request adalah aplikasi kita
                 .header("User-Agent", USER_AGENT)
                 // Timeout total request (connect + read)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(10))
                 // Bikin objek request
                 .build();
 

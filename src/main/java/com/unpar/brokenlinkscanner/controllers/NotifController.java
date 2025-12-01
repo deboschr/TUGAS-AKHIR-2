@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 /**
  * Controller buat window notifikasi.
  */
-public class NotificationController {
+public class NotifController {
     @FXML
     private BorderPane root;
     @FXML
@@ -29,7 +29,7 @@ public class NotificationController {
     private final String type;
     private final String message;
 
-    public NotificationController(String type, String message) {
+    public NotifController(String type, String message) {
         this.type = type.toUpperCase();
         this.message = message;
     }
@@ -88,7 +88,6 @@ public class NotificationController {
         switch (type) {
             case "ERROR" -> applyStyle("-red", "\u2716", "ERROR");
             case "WARNING" -> applyStyle("-orange", "\u26A0", "WARNING");
-            case "INFO" -> applyStyle("-blue", "\u2139", "INFORMATION");
             case "SUCCESS" -> applyStyle("-green", "\u2714", "SUCCESS");
             default -> applyStyle("-grey-light", "\u2753", "UNKNOWN");
         }

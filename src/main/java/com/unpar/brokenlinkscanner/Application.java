@@ -1,7 +1,7 @@
 package com.unpar.brokenlinkscanner;
 
 import com.unpar.brokenlinkscanner.controllers.LinkController;
-import com.unpar.brokenlinkscanner.controllers.NotificationController;
+import com.unpar.brokenlinkscanner.controllers.NotifController;
 import com.unpar.brokenlinkscanner.models.Link;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -56,7 +56,7 @@ public class Application extends javafx.application.Application {
 
             loader.setControllerFactory(param -> {
                 if (param == LinkController.class) {
-                    return new LinkController(link);  // inject Link
+                    return new LinkController(link);
                 }
                 try {
                     return param.getDeclaredConstructor().newInstance();
@@ -81,7 +81,7 @@ public class Application extends javafx.application.Application {
 
     public static void openNotificationWindow(String type, String message) {
         try {
-            URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notification-scene.fxml");
+            URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notif-scene.fxml");
 
             Stage stage = getStage(type, message, fxml);
             stage.initStyle(StageStyle.UNDECORATED);
@@ -98,8 +98,8 @@ public class Application extends javafx.application.Application {
         FXMLLoader loader = new FXMLLoader(fxml);
 
         loader.setControllerFactory(param -> {
-            if (param == NotificationController.class) {
-                return new NotificationController(type, message); // inject type & message
+            if (param == NotifController.class) {
+                return new NotifController(type, message);
             }
             try {
                 return param.getDeclaredConstructor().newInstance();

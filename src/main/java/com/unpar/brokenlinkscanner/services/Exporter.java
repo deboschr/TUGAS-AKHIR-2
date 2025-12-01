@@ -39,7 +39,11 @@ public class Exporter {
 
         try (Workbook workbook = new XSSFWorkbook()) {
 
-            initStyles(workbook);
+            this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
+            this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
+            this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false, Color.decode("#222222"), 12);
+            this.otherStyle = createRowStyle(workbook, Color.decode("#efefef"), true, true, Color.decode("#222222"), 12);
+            this.emptyStyle = workbook.createCellStyle();
 
             Sheet summarySheet = workbook.createSheet("Summary");
             writeProcessSummaryTable(summarySheet);
@@ -88,15 +92,15 @@ public class Exporter {
             durationStr = m + "m " + s + "s";
         }
 
-        Map<String, String> summaryMap = new LinkedHashMap<>(Map.of(
-                "Status",        String.valueOf(summary.getStatus()),
-                "All Links",     String.valueOf(summary.getAllLinksCount()),
-                "Webpage Links", String.valueOf(summary.getWebpages()),
-                "Broken Links",  String.valueOf(summary.getBrokenLinksCount()),
-                "Start Time",    startTimeStr,
-                "End Time",      endTimeStr,
-                "Duration",      durationStr
-        ));
+        Map<String, String> summaryMap = new LinkedHashMap<>();
+        summaryMap.put("Status",        String.valueOf(summary.getStatus()));
+        summaryMap.put("All Links",     String.valueOf(summary.getAllLinksCount()));
+        summaryMap.put("Webpage Links", String.valueOf(summary.getWebpages()));
+        summaryMap.put("Broken Links",  String.valueOf(summary.getBrokenLinksCount()));
+        summaryMap.put("Start Time",    startTimeStr);
+        summaryMap.put("End Time",      endTimeStr);
+        summaryMap.put("Duration",      durationStr);
+
 
         for (var entry : summaryMap.entrySet()) {
             Row row = sheet.createRow(rowIndex++);
@@ -330,14 +334,6 @@ public class Exporter {
         style.setBorderTop(BorderStyle.MEDIUM);
         style.setBorderLeft(BorderStyle.MEDIUM);
         style.setBorderRight(BorderStyle.MEDIUM);
-    }
-
-    private void initStyles(Workbook workbook) {
-        this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
-        this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
-        this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false, Color.decode("#222222"), 12);
-        this.otherStyle = createRowStyle(workbook, Color.decode("#efefef"), true, true, Color.decode("#222222"), 12);
-        this.emptyStyle = workbook.createCellStyle();
     }
 
     private CellStyle createRowStyle(Workbook workbook, Color bgColor, Boolean isCenter, Boolean isBold, Color fontColor, int fontSize) {

@@ -4,8 +4,8 @@
 <?import javafx.scene.control.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.unpar.brokenlinkscanner.controllers.NotificationController"
-            stylesheets="@../styles/notification-style.css"
+            fx:controller="com.unpar.brokenlinkscanner.controllers.NotifController"
+            stylesheets="@../styles/notif-style.css"
             prefWidth="400" prefHeight="180"
             fx:id="root">
 
