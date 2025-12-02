@@ -94,6 +94,7 @@ public class MainController {
             setTableView();
             setFilterCard();
             setPagination();
+            seedUrlField.setText("https://informatika.unpar.ac.id");
 
             /*
              * Buat instance kelas Crawler dan kirim sebuah fungsi (lambda expresion) untuk

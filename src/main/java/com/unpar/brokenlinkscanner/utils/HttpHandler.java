@@ -8,14 +8,17 @@ import java.time.Duration;
 import java.util.Map;
 
 public class HttpHandler {
+
+    private static final int CONNECTION_TIMEOUT = 10;
+    private static final int REQUEST_TIMEOUT = 10;
+
+
     /**
      * Untuk melakukan request HTTP
-     *
      * - followRedirects => alway, biar nanti kita bisa mendapatkan final URL. Kalau
      * misalnya URL awal memiliki host yang sama dengan rootHost tapi final URL nya
      * memiliki host yang beda dengan rootHost maka ga perlu kita crawling, karna
      * itu artinya isi dia bukan merupakan halaman dari website yang lagi diperiksa.
-     *
      * - connectTimeout => 5 detik, biar ga terlalu lama nunggu, kalau kelamaan
      * sistem jadi lambat, tapi kalau terlalu cepat juga bisa-bisa semua URL error
      * karena ga sempat bikin connection.
@@ -26,7 +29,7 @@ public class HttpHandler {
             // Ikuti redirect dari server website
             .followRedirects(HttpClient.Redirect.ALWAYS)
             // Timeout saat bikin koneksi
-            .connectTimeout(Duration.ofSeconds(10)).build();
+            .connectTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT)).build();
 
     /**
      * Untuk menyimpan request header user-agent, dipake biar server website tujuan
@@ -36,7 +39,6 @@ public class HttpHandler {
 
     /**
      * Untuk menyimpan HTTP status yaitu kode status + reason phrase
-     *
      * Struktur data Map dipakai untuk menyimpan pasangan key dan value:
      * - Key : kode status HTTP
      * - Value : pesan errornya (kode status + reason phrase)
@@ -47,7 +49,7 @@ public class HttpHandler {
             // 5xx - Server Errors
             Map.entry(500, "500 Internal Server Error"), Map.entry(501, "501 Not Implemented"), Map.entry(502, "502 Bad Gateway"), Map.entry(503, "503 Service Unavailable"), Map.entry(504, "504 Gateway Timeout"), Map.entry(505, "505 HTTP Version Not Supported"), Map.entry(506, "506 Variant Also Negotiates"), Map.entry(507, "507 Insufficient Storage"), Map.entry(508, "508 Loop Detected"), Map.entry(510, "510 Not Extended"), Map.entry(511, "511 Network Authentication Required"));
 
-    public static HttpResponse<?> fetch(String url, boolean needResponseBody) throws Exception {
+    public static HttpResponse<?> fetch(String url, boolean isNeedBody) throws Exception {
 
         HttpRequest request = HttpRequest.newBuilder()
                 // URL tujuan
@@ -57,21 +59,19 @@ public class HttpHandler {
                 // Header biar server tahu yg minta request adalah aplikasi kita
                 .header("User-Agent", USER_AGENT)
                 // Timeout total request (connect + read)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(Duration.ofSeconds(REQUEST_TIMEOUT))
                 // Bikin objek request
                 .build();
 
-        HttpResponse<?> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+        HttpResponse<?> response;
 
-        int statusCode = response.statusCode();
-        String contentType = response.headers()
-                .firstValue("Content-Type")
-                .orElse("")
-                .toLowerCase();
 
-        if (needResponseBody && statusCode == 200 && contentType.contains("text/html")) {
+        if (isNeedBody) {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        } else {
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
         }
+
 
         return response;
     }
@@ -89,5 +89,36 @@ public class HttpHandler {
     public static boolean isStandardError(int statusCode) {
         return STATUS_MAP.containsKey(statusCode);
     }
+
+
+    // public static HttpResponse<?> fetch(String url, boolean needResponseBody) throws Exception {
+    //
+    //     HttpRequest request = HttpRequest.newBuilder()
+    //             // URL tujuan
+    //             .uri(URI.create(url))
+    //             // Menggunakan metode GET untuk fetching
+    //             .GET()
+    //             // Header biar server tahu yg minta request adalah aplikasi kita
+    //             .header("User-Agent", USER_AGENT)
+    //             // Timeout total request (connect + read)
+    //             .timeout(Duration.ofSeconds(REQUEST_TIMEOUT))
+    //             // Bikin objek request
+    //             .build();
+    //
+    //     HttpResponse<?> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+    //
+    //     int statusCode = response.statusCode();
+    //     String contentType = response.headers()
+    //             .firstValue("Content-Type")
+    //             .orElse("")
+    //             .toLowerCase();
+    //
+    //     if (needResponseBody && statusCode == 200 && contentType.contains("text/html")) {
+    //         response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+    //     }
+    //
+    //     return response;
+    // }
+
 
 }

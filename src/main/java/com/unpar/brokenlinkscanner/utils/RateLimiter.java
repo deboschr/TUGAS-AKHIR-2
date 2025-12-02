@@ -2,7 +2,7 @@ package com.unpar.brokenlinkscanner.utils;
 
 public class RateLimiter {
     // Waktu jarak antar request
-    private static final long INTERVAL = 0L;
+    private static final long INTERVAL = 1800L;
 
     // Waktu dari request terakhir
     private volatile long lastRequestTime = 0L;

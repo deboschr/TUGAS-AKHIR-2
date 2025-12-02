@@ -134,29 +134,20 @@ public class Crawler {
             }
 
             /**
-             * Cek apakah link ini sudah pernah dicatat di repositories, kalau sudah ada,
-             * berarti link ini udah pernah di periksa, jadi ga perlu di periksa lagi.
-             */
-            Link existing = repositories.putIfAbsent(currLink.getUrl(), currLink);
-            if (existing != null) {
-                continue;
-            }
-
-            /**
              * Fetach dan kirim perintah buat nge-parse response-bodynya ke dokumen HTML.
              * Kita kirim perintah buat nge-parse karna link ini diambil dari frontier, jadi
              * berpotensi jadi halaman website, kalau halaman website maka kita akan ekstrak
              * link didalamnya.
              */
-            Document doc = checkLink(currLink, true);
+            Document HTML = checkLink(currLink, true);
 
             // Kalau bukan halaman situs web (response body bukan HTML) maka skip
-            if (!currLink.isWebpage()) {
+            if (!currLink.isWebpage() || HTML == null) {
                 continue;
             }
 
             // Ekstrak seluruh link dari webpage
-            Map<Link, String> linksOnWebpage = extractLink(doc);
+            Map<Link, String> linksOnWebpage = extractLink(HTML);
 
             /**
              * Bikin executor buat bikin virtual thread per task.
@@ -210,9 +201,6 @@ public class Crawler {
                      * perlu di crawling cukup di fetch aja.
                      */
                     else {
-                        // Masukin ke repository kalau belum ada
-                        repositories.putIfAbsent(link.getUrl(), link);
-
                         /**
                          * Disini kita bakal submit tugas ke dalam executor dan executor bakal bikin
                          * virtual thread tersendiri untuk masing-masing tugas yang kita submit.
@@ -262,14 +250,28 @@ public class Crawler {
      */
     private Document checkLink(Link link, boolean isParseDoc) {
         try {
+            /**
+             * Cek apakah link ini sudah pernah dicatat di repositories, kalau sudah ada,
+             * berarti link ini udah pernah di periksa, jadi ga perlu di periksa lagi.
+             * Kalau jumlah link total sudah mencapai batas, berarti ga perlu dilakukan pemeriksaan lagi.
+             */
+            Link existingLink = repositories.get(link.getUrl());
+            if (existingLink != null || repositories.size() > MAX_LINKS) {
+                return null;
+            }
+
+
             // Ambil atau buat RateLimiter untuk host ini
             RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(link.getUrl()), h -> new RateLimiter());
             // Kasih delay ke thread ini buat ngelakuin request
             limiter.delay();
 
+
+
+
+
             // variabel buat nyimpen hasil response dari server
             HttpResponse<?> res = HttpHandler.fetch(link.getUrl(), isParseDoc);
-
             // simpan final URL
             link.setFinalUrl(res.uri().toString());
             // simpan tipe konten
@@ -277,31 +279,32 @@ public class Crawler {
             // simpan status code
             link.setStatusCode(res.statusCode());
 
-            Document doc = null;
 
+
+
+            Document html = null;
             /*
              * Parse body response hanya kalau:
              * - diminta untuk parsing
              * - request-nya oke
-             * - response body-nya bukan null (artinya HTML)
+             * - response body-nya bukan null
              */
             if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && UrlHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
-
-                String body = (String) res.body();
-
                 try {
-                    // Jsoup parse body string ke dokumen HTML
-                    doc = Jsoup.parse(body, link.getFinalUrl());
+                    String body = (String) res.body();
+
+                    // Jsoup parse body string ke dokumen html
+                    html = Jsoup.parse(body, link.getFinalUrl());
 
                     // Tandai sebagai webpage
                     link.setIsWebpage(true);
                 } catch (Exception ignore) {
-                    doc = null;
+                    html = null;
                 }
             }
 
-            // bisa null kalau bukan HTML atau error
-            return doc;
+            // bisa null kalau bukan html atau error
+            return html;
         } catch (Throwable e) {
             // Ambil nama error/class (misal "IOException")
             String errorName = e.getClass().getSimpleName();
@@ -315,8 +318,12 @@ public class Crawler {
 
             return null;
         } finally {
-            // Kirim hasil ke controller apapun hasilnya, sukses / error
-            if (linkSender != null) {
+            /**
+             * Masukan link ke daftar link yang udah diperiksa.
+             * Kalau returnnya null berarti link ini belum dimasukan ke repositoru dan bisa dikirim ke GUI
+             */
+            Link existing = repositories.putIfAbsent(link.getUrl(), link);
+            if (existing == null) {
                 Platform.runLater(() -> linkSender.accept(link));
             }
         }
