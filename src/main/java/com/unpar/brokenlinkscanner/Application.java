@@ -83,7 +83,23 @@ public class Application extends javafx.application.Application {
         try {
             URL fxml = Application.class.getResource("/com/unpar/brokenlinkscanner/scenes/notif-scene.fxml");
 
-            Stage stage = getStage(type, message, fxml);
+            FXMLLoader loader = new FXMLLoader(fxml);
+
+            loader.setControllerFactory(param -> {
+                if (param == NotifController.class) {
+                    return new NotifController(type, message);
+                }
+                try {
+                    return param.getDeclaredConstructor().newInstance();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+
+            Scene scene = new Scene(loader.load());
+            Stage stage = new Stage();
+
+            stage.setScene(scene);
             stage.initStyle(StageStyle.UNDECORATED);
             stage.initOwner(MAIN_STAGE);
             stage.initModality(Modality.WINDOW_MODAL);
@@ -92,26 +108,7 @@ public class Application extends javafx.application.Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
     }
 
-    private static Stage getStage(String type, String message, URL fxml) throws IOException {
-        FXMLLoader loader = new FXMLLoader(fxml);
-
-        loader.setControllerFactory(param -> {
-            if (param == NotifController.class) {
-                return new NotifController(type, message);
-            }
-            try {
-                return param.getDeclaredConstructor().newInstance();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-
-        Scene scene = new Scene(loader.load());
-        Stage stage = new Stage();
-
-        stage.setScene(scene);
-        return stage;
-    }
 }

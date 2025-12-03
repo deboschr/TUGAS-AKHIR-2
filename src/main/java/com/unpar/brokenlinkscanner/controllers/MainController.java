@@ -97,7 +97,7 @@ public class MainController {
         });
     }
 
-
+    // =============== EVENT HANDLER ===============
     @FXML
     private void onStartClick() {
         try {
@@ -109,7 +109,7 @@ public class MainController {
 
 
             if (cleanedSeedUrl == null) {
-                showNofication("WARNING", "Please enter a valid seed URL before starting.");
+                showNotification("WARNING", "Please enter a valid seed URL before starting.");
                 return;
             }
 
@@ -138,11 +138,11 @@ public class MainController {
                     }
 
                 } catch (Exception e) {
-                    showNofication("ERROR", e.getMessage());
+                    showNotification("ERROR", e.getMessage());
                 }
             });
         } catch (Exception e) {
-            showNofication("ERROR", e.getMessage());
+            showNotification("ERROR", e.getMessage());
         }
     }
 
@@ -158,7 +158,7 @@ public class MainController {
                 summary.setStatus(Status.STOPPED);
             }
         } catch (Exception e) {
-            showNofication("ERROR", e.getMessage());
+            showNotification("ERROR", e.getMessage());
         }
 
     }
@@ -171,13 +171,13 @@ public class MainController {
 
 
             if (status != Status.STOPPED && status != Status.COMPLETED) {
-                showNofication("WARNING", "Export is only available after the process is finished.");
+                showNotification("WARNING", "Export is only available after the process is finished.");
                 return;
             }
 
 
             if (brokenLinks.isEmpty()) {
-                showNofication("WARNING", "There are no broken links to export.");
+                showNotification("WARNING", "There are no broken links to export.");
                 return;
             }
 
@@ -206,17 +206,17 @@ public class MainController {
                     Exporter exporter = new Exporter(summary, brokenLinks);
                     exporter.save(finalFile);
 
-                    showNofication("SUCCESS", "Data has been successfully exported to:\n" + finalFile.getAbsolutePath());
+                    showNotification("SUCCESS", "Data has been successfully exported to:\n" + finalFile.getAbsolutePath());
                 } catch (Exception e) {
-                    showNofication("ERROR", e.getMessage());
+                    showNotification("ERROR", e.getMessage());
                 }
             });
         } catch (Exception e) {
-            showNofication("ERROR", e.getMessage());
+            showNotification("ERROR", e.getMessage());
         }
     }
 
-
+    // =============== SET UP GUI ===============
     private void setTitleBar() {
 
         Stage stage = (Stage) titleBar.getScene().getWindow();
@@ -238,7 +238,6 @@ public class MainController {
 
         closeBtn.setOnAction(e -> stage.close());
     }
-
 
     private void setButtonState() {
 
@@ -262,7 +261,6 @@ public class MainController {
             }
         });
     }
-
 
     private void setTableView() {
 
@@ -319,7 +317,7 @@ public class MainController {
                             Desktop.getDesktop().browse(new URI(url));
                         }
                     } catch (Exception ex) {
-                        showNofication("ERROR", ex.getMessage());
+                        showNotification("ERROR", ex.getMessage());
                     }
                 });
             }
@@ -337,7 +335,6 @@ public class MainController {
         });
 
     }
-
 
     private void setSummaryCard() {
 
@@ -422,7 +419,6 @@ public class MainController {
         statusCodeFilterField.textProperty().addListener((o, a, b) -> filter.run());
         statusCodeFilterOption.valueProperty().addListener((o, a, b) -> filter.run());
     }
-
 
     private void setPagination() {
 
@@ -520,11 +516,11 @@ public class MainController {
         paginationBar.getChildren().add(nextBtn);
     }
 
+    // =============== UTILS ===============
+    private void showNotification(String type, String msg) {
+        String message = (msg == null || msg.isBlank()) ? "Unknown error." : msg;
 
-    private void showNofication(String type, String message) {
-        String msg = (message == null || message.isBlank()) ? "Unknown error." : message;
-
-        Platform.runLater(() -> Application.openNotificationWindow(type, msg));
+        Platform.runLater(() -> Application.openNotificationWindow(type, message));
     }
 
     private void setupUncaughtExceptionHandler() {
@@ -537,7 +533,7 @@ public class MainController {
                 message = throwable.toString();
             }
 
-            showNofication("ERROR", message);
+            showNotification("ERROR", message);
         });
     }
 

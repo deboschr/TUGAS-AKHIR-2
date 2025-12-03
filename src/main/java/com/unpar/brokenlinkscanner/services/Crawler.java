@@ -95,7 +95,6 @@ public class Crawler {
 
                 executor.shutdown();
                 executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
