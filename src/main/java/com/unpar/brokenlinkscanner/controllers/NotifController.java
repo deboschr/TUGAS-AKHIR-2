@@ -75,15 +75,11 @@ public class NotifController {
 
         titleLabel.setText(title);
 
-
         titleBar.setStyle("-fx-background-color: " + color + ";");
-
 
         iconLabel.setText(icon);
 
-
         iconLabel.setStyle("-fx-text-fill: " + color + ";");
-
 
         String existing = root.getStyle();
 
