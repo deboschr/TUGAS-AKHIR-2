@@ -108,7 +108,7 @@ public class Application extends javafx.application.Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
     }
 
 }

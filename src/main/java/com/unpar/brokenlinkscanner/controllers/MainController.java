@@ -6,6 +6,7 @@ import com.unpar.brokenlinkscanner.services.Exporter;
 import com.unpar.brokenlinkscanner.models.Status;
 import com.unpar.brokenlinkscanner.models.Link;
 import com.unpar.brokenlinkscanner.models.Summary;
+import com.unpar.brokenlinkscanner.utils.LinkReceiver;
 import com.unpar.brokenlinkscanner.utils.UrlHandler;
 
 import javafx.application.Platform;
@@ -30,7 +31,7 @@ import java.net.URI;
 /**
  * Controller utama aplikasi Broken Link Checker.
  */
-public class MainController {
+public class MainController implements LinkReceiver {
 
     // =================================================================================================
     @FXML
@@ -76,8 +77,6 @@ public class MainController {
 
     private final Summary summary = new Summary();
 
-
-
     @FXML
     public void initialize() {
         setupUncaughtExceptionHandler();
@@ -93,8 +92,13 @@ public class MainController {
 
             seedUrlField.setText("https://informatika.unpar.ac.id");
 
-            crawler = new Crawler(link -> allLinks.add(link));
+            crawler = new Crawler(this);
         });
+    }
+
+    @Override
+    public void receive(Link link) {
+        Platform.runLater(() -> allLinks.add(link));
     }
 
     // =============== EVENT HANDLER ===============
@@ -346,6 +350,7 @@ public class MainController {
         summary.allLinksCountProperty().bind(Bindings.size(allLinks));
         summary.webpageLinksCountProperty().bind(Bindings.size(webpageLinks));
         summary.brokenLinksCountProperty().bind(Bindings.createIntegerBinding(() -> (int) allLinks.stream().filter(l -> !l.getError().isEmpty()).count(), allLinks));
+
         summary.statusProperty().addListener((obs, old, status) -> {
             switch (status) {
                 case IDLE -> statusLabel.setStyle("-fx-text-fill: #f9fafb;");
@@ -421,7 +426,6 @@ public class MainController {
     }
 
     private void setPagination() {
-
         updatePagination();
         brokenLinks.addListener((javafx.collections.ListChangeListener<Link>) c -> updatePagination());
     }

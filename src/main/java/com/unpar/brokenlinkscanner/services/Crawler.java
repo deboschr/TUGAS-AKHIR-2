@@ -2,9 +2,9 @@ package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
 import com.unpar.brokenlinkscanner.utils.HttpHandler;
+import com.unpar.brokenlinkscanner.utils.LinkReceiver;
 import com.unpar.brokenlinkscanner.utils.RateLimiter;
 import com.unpar.brokenlinkscanner.utils.UrlHandler;
-import javafx.application.Platform;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 
 public class Crawler {
 
@@ -24,7 +23,7 @@ public class Crawler {
 
     private final Map<String, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
 
-    private final Consumer<Link> linkSender;
+    private final LinkReceiver receiver;
 
     private volatile boolean isStopped = false;
 
@@ -32,13 +31,11 @@ public class Crawler {
 
     private static final int MAX_LINKS = 1000;
 
-    public Crawler(Consumer<Link> linkSender) {
-        this.linkSender = linkSender;
+    public Crawler(LinkReceiver receiver) {
+        this.receiver = receiver;
     }
 
-
     public void start(String seedUrl) {
-
         isStopped = false;
         repositories.clear();
         rateLimiters.clear();
@@ -108,7 +105,6 @@ public class Crawler {
 
     private Document checkLink(Link link, boolean isParseDoc) {
         try {
-
             if (repositories.get(link.getUrl()) != null || repositories.size() > MAX_LINKS) {
                 return null;
             }
@@ -145,10 +141,9 @@ public class Crawler {
 
             return null;
         } finally {
-
             Link existing = repositories.putIfAbsent(link.getUrl(), link);
             if (existing == null) {
-                Platform.runLater(() -> linkSender.accept(link));
+                receiver.receive(link);
             }
         }
     }
