@@ -114,7 +114,7 @@ public class Exporter {
         // ================= UKURAN KOLOM =================
         sheet.setColumnWidth(0, 7000);
         sheet.setColumnWidth(1, 7000);
-        sheet.setColumnWidth(1, 7000);
+        sheet.setColumnWidth(2, 4000);
     }
 
     private void writeBrokenLinkSummaryTable(Sheet sheet) {
