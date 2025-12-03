@@ -13,12 +13,10 @@ public class Summary {
     private final IntegerProperty webpageLinksCount = new SimpleIntegerProperty(0);
     private final IntegerProperty brokenLinksCount = new SimpleIntegerProperty(0);
 
-    // Start & End time (dalam millisecond)
     private final LongProperty startTime = new SimpleLongProperty(0);
     private final LongProperty endTime = new SimpleLongProperty(0);
 
     // ===============================================================================
-    // Status
     public Status getStatus() {
         return status.get();
     }
@@ -32,7 +30,6 @@ public class Summary {
     }
 
     // ===============================================================================
-    // TotalLinks
     public int getAllLinksCount() {
         return allLinksCount.get();
     }
@@ -47,7 +44,6 @@ public class Summary {
     }
 
     // ===============================================================================
-    // Webpages
     public int getWebpages() {
         return webpageLinksCount.get();
     }
@@ -62,7 +58,6 @@ public class Summary {
     }
 
     // ===============================================================================
-    // BrokenLinks
     public int getBrokenLinksCount() {
         return brokenLinksCount.get();
     }
@@ -77,7 +72,6 @@ public class Summary {
     }
 
     // ===============================================================================
-    // Start Time (ms)
     public long getStartTime() {
         return startTime.get();
     }
@@ -91,7 +85,6 @@ public class Summary {
     }
 
     // ===============================================================================
-    // End Time (ms)
     public long getEndTime() {
         return endTime.get();
     }

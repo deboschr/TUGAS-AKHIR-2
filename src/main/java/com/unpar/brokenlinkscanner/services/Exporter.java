@@ -32,7 +32,7 @@ public class Exporter {
     public Exporter( Summary summary, List<Link> data) {
         this.summary = summary;
         this.brokenLinks = new ArrayList<>(data);
-        this.brokenLinks.sort(Comparator.comparingInt(a -> a.getConnection().size()));
+        this.brokenLinks.sort(Comparator.comparingInt(a -> a.getRelation().size()));
     }
 
     public void save(File file) throws IOException {
@@ -194,7 +194,6 @@ public class Exporter {
             if (total == 0 || map.isEmpty())
                 continue;
 
-            // sorted errors
             List<String> errors = new ArrayList<>(map.keySet());
             errors.sort(String::compareTo);
 
@@ -205,7 +204,6 @@ public class Exporter {
 
                 CellStyle style = (rowIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
 
-                // category (only first row)
                 createTableCell(row, 0, (rowIndex == startRow ? categoryName : ""), style);
                 createTableCell(row, 1, err, style);
 
@@ -266,7 +264,7 @@ public class Exporter {
 
             CellStyle groupStyle = (groupIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
 
-            for (Map.Entry<Link, String> entry : link.getConnection().entrySet()) {
+            for (Map.Entry<Link, String> entry : link.getRelation().entrySet()) {
 
                 Row row = sheet.createRow(rowIndex);
 
