@@ -182,12 +182,12 @@ public class Crawler {
                      */
                     Link existingLink = repositories.get(link.getUrl());
                     if (existingLink != null) {
-                        existingLink.addConnection(currLink, anchorText);
+                        existingLink.addRelation(currLink, anchorText);
                         continue;
                     }
 
                     // Kalau belum pernah di periksa, berarti kita bikin koneksi pertama
-                    link.addConnection(currLink, anchorText);
+                    link.addRelation(currLink, anchorText);
 
                     /**
                      * Kalau hostnya sama dengan rootHost berarti link ini berpotensi jadi webpage.
@@ -255,8 +255,7 @@ public class Crawler {
              * berarti link ini udah pernah di periksa, jadi ga perlu di periksa lagi.
              * Kalau jumlah link total sudah mencapai batas, berarti ga perlu dilakukan pemeriksaan lagi.
              */
-            Link existingLink = repositories.get(link.getUrl());
-            if (existingLink != null || repositories.size() > MAX_LINKS) {
+            if (repositories.get(link.getUrl()) != null || repositories.size() > MAX_LINKS) {
                 return null;
             }
 
@@ -289,7 +288,10 @@ public class Crawler {
              * - request-nya oke
              * - response body-nya bukan null
              */
-            if (isParseDoc && res.body() != null && link.getStatusCode() == 200  && UrlHandler.getHost(link.getFinalUrl()).equals(rootHost)) {
+            boolean isOk = link.getStatusCode() == 200 && res.body() != null;
+            boolean isSameHost = UrlHandler.getHost(link.getFinalUrl()).equals(rootHost);
+
+            if (isParseDoc && isOk && isSameHost) {
                 try {
                     String body = (String) res.body();
 
@@ -306,15 +308,7 @@ public class Crawler {
             // bisa null kalau bukan html atau error
             return html;
         } catch (Throwable e) {
-            // Ambil nama error/class (misal "IOException")
-            String errorName = e.getClass().getSimpleName();
-
-            if (errorName.isBlank()) {
-                errorName = "UnknownError";
-            }
-
-            // simpan nama error
-            link.setError(errorName);
+            link.setError(e.getClass().getSimpleName());
 
             return null;
         } finally {
@@ -361,14 +355,8 @@ public class Crawler {
                 continue;
             }
 
-            // Bikin objek Link baru berdasarkan URL yang udah bersih
-            Link link = new Link(normalizedUrl);
-
-            // Ambil teks yang ada di link
-            String anchorText = a.text().trim();
-
-            // Masukin ke map hanya kalau URL itu belum pernah tercatat sebelumnya
-            result.putIfAbsent(link, anchorText);
+            // Masukan link baru dan anchor textnya
+            result.putIfAbsent(new Link(normalizedUrl), a.text().trim());
         }
 
         return result;

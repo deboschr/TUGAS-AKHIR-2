@@ -32,7 +32,7 @@ public class Link {
      * - key = Link lain yang terhubung dengan link ini
      * - value = anchor text yaitu teks yang ada di dalam tag a HTML
      */
-    private final Map<Link, String> connections = new ConcurrentHashMap<>();
+    private final Map<Link, String> relations = new ConcurrentHashMap<>();
 
     public Link(String url) {
         if (url == null || url.isBlank()) {
@@ -152,17 +152,17 @@ public class Link {
      * @param other      link lain yang terhubung
      * @param anchorText teks yang menghubungkan (boleh null, akan diset "")
      */
-    public void addConnection(Link other, String anchorText) {
+    public void addRelation(Link other, String anchorText) {
         if (other == null || other == this) {
             return;
         }
 
         // Tambahkan koneksi dua arah
-        this.connections.putIfAbsent(other, anchorText != null ? anchorText : "");
-        other.connections.putIfAbsent(this, anchorText != null ? anchorText : "");
+        this.relations.putIfAbsent(other, anchorText != null ? anchorText : "");
+        other.relations.putIfAbsent(this, anchorText != null ? anchorText : "");
     }
 
     public Map<Link, String> getConnection() {
-        return connections;
+        return relations;
     }
 }

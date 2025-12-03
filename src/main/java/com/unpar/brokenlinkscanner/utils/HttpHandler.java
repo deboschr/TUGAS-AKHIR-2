@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class HttpHandler {
 
-    private static final int CONNECTION_TIMEOUT = 10;
-    private static final int REQUEST_TIMEOUT = 10;
+    private static final long CONNECTION_TIMEOUT = 12L;
+    private static final long REQUEST_TIMEOUT = 10L;
 
 
     /**
