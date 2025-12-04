@@ -90,19 +90,28 @@ public class MainController implements LinkReceiver {
             setPagination();
 
 
-            // IF UNPAR
-            seedUrlField.setText("https://informatika.unpar.ac.id");
+            // IF UNPAR (OKE)
+            // seedUrlField.setText("https://informatika.unpar.ac.id");
 
-            // IF BINUS => SCHOOL OF COMPUTER SCIENCE BINUS
-            seedUrlField.setText("https://socs.binus.ac.id");
-
-            // MAT UNPAR
-            seedUrlField.setText("https://matematika.unpar.ac.id/");
+            // IF UNPAS
+            seedUrlField.setText("https://if.unpas.ac.id");
 
             // MAT ITB =>
-            seedUrlField.setText("https://fmipa.itb.ac.id");
+            // seedUrlField.setText("https://fmipa.itb.ac.id");
 
+            // ==================================================================
 
+            // IF UNPAD
+            // seedUrlField.setText("https://informatika.unpad.ac.id");
+
+            // IF BINUS => SCHOOL OF COMPUTER SCIENCE BINUS (TERLALU BESAR)
+            // seedUrlField.setText("https://socs.binus.ac.id");
+
+            // IF ITB => Sekolah Teknik Elektro dan Informatika
+            // seedUrlField.setText("https://stei.itb.ac.id/");
+
+            // MAT UNPAR (TERLALU KECIL)
+            // seedUrlField.setText("https://matematika.unpar.ac.id");
             crawler = new Crawler(this);
         });
     }
@@ -120,7 +129,7 @@ public class MainController implements LinkReceiver {
             String seedUrl = seedUrlField.getText().trim();
 
 
-            String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl, true);
+            String cleanedSeedUrl = UrlHandler.normalizeUrl(seedUrl, false);
 
 
             if (cleanedSeedUrl == null) {

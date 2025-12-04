@@ -1,15 +1,16 @@
 package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
-import com.unpar.brokenlinkscanner.utils.HttpHandler;
-import com.unpar.brokenlinkscanner.utils.LinkReceiver;
-import com.unpar.brokenlinkscanner.utils.RateLimiter;
-import com.unpar.brokenlinkscanner.utils.UrlHandler;
+import com.unpar.brokenlinkscanner.utils.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -23,19 +24,21 @@ public class Crawler {
 
     private final LinkReceiver receiver;
 
-    private volatile boolean isStopped = false;
+    private volatile boolean isStopped;
+
+    private ExecutorService executor;
 
     private String rootHost;
 
-    private static final int MAX_LINKS = 1000;
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(15)).build();
 
-    private ExecutorService executor;
+    private static final int MAX_LINKS = 1000;
 
     public Crawler(LinkReceiver receiver) {
         this.receiver = receiver;
     }
 
-    public void start(String seedUrl)  {
+    public void start(String seedUrl) {
 
         executor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -53,7 +56,7 @@ public class Crawler {
             Link webpageLink = frontier.poll();
 
             if (webpageLink == null) {
-                continue;
+                return;
             }
 
             Document html = checkLink(webpageLink, true);
@@ -67,10 +70,8 @@ public class Crawler {
             List<Callable<Void>> tasks = new ArrayList<>();
 
             for (var entry : linksOnWebpage.entrySet()) {
-
-                if (repositories.size() >= MAX_LINKS || isStopped) {
-                    frontier.clear();
-                    break;
+                if (isStopped) {
+                    return;
                 }
 
                 Link link = entry.getKey();
@@ -101,7 +102,6 @@ public class Crawler {
                     executor.invokeAll(tasks);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    return;
                 }
             }
         }
@@ -116,19 +116,16 @@ public class Crawler {
     }
 
     private Document checkLink(Link link, boolean isParseDoc) {
+        if (repositories.get(link.getUrl()) != null || repositories.size() > MAX_LINKS) {
+            return null;
+        }
+
         try {
-            if (repositories.get(link.getUrl()) != null || repositories.size() > MAX_LINKS) {
-                return null;
-            }
+            HttpResponse<?> res = fetch(link.getUrl(), isParseDoc);
 
-            RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(link.getUrl()), h -> new RateLimiter());
-            limiter.delay();
-
-            HttpResponse<?> res = HttpHandler.fetch(link.getUrl(), isParseDoc);
             link.setFinalUrl(res.uri().toString());
             link.setContentType(res.headers().firstValue("Content-Type").orElse("").toLowerCase());
             link.setStatusCode(res.statusCode());
-
 
             Document html = null;
             boolean isOk = link.getStatusCode() == 200 && res.body() != null;
@@ -148,9 +145,8 @@ public class Crawler {
 
             return html;
         } catch (Throwable e) {
-
-            link.setError(e.getClass().getSimpleName());
-
+            // link.setError(e.getClass().getSimpleName());
+            link.setError(ErrorHandler.getExceptionError(e));
             return null;
         } finally {
             Link existing = repositories.putIfAbsent(link.getUrl(), link);
@@ -182,6 +178,31 @@ public class Crawler {
         }
 
         return result;
+    }
+
+    private HttpResponse<?> fetch(String url, boolean isNeedBody) throws Exception {
+        RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(url), h -> new RateLimiter());
+        limiter.delay();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                // URL target
+                .uri(URI.create(url))
+                // Metode HTTP
+                .GET()
+                // Header
+                .header("User-Agent", "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2)")
+                // Request Timeout
+                .timeout(Duration.ofSeconds(15L)).build();
+
+        HttpResponse<?> response;
+
+        if (isNeedBody) {
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        } else {
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+        }
+
+        return response;
     }
 
     public boolean isStoppedByUser() {

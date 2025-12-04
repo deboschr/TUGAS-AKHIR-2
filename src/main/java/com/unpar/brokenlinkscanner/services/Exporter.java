@@ -2,7 +2,7 @@ package com.unpar.brokenlinkscanner.services;
 
 import com.unpar.brokenlinkscanner.models.Link;
 import com.unpar.brokenlinkscanner.models.Summary;
-import com.unpar.brokenlinkscanner.utils.HttpHandler;
+import com.unpar.brokenlinkscanner.utils.ErrorHandler;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFColor;
@@ -158,7 +158,7 @@ public class Exporter {
         for (Link link : brokenLinks) {
             int code = link.getStatusCode();
             String err = link.getError();
-            boolean isStandard = HttpHandler.isStandardError(code);
+            boolean isStandard = ErrorHandler.isHttpError(code);
 
             if (code == 0) {
                 connectionErrorMap.merge(err, 1, Integer::sum);
