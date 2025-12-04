@@ -10,9 +10,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.net.http.HttpResponse;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class Crawler {
@@ -31,11 +29,16 @@ public class Crawler {
 
     private static final int MAX_LINKS = 1000;
 
+    private ExecutorService executor;
+
     public Crawler(LinkReceiver receiver) {
         this.receiver = receiver;
     }
 
-    public void start(String seedUrl) {
+    public void start(String seedUrl)  {
+
+        executor = Executors.newVirtualThreadPerTaskExecutor();
+
         isStopped = false;
         repositories.clear();
         rateLimiters.clear();
@@ -47,53 +50,59 @@ public class Crawler {
 
         while (!isStopped && !frontier.isEmpty() && repositories.size() < MAX_LINKS) {
 
-            Link currLink = frontier.poll();
+            Link webpageLink = frontier.poll();
 
-            if (currLink == null) {
+            if (webpageLink == null) {
                 continue;
             }
 
-            Document HTML = checkLink(currLink, true);
+            Document html = checkLink(webpageLink, true);
 
-            if (!currLink.isWebpage() || HTML == null) {
+            if (!webpageLink.isWebpage() || html == null) {
                 continue;
             }
 
-            Map<Link, String> linksOnWebpage = extractLink(HTML);
+            Map<Link, String> linksOnWebpage = extractLink(html);
 
-            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Callable<Void>> tasks = new ArrayList<>();
 
-                for (var entry : linksOnWebpage.entrySet()) {
+            for (var entry : linksOnWebpage.entrySet()) {
 
-                    if (repositories.size() >= MAX_LINKS || isStopped) {
-                        frontier.clear();
-                        break;
-                    }
-
-                    Link link = entry.getKey();
-                    String anchorText = entry.getValue();
-
-                    Link existingLink = repositories.get(link.getUrl());
-                    if (existingLink != null) {
-                        existingLink.addRelation(currLink, anchorText);
-                        continue;
-                    }
-
-                    link.addRelation(currLink, anchorText);
-
-                    if (UrlHandler.getHost(link.getUrl()).equalsIgnoreCase(rootHost)) {
-                        frontier.offer(link);
-                    } else {
-                        executor.submit(() -> {
-                            checkLink(link, false);
-                        });
-                    }
+                if (repositories.size() >= MAX_LINKS || isStopped) {
+                    frontier.clear();
+                    break;
                 }
 
-                executor.shutdown();
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                Link link = entry.getKey();
+                String anchorText = entry.getValue();
+
+                Link existingLink = repositories.get(link.getUrl());
+                if (existingLink != null) {
+                    existingLink.addWebpageSource(webpageLink, anchorText);
+                    continue;
+                } else {
+                    link.addWebpageSource(webpageLink, anchorText);
+                }
+
+                if (UrlHandler.getHost(link.getUrl()).equalsIgnoreCase(rootHost)) {
+                    frontier.offer(link);
+                } else {
+                    tasks.add(() -> {
+                        if (isStopped) return null;
+                        checkLink(link, false);
+                        return null;
+                    });
+
+                }
+            }
+
+            if (!tasks.isEmpty()) {
+                try {
+                    executor.invokeAll(tasks);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
             }
         }
     }
@@ -101,6 +110,9 @@ public class Crawler {
     public void stop() {
         isStopped = true;
         frontier.clear();
+        if (executor != null) {
+            executor.shutdownNow();
+        }
     }
 
     private Document checkLink(Link link, boolean isParseDoc) {

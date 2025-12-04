@@ -20,7 +20,7 @@ public class Link {
 
     private final BooleanProperty isWebpage = new SimpleBooleanProperty(false);
 
-    private final Map<Link, String> relations = new ConcurrentHashMap<>();
+    private final Map<Link, String> webpageSources = new ConcurrentHashMap<>();
 
     public Link(String url) {
         if (url == null || url.isBlank()) {
@@ -36,12 +36,6 @@ public class Link {
         return url.get();
     }
 
-    public void setUrl(String value) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("URL cannot be null or empty");
-        }
-        url.set(value);
-    }
 
     public StringProperty urlProperty() {
         return url;
@@ -122,16 +116,33 @@ public class Link {
 
 
     // =============================================================================
-    public void addRelation(Link other, String anchorText) {
-        if (other == null || other == this) {
+    public void addWebpageSource(Link webpageLink, String anchorText) {
+        if (webpageLink == null || webpageLink == this) {
             return;
         }
 
-        this.relations.putIfAbsent(other, anchorText != null ? anchorText : "");
-        other.relations.putIfAbsent(this, anchorText != null ? anchorText : "");
+        this.webpageSources.putIfAbsent(webpageLink, anchorText != null ? anchorText : "");
     }
 
-    public Map<Link, String> getRelation() {
-        return relations;
+    public Map<Link, String> getWebpageSources() {
+        return webpageSources;
     }
+
+    // =============================================================================
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+
+        if (!(obj instanceof Link)) return false;
+
+        Link other = (Link) obj;
+
+        return this.getUrl().equals(other.getUrl());
+    }
+
+    @Override
+    public int hashCode() {
+        return getUrl().hashCode();
+    }
+
 }

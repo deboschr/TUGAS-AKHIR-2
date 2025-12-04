@@ -9,12 +9,12 @@ import java.util.Map;
 
 public class HttpHandler {
 
-    private static final long CONNECTION_TIMEOUT = 12L;
-    private static final long REQUEST_TIMEOUT = 10L;
+    private static final long CONNECTION_TIMEOUT = 15L;
+    private static final long REQUEST_TIMEOUT = 15L;
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT)).build();
 
-    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2; contact: 6182001060@student.unpar.ac.id)";
+    private static final String USER_AGENT = "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2)";
 
     private static final Map<Integer, String> STATUS_MAP = Map.ofEntries(
             // 4xx - Client Errors

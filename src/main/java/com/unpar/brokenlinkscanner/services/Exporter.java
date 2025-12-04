@@ -32,7 +32,7 @@ public class Exporter {
     public Exporter( Summary summary, List<Link> data) {
         this.summary = summary;
         this.brokenLinks = new ArrayList<>(data);
-        this.brokenLinks.sort(Comparator.comparingInt(a -> a.getRelation().size()));
+        this.brokenLinks.sort(Comparator.comparingInt(a -> a.getWebpageSources().size()));
     }
 
     public void save(File file) throws IOException {
@@ -264,7 +264,7 @@ public class Exporter {
 
             CellStyle groupStyle = (groupIndex % 2 == 0) ? evenRowStyle : oddRowStyle;
 
-            for (Map.Entry<Link, String> entry : link.getRelation().entrySet()) {
+            for (Map.Entry<Link, String> entry : link.getWebpageSources().entrySet()) {
 
                 Row row = sheet.createRow(rowIndex);
 

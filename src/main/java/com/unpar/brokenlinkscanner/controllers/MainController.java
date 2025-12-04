@@ -90,7 +90,18 @@ public class MainController implements LinkReceiver {
             setPagination();
 
 
+            // IF UNPAR
             seedUrlField.setText("https://informatika.unpar.ac.id");
+
+            // IF BINUS => SCHOOL OF COMPUTER SCIENCE BINUS
+            seedUrlField.setText("https://socs.binus.ac.id");
+
+            // MAT UNPAR
+            seedUrlField.setText("https://matematika.unpar.ac.id/");
+
+            // MAT ITB =>
+            seedUrlField.setText("https://fmipa.itb.ac.id");
+
 
             crawler = new Crawler(this);
         });

@@ -54,7 +54,8 @@ public class UrlHandler {
 
             path = normalizePath(path);
 
-            URI cleaned = new URI(scheme.toLowerCase(), // SCHEME
+            URI cleaned = new URI(
+                    scheme.toLowerCase(), // SCHEME
                     null, // USERINFO
                     host.toLowerCase(), // HOST
                     port, // PORT

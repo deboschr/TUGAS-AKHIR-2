@@ -77,7 +77,7 @@ public class LinkController {
     private void setTableValue() {
 
         webpageLinkTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        webpageLinkTable.setItems(FXCollections.observableArrayList(link.getRelation().entrySet()));
+        webpageLinkTable.setItems(FXCollections.observableArrayList(link.getWebpageSources().entrySet()));
         anchorTextColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
         webpageUrlColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getKey().getUrl()));
 
