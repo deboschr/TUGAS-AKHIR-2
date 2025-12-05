@@ -35,7 +35,7 @@ public class NotifController {
     @FXML
     private void initialize() {
         setTitleBar();
-        setNotification();
+        setNotifValue();
     }
 
     private void setTitleBar() {
@@ -59,7 +59,7 @@ public class NotifController {
         });
     }
 
-    public void setNotification() {
+    public void setNotifValue() {
 
         messageLabel.setText(message);
 
