@@ -1,9 +1,14 @@
 package com.unpar.brokenlinkscanner.utils;
 
 public class RateLimiter {
-    private static final long INTERVAL = 1500L;
+    // private final long INTERVAL = 1500L;
+    private final long INTERVAL;
 
     private volatile long lastRequestTime = 0L;
+
+    public RateLimiter(long interval) {
+        this.INTERVAL = interval;
+    }
 
     public synchronized void delay() {
 

@@ -91,27 +91,44 @@ public class MainController implements LinkReceiver {
 
 
             // IF UNPAR (OKE)
-            // seedUrlField.setText("https://informatika.unpar.ac.id");
+            seedUrlField.setText("https://informatika.unpar.ac.id");
 
-            // IF UNPAS
-            seedUrlField.setText("https://if.unpas.ac.id");
+            // IF UNPAS (OKE)
+            // seedUrlField.setText("https://if.unpas.ac.id");
 
-            // MAT ITB =>
-            // seedUrlField.setText("https://fmipa.itb.ac.id");
+            // IF UNPAD (OKE)
+            // seedUrlField.setText("https://informatika.unpad.ac.id");
+
+            // IF UNIKOM (OKE) (RADA KECIL)
+            // seedUrlField.setText("https://if.unikom.ac.id");
+
 
             // ==================================================================
 
-            // IF UNPAD
-            // seedUrlField.setText("https://informatika.unpad.ac.id");
+            // MAT ITB (BLOCK)
+            // seedUrlField.setText("https://fmipa.itb.ac.id");
+
+            // IF TELKOM (BLOCK)
+            // seedUrlField.setText("https://soc.telkomuniversity.ac.id");
+
 
             // IF BINUS => SCHOOL OF COMPUTER SCIENCE BINUS (TERLALU BESAR)
             // seedUrlField.setText("https://socs.binus.ac.id");
 
-            // IF ITB => Sekolah Teknik Elektro dan Informatika
-            // seedUrlField.setText("https://stei.itb.ac.id/");
+            // IF ITB => Sekolah Teknik Elektro dan Informatika (Terlalu Besar)
+            // seedUrlField.setText("https://stei.itb.ac.id");
+
+
+            // IF MARNAT (LAMBAT)
+            // seedUrlField.setText("https://it.maranatha.edu");
+
+            // IF UNJANI
+            // seedUrlField.setText("https://if.unjani.ac.id");
 
             // MAT UNPAR (TERLALU KECIL)
             // seedUrlField.setText("https://matematika.unpar.ac.id");
+
+
             crawler = new Crawler(this);
         });
     }
@@ -151,9 +168,7 @@ public class MainController implements LinkReceiver {
 
                     summary.setStartTime(System.currentTimeMillis());
 
-
                     crawler.start(cleanedSeedUrl);
-
 
                     summary.setEndTime(System.currentTimeMillis());
 

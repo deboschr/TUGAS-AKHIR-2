@@ -30,7 +30,14 @@ public class Crawler {
 
     private String rootHost;
 
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(15)).build();
+    // 0 500 1000 1500 2000 2500 3000
+    private static long INTERVAL = 500L;
+    // 1 5 10 15 20 25 30
+    private static long CONNECTION_TIMEOUT = 30L;
+    // 1 5 10 15 20 25 30
+    private static long REQUEST_TIMEOUT = 30L;
+
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT)).build();
 
     private static final int MAX_LINKS = 1000;
 
@@ -39,13 +46,15 @@ public class Crawler {
     }
 
     public void start(String seedUrl) {
-
-        executor = Executors.newVirtualThreadPerTaskExecutor();
-
         isStopped = false;
         repositories.clear();
         rateLimiters.clear();
         frontier.clear();
+
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+        executor = Executors.newVirtualThreadPerTaskExecutor();
 
         rootHost = UrlHandler.getHost(seedUrl);
 
@@ -145,7 +154,6 @@ public class Crawler {
 
             return html;
         } catch (Throwable e) {
-            // link.setError(e.getClass().getSimpleName());
             link.setError(ErrorHandler.getExceptionError(e));
             return null;
         } finally {
@@ -181,7 +189,7 @@ public class Crawler {
     }
 
     private HttpResponse<?> fetch(String url, boolean isNeedBody) throws Exception {
-        RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(url), h -> new RateLimiter());
+        RateLimiter limiter = rateLimiters.computeIfAbsent(UrlHandler.getHost(url), h -> new RateLimiter(INTERVAL));
         limiter.delay();
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -192,7 +200,7 @@ public class Crawler {
                 // Header
                 .header("User-Agent", "BrokenLinkChecker (+https://github.com/deboschr/TUGAS-AKHIR-2)")
                 // Request Timeout
-                .timeout(Duration.ofSeconds(15L)).build();
+                .timeout(Duration.ofSeconds(REQUEST_TIMEOUT)).build();
 
         HttpResponse<?> response;
 
