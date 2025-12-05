@@ -31,13 +31,16 @@ public class Crawler {
     private String rootHost;
 
     // 0 500 1000 1500 2000 2500 3000
-    private static long INTERVAL = 500L;
+    private static long INTERVAL = 2000L;
     // 1 5 10 15 20 25 30
-    private static long CONNECTION_TIMEOUT = 30L;
+    private static long CONNECTION_TIMEOUT = 500L;
     // 1 5 10 15 20 25 30
-    private static long REQUEST_TIMEOUT = 30L;
+    private static long REQUEST_TIMEOUT = 20L;
 
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT)).build();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .connectTimeout(Duration.ofMillis(CONNECTION_TIMEOUT))
+            .build();
 
     private static final int MAX_LINKS = 1000;
 
@@ -154,6 +157,7 @@ public class Crawler {
 
             return html;
         } catch (Throwable e) {
+            // link.setError(e.getClass().getSimpleName());
             link.setError(ErrorHandler.getExceptionError(e));
             return null;
         } finally {

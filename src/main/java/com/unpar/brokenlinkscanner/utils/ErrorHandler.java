@@ -21,42 +21,58 @@ public class ErrorHandler {
 
         if (e == null) return "";
 
-        // ========== 0. Jika thread dihentikan ==========
-        if (e instanceof InterruptedException ||
-                e instanceof CancellationException) {
+        // ========== 0. Thread dihentikan ==========
+        if (e instanceof InterruptedException || e instanceof CancellationException) {
             return "";
         }
 
-        // Ambil exception utama + cause hingga paling dalam
+        // Ambil exception terluar (top) dan root cause
+        Throwable top = e;
         Throwable root = e;
         while (root.getCause() != null) {
             root = root.getCause();
         }
 
+        String topName = top.getClass().getName();
+        String topSimple = top.getClass().getSimpleName();
+        String topMsg = top.getMessage() != null ? top.getMessage().toLowerCase() : "";
+
         String name = root.getClass().getName();
         String simple = root.getClass().getSimpleName();
         String msg = root.getMessage() != null ? root.getMessage().toLowerCase() : "";
 
-        // ========== 1. Timeout ==========
-        if (simple.contains("HttpTimeoutException")) return "Request Timeout";
-        if (simple.contains("HttpConnectTimeoutException")) return "Connection Timeout";
+        // ========== 1. TIMEOUT (gabung semua) ==========
+        if (topSimple.contains("HttpTimeoutException") ||
+                topSimple.contains("HttpConnectTimeoutException") ||
+                simple.contains("HttpTimeoutException") ||
+                simple.contains("HttpConnectTimeoutException") ||
+                msg.contains("timed out") ||
+                topMsg.contains("timed out")) {
 
-        // ========== 2. Host errors ==========
-        if (root instanceof UnknownHostException || msg.contains("unknown host")) return "Host Not Found";
-        if (msg.contains("no such host")) return "Host Not Found";
-        if (simple.equals("UnresolvedAddressException")) return "Host Not Found";
+            return "Timeout";
+        }
 
-        // ========== 3. Routing / Network ==========
+        // ========== 2. HOST NOT FOUND ==========
+        if (root instanceof UnknownHostException ||
+                msg.contains("unknown host") ||
+                msg.contains("no such host") ||
+                simple.contains("UnresolvedAddressException")) {
+
+            return "Host Not Found";
+        }
+
+        // ========== 3. ROUTING / NETWORK UNREACHABLE ==========
         if (msg.contains("no route to host")) return "No Route To Host";
         if (msg.contains("network is unreachable")) return "Network Unreachable";
 
-        // ========== 4. CONNECTION ERROR ==========
+        // ========== 4. CONNECTION ERRORS ==========
         if (msg.contains("refused")) return "Connection Refused";
         if (msg.contains("connection reset")) return "Connection Reset";
         if (msg.contains("broken pipe")) return "Connection Closed";
+
         if (root instanceof ConnectException) return "Connection Error";
 
-        // ========== 6. SSL / Certificate ==========
+        // ========== 5. SSL ERRORS (disatukan) ==========
         if (root instanceof SSLHandshakeException ||
                 root instanceof CertificateException ||
                 name.contains("SunCertPathBuilderException") ||
@@ -69,17 +85,23 @@ public class ErrorHandler {
             return "SSL Error";
         }
 
-        // ========== 7. Invalid URL ==========
-        if (root instanceof MalformedURLException) return "Invalid URL";
-        if (root instanceof MalformedInputException) return "Invalid URL";
-        if (root instanceof IllegalArgumentException) return "Invalid URL";
+        // ========== 6. INVALID URL ==========
+        if (root instanceof MalformedURLException ||
+                root instanceof MalformedInputException ||
+                root instanceof IllegalArgumentException) {
 
-        // ========== 9. IOException generik ==========
-        if (root instanceof IOException) return "I/O Error";
+            return "Invalid URL";
+        }
 
-        // ========== 10. Fallback: format nama ==========
+        // ========== 7. GENERIC IO ERROR ==========
+        if (root instanceof IOException) {
+            return "I/O Error";
+        }
+
+        // ========== 8. FALLBACK ==========
         return simple.replaceAll("(.)([A-Z])", "$1 $2");
     }
+
 
 
 
