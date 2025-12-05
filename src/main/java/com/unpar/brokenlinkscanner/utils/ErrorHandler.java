@@ -61,18 +61,12 @@ public class ErrorHandler {
             return "Host Not Found";
         }
 
-        // ========== 3. ROUTING / NETWORK UNREACHABLE ==========
-        if (msg.contains("no route to host")) return "No Route To Host";
-        if (msg.contains("network is unreachable")) return "Network Unreachable";
-
         // ========== 4. CONNECTION ERRORS ==========
         if (msg.contains("refused")) return "Connection Refused";
         if (msg.contains("connection reset")) return "Connection Reset";
         if (msg.contains("broken pipe")) return "Connection Closed";
 
-        if (root instanceof ConnectException) return "Connection Error";
-
-        // ========== 5. SSL ERRORS (disatukan) ==========
+        // ========== 5. SSL ERRORS  ==========
         if (root instanceof SSLHandshakeException ||
                 root instanceof CertificateException ||
                 name.contains("SunCertPathBuilderException") ||
