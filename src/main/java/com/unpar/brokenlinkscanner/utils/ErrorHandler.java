@@ -86,12 +86,7 @@ public class ErrorHandler {
 
             return "Invalid URL";
         }
-
-        // ========== 7. GENERIC IO ERROR ==========
-        if (root instanceof IOException) {
-            return "I/O Error";
-        }
-
+        
         // ========== 8. FALLBACK ==========
         return simple.replaceAll("(.)([A-Z])", "$1 $2");
     }
