@@ -41,7 +41,7 @@ public class ErrorHandler {
         String simple = root.getClass().getSimpleName();
         String msg = root.getMessage() != null ? root.getMessage().toLowerCase() : "";
 
-        // ========== 1. TIMEOUT (gabung semua) ==========
+        // ========== TIMEOUT  ==========
         if (topSimple.contains("HttpTimeoutException") ||
                 topSimple.contains("HttpConnectTimeoutException") ||
                 simple.contains("HttpTimeoutException") ||
@@ -52,7 +52,7 @@ public class ErrorHandler {
             return "Timeout";
         }
 
-        // ========== 2. HOST NOT FOUND ==========
+        // ========== HOST NOT FOUND ==========
         if (root instanceof UnknownHostException ||
                 msg.contains("unknown host") ||
                 msg.contains("no such host") ||
@@ -61,12 +61,12 @@ public class ErrorHandler {
             return "Host Not Found";
         }
 
-        // ========== 4. CONNECTION ERRORS ==========
+        // ========== CONNECTION ERRORS ==========
         if (msg.contains("refused")) return "Connection Refused";
         if (msg.contains("connection reset")) return "Connection Reset";
         if (msg.contains("broken pipe")) return "Connection Closed";
 
-        // ========== 5. SSL ERRORS  ==========
+        // ========== SSL ERRORS  ==========
         if (root instanceof SSLHandshakeException ||
                 root instanceof CertificateException ||
                 name.contains("SunCertPathBuilderException") ||
@@ -79,16 +79,21 @@ public class ErrorHandler {
             return "SSL Error";
         }
 
-        // ========== 6. INVALID URL ==========
+        // ========== INVALID URL ==========
         if (root instanceof MalformedURLException ||
                 root instanceof MalformedInputException ||
                 root instanceof IllegalArgumentException) {
 
             return "Invalid URL";
         }
-        
-        // ========== 8. FALLBACK ==========
-        return simple.replaceAll("(.)([A-Z])", "$1 $2");
+
+        // ========== IO ERROR ==========
+        if (root instanceof IOException) {
+            return "I/O Error";
+        }
+
+
+        return simple;
     }
 
 
