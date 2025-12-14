@@ -15,6 +15,7 @@ public class Summary {
     private final LongProperty startTime = new SimpleLongProperty(0);
     private final LongProperty endTime = new SimpleLongProperty(0);
 
+    // =============================================
     public Status getStatus() {
         return status.get();
     }
@@ -27,6 +28,7 @@ public class Summary {
         return status;
     }
 
+    // =============================================
     public int getAllLinksCount() {
         return allLinksCount.get();
     }
@@ -35,11 +37,11 @@ public class Summary {
         this.allLinksCount.set(value);
     }
 
-    @SuppressWarnings("exports")
     public IntegerProperty allLinksCountProperty() {
         return allLinksCount;
     }
 
+    // =============================================
     public int getWebpages() {
         return webpageLinksCount.get();
     }
@@ -48,11 +50,11 @@ public class Summary {
         this.webpageLinksCount.set(value);
     }
 
-    @SuppressWarnings("exports")
     public IntegerProperty webpageLinksCountProperty() {
         return webpageLinksCount;
     }
 
+    // =============================================
     public int getBrokenLinksCount() {
         return brokenLinksCount.get();
     }
@@ -61,11 +63,11 @@ public class Summary {
         this.brokenLinksCount.set(value);
     }
 
-    @SuppressWarnings("exports")
     public IntegerProperty brokenLinksCountProperty() {
         return brokenLinksCount;
     }
 
+    // =============================================
     public long getStartTime() {
         return startTime.get();
     }
@@ -78,6 +80,7 @@ public class Summary {
         return startTime;
     }
 
+    // =============================================
     public long getEndTime() {
         return endTime.get();
     }

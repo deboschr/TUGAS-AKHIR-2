@@ -38,7 +38,6 @@ public class Exporter {
     public void save(File file) throws IOException {
 
         try (Workbook workbook = new XSSFWorkbook()) {
-
             this.headerStyle = createRowStyle(workbook, Color.decode("#2f5d50"), true, true, Color.decode("#f1f0eb"), 16);
             this.oddRowStyle = createRowStyle(workbook, Color.decode("#f4ebdb"), false, false, Color.decode("#222222"), 12);
             this.evenRowStyle = createRowStyle(workbook, Color.decode("#b6c5bf"), false, false, Color.decode("#222222"), 12);
@@ -111,7 +110,7 @@ public class Exporter {
             createTableCell(row, 1, entry.getValue(), style);
         }
 
-        // ================= UKURAN KOLOM =================
+        // ================= LEBAR KOLOM =================
         sheet.setColumnWidth(0, 7000);
         sheet.setColumnWidth(1, 7000);
         sheet.setColumnWidth(2, 4000);
@@ -183,9 +182,7 @@ public class Exporter {
                 Map.of("name", "Non-Standard Error", "map", nonStandardErrorMap,  "total", nonStandardErrorTotal)
         );
 
-        // ================= WRITE ALL WITH ONE LOOP =================
         for (var group : groups) {
-
             String categoryName = (String) group.get("name");
             @SuppressWarnings("unchecked")
             Map<String, Integer> map = (Map<String, Integer>) group.get("map");
@@ -308,7 +305,7 @@ public class Exporter {
             groupIndex++;
         }
 
-        // ================= UKURAN KOLOM =================
+        // ================= LEBAR KOLOM =================
         sheet.setColumnWidth(columnList.indexOf("URL"), 15000);
         sheet.setColumnWidth(columnList.indexOf("Final URL"), 15000);
         sheet.setColumnWidth(columnList.indexOf("Content Type"), 10000);
@@ -360,5 +357,4 @@ public class Exporter {
 
         return style;
     }
-
 }

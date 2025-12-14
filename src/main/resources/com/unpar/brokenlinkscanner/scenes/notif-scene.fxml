@@ -12,17 +12,20 @@
     <!-- ===================== TITLE BAR ===================== -->
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
-            <Label fx:id="titleLabel" styleClass="title-text" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Button fx:id="closeBtn" text="&#x2715;" styleClass="title-btn" />
+            <Label fx:id="titleLabel" styleClass="title-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="closeBtn" text="&#x2715;" styleClass="title-btn"/>
         </HBox>
     </top>
 
     <!-- ===================== CONTENT ===================== -->
     <center>
         <HBox spacing="16" styleClass="content-area">
-            <Label fx:id="iconLabel" styleClass="icon-label" />
-            <Label fx:id="messageLabel" wrapText="true" styleClass="message-text" />
+            <!-- ======== Ikon Jenis Notifikasi (Error, Warning, Success) ======== -->
+            <Label fx:id="iconLabel" styleClass="icon-label"/>
+
+            <!-- ======== Pesan Notifikasi ======== -->
+            <Label fx:id="messageLabel" wrapText="true" styleClass="message-text"/>
         </HBox>
     </center>
 </BorderPane>

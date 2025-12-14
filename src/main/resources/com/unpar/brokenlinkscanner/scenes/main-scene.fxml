@@ -10,6 +10,7 @@
         fx:controller="com.unpar.brokenlinkscanner.controllers.MainController"
         stylesheets="@../styles/main-style.css">
 
+    <!-- ===================== TITLE BAR ===================== -->
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
             <Label text="Broken Link Scanner" styleClass="title-text" HBox.hgrow="ALWAYS"/>
@@ -25,11 +26,10 @@
         </HBox>
     </top>
 
-
+    <!-- ===================== CONTENT ===================== -->
     <center>
         <VBox styleClass="content-area">
-
-            <!-- ===================== INPUT & CONTROLL BUTTON ===================== -->
+            <!-- ===================== INPUT URL & CONTROLL BUTTON ===================== -->
             <HBox alignment="CENTER_LEFT" styleClass="input-wrapper">
 
                 <TextField fx:id="seedUrlField" promptText="Enter Seed URL..." HBox.hgrow="ALWAYS"
@@ -81,7 +81,7 @@
                             <Label fx:id="statusLabel" text="....." styleClass="status-idle"/>
                         </VBox>
 
-                        <!-- Total Links -->
+                        <!-- All Links -->
                         <VBox styleClass="summary-box" GridPane.columnIndex="1"
                               GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                             <Label text="All Links" styleClass="subcard-title"/>
@@ -165,7 +165,6 @@
 
             <!-- ===================== RESULT SECTION ===================== -->
             <VBox styleClass="card" VBox.vgrow="ALWAYS">
-
                 <!-- ====== Card Header ====== -->
                 <HBox spacing="10">
                     <Label text="Result" styleClass="section-title"/>
@@ -199,11 +198,7 @@
                         <TableColumn fx:id="urlColumn" text="URL" prefWidth="800"/>
                     </columns>
                 </TableView>
-
             </VBox>
-
         </VBox>
-
     </center>
-
 </BorderPane>

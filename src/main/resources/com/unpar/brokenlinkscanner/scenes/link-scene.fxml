@@ -5,21 +5,21 @@
 <?import java.lang.String?>
 
 <BorderPane
-    xmlns:fx="http://javafx.com/fxml"
-    fx:controller="com.unpar.brokenlinkscanner.controllers.LinkController"
-    stylesheets="@../styles/link-style.css"
-    prefWidth="900" prefHeight="600"
-    fx:id="root">
+        xmlns:fx="http://javafx.com/fxml"
+        fx:controller="com.unpar.brokenlinkscanner.controllers.LinkController"
+        stylesheets="@../styles/link-style.css"
+        prefWidth="900" prefHeight="600"
+        fx:id="root">
 
     <!-- ===================== TITLE BAR ===================== -->
     <top>
         <HBox fx:id="titleBar" styleClass="title-bar">
-            <Label text="Link Details" styleClass="title-text" />
-            <Region HBox.hgrow="ALWAYS" />
+            <Label text="Link Details" styleClass="title-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
             <Button text="&#x2715;" fx:id="closeBtn">
                 <styleClass>
-                    <String fx:value="title-btn" />
-                    <String fx:value="close-btn" />
+                    <String fx:value="title-btn"/>
+                    <String fx:value="close-btn"/>
                 </styleClass>
             </Button>
         </HBox>
@@ -28,46 +28,50 @@
     <!-- ===================== CONTENT ===================== -->
     <center>
         <VBox styleClass="content-area">
-            
+
             <!-- ======== LINK INFO CARD ======== -->
             <VBox styleClass="card">
                 <GridPane hgap="12" vgap="10">
                     <columnConstraints>
-                        <ColumnConstraints percentWidth="20" />
-                        <ColumnConstraints percentWidth="80" />
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="80"/>
                     </columnConstraints>
 
+                    <!-- ======== URL ======== -->
                     <Label text="URL" GridPane.rowIndex="0" GridPane.columnIndex="0"
-                           styleClass="text-label" />
+                           styleClass="text-label"/>
                     <TextField fx:id="urlField" editable="false" GridPane.rowIndex="0"
                                GridPane.columnIndex="1"
-                               styleClass="text-field" />
+                               styleClass="text-field"/>
 
+                    <!-- ======== Final URL ======== -->
                     <Label text="Final URL" GridPane.rowIndex="1" GridPane.columnIndex="0"
-                           styleClass="text-label" />
+                           styleClass="text-label"/>
                     <TextField fx:id="finalUrlField" editable="false" GridPane.rowIndex="1"
                                GridPane.columnIndex="1"
-                               styleClass="text-field" />
+                               styleClass="text-field"/>
 
+                    <!-- ======== Content Type ======== -->
                     <Label text="Content Type" GridPane.rowIndex="2" GridPane.columnIndex="0"
-                           styleClass="text-label" />
+                           styleClass="text-label"/>
                     <TextField fx:id="contentTypeField" editable="false" GridPane.rowIndex="2"
                                GridPane.columnIndex="1"
-                               styleClass="text-field" />
+                               styleClass="text-field"/>
 
+                    <!-- ======== Error ======== -->
                     <Label text="Error" GridPane.rowIndex="3" GridPane.columnIndex="0"
-                           styleClass="text-label" />
+                           styleClass="text-label"/>
                     <TextField fx:id="errorField" editable="false" GridPane.rowIndex="3"
                                GridPane.columnIndex="1"
-                               styleClass="text-field" />
+                               styleClass="text-field"/>
                 </GridPane>
             </VBox>
 
             <!-- ======== WEBPAGE LINK TABLE ======== -->
             <TableView fx:id="webpageLinkTable" styleClass="table-view" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="anchorTextColumn" text="Anchor text" prefWidth="200" />
-                    <TableColumn fx:id="webpageUrlColumn" text="Webpage URL" prefWidth="500" />
+                    <TableColumn fx:id="anchorTextColumn" text="Anchor text" prefWidth="200"/>
+                    <TableColumn fx:id="webpageUrlColumn" text="Webpage URL" prefWidth="500"/>
                 </columns>
             </TableView>
         </VBox>
