@@ -84,9 +84,6 @@ public class MainController implements LinkReceiver {
      */
     @FXML
     public void initialize() {
-        // Pasang global uncaught exception handler
-        setupUncaughtExceptionHandler();
-
         // Jalankan setup UI di JavaFX Application Thread
         Platform.runLater(() -> {
             // Setup title bar
@@ -777,24 +774,5 @@ public class MainController implements LinkReceiver {
 
         // Buka window notifikasi
         Platform.runLater(() -> Application.openNotificationWindow(type, msg));
-    }
-
-    /**
-     * Method untuk menangani exception yang tidak tertangkap di thread mana pun.
-     */
-    private void setupUncaughtExceptionHandler() {
-        // Set handler global untuk semua thread
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            // Ambil pesan exception
-            String message = throwable.getMessage();
-
-            // Jika pesan kosong, pakai toString()
-            if (message == null || message.isBlank()) {
-                message = throwable.toString();
-            }
-
-            // Tampilkan sebagai notifikasi error
-            showNotification("ERROR", message);
-        });
     }
 }
