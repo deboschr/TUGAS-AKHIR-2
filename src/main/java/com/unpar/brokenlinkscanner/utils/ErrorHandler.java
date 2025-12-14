@@ -73,7 +73,6 @@ public class ErrorHandler {
         return topSimple;
     }
 
-
     public static String getHttpError(int statusCode) {
         // Jika status code bukan termasuk error
         if (statusCode >= 100 && statusCode < 400) {
@@ -82,7 +81,6 @@ public class ErrorHandler {
 
         return HTTP_STATUS_MAP.getOrDefault(statusCode, String.valueOf(statusCode));
     }
-
 
     public static boolean isHttpError(int statusCode) {
         return HTTP_STATUS_MAP.containsKey(statusCode);

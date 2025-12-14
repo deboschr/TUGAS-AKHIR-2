@@ -12,7 +12,7 @@ public interface LinkReceiver {
     /**
      * Method yang dipanggil setiap kali sebuah Link berhasil diperiksa.
      *
-     * @param link objek Link hasil pemeriksaan
+     * @param link : objek Link hasil pemeriksaan
      */
     void receive(Link link);
 }

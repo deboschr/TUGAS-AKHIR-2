@@ -36,7 +36,7 @@ public class Crawler {
     // Penanda apakah proses dihentikan oleh user
     private volatile boolean isStopped;
 
-    // Executor untuk menjalankan pemeriksaan link secara paralel
+    // Executor untuk menjalankan pemeriksaan link eksternal secara paralel
     private ExecutorService executor;
 
     // Host dari URL awal untuk menentukan link internal atau eksternal
