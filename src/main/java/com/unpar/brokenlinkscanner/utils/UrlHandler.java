@@ -63,6 +63,7 @@ public class UrlHandler {
 
             // Ambil masing-masing komponen URI
             String scheme = uri.getScheme();
+            // String userInfo = uri.getUserInfo();
             String host = uri.getHost();
             String path = uri.getRawPath();
             String query = uri.getRawQuery();
@@ -89,6 +90,7 @@ public class UrlHandler {
 
             // Bangun ulang URI yang sudah dibersihkan
             URI cleaned = new URI(scheme.toLowerCase(), // SCHEME: selalu lowercase
+                    // userInfo,                 // USERINFO: diabaikan
                     null,                 // USERINFO: diabaikan
                     host.toLowerCase(),   // HOST: selalu lowercase
                     port,                 // PORT: sudah disesuaikan
