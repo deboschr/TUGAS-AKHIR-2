@@ -188,11 +188,13 @@ public class Exporter {
             Map<String, Integer> map = (Map<String, Integer>) group.get("map");
             int total = (int) group.get("total");
 
-            if (total == 0 || map.isEmpty())
+            if (total == 0 || map.isEmpty()) {
                 continue;
+            }
 
             List<String> errors = new ArrayList<>(map.keySet());
             errors.sort(String::compareTo);
+
 
             int startRow = rowIndex;
 
