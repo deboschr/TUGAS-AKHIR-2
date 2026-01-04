@@ -62,6 +62,6 @@
 
 .message-text {
 	-fx-text-fill: -grey-dark;
-	-fx-font-size: 17px;
+	-fx-font-size: 14px;
 	-fx-wrap-text: true;
 }
